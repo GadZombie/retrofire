@@ -60,12 +60,13 @@ bity:array[0..2] of integer=(
               16,
               24,
               32);
-rozdz:array[0..4,0..1] of integer=(
+rozdz:array[0..5,0..1] of integer=(
              (320,240),
              (640,480),
              (800,600),
              (1024,768),
-             (1280,1024));
+             (1280,1024),
+             (1920, 1080));
 
 nazwyklawiszy:array[0..ile_klaw] of string=(
          'Skrêcanie w lewo (prawa dysza)',

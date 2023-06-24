@@ -96,6 +96,17 @@ l_cien:GLUint;
 l_sceneria:array[0..ile_obiektow_scenerii-1] of GLUint;
 l_krzaki:array[0..3] of GLUint;
 
+procedure SetGluOrtho2DForMenu(out width: integer; out height: integer);
+begin
+  width := trunc(currentScreenParams.MenuWidth);
+  height := trunc(currentScreenParams.MenuHeight);
+  gluOrtho2D(
+    -currentScreenParams.MenuOffsetX,
+    width + currentScreenParams.MenuOffsetX,
+    0,
+    currentScreenParams.MenuHeight);
+end;
+
 //---------------------------------------------------------------------------
 procedure RenderScene;
 begin
@@ -541,8 +552,8 @@ begin
 
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
-  width:=640;//Form1.ClientWidth;
-  height:=480;//Form1.ClientHeight;
+  width:= trunc(currentScreenParams.HudWidth);
+  height:= trunc(currentScreenParams.HudHeight);
   gluOrtho2D(0,width,0,height);
 
   glMatrixMode(GL_MODELVIEW);
@@ -579,12 +590,12 @@ begin
     0:begin
       pisz2d('jest:'+inttostr(gra.ilepilotow+gracz.pilotow), 10, height-10, 4);
       pisz2d('na pok³adzie:'+inttostr(gracz.pilotow)+'/'+inttostr(gracz.ladownosc), 90, height-10, 4);
-      pisz2d('zginê³o:'+inttostr(gra.zginelo), 480, height-10, 4,2);
-      pisz2d('uratowanych:'+inttostr(gra.zabranych)+'/'+inttostr(gra.minimum), 630, height-10, 4,2);
+      pisz2d('zginê³o:'+inttostr(gra.zginelo), currentScreenParams.HudWidth - 160, height-10, 4,2);
+      pisz2d('uratowanych:'+inttostr(gra.zabranych)+'/'+inttostr(gra.minimum), currentScreenParams.HudWidth - 10, height-10, 4,2);
       end;
     1:begin
       pisz2d('jest:'+inttostr(gra.iledzialek), 10, height-10, 4);
-      pisz2d('zniszczonych:'+inttostr(gra.dzialekzniszczonych)+'/'+inttostr(gra.dzialekminimum), 630, height-10, 4,2);
+      pisz2d('zniszczonych:'+inttostr(gra.dzialekzniszczonych)+'/'+inttostr(gra.dzialekminimum), currentScreenParams.HudWidth - 10, height-10, 4,2);
       end;
   end;
 
@@ -600,7 +611,7 @@ begin
   if gra.czas<20 then glColor4f(1,0.2,0,0.9)
      else if gra.czas<60 then glColor4f(1,0.7,0.4,0.7)
           else glColor4f(1,1,1,0.7);
-  pisz2d(inttostr(gra.czas div 60)+':'+l2t(gra.czas mod 60,2), 320, height-12, 7,1);
+  pisz2d(inttostr(gra.czas div 60)+':'+l2t(gra.czas mod 60,2), currentScreenParams.HudWidth / 2, height-12, 7,1);
 
 //  pisz2d('L¹downiki:'+inttostr(gra.zycia), width-20, height-45, 4,2);
 
@@ -626,11 +637,11 @@ begin
   pisz2d(inttostr(gracz.iledzialko), 360, 18, 7);
 
 
-  rysuj_ikone(5,420,28, 7);
-  rysuj_ikone(6,420,17, 7);
+  rysuj_ikone(5, currentScreenParams.HudWidth - 220,28, 7);
+  rysuj_ikone(6, currentScreenParams.HudWidth - 220,17, 7);
   glColor4f(0.3,0.7,1,0.6);
-  pisz2d(inttostr(gra.kasa), 440, 28, 4);
-  pisz2d(inttostr(gra.pkt), 440, 17, 4);
+  pisz2d(inttostr(gra.kasa), currentScreenParams.HudWidth - 200, 28, 4);
+  pisz2d(inttostr(gra.pkt), currentScreenParams.HudWidth - 200, 17, 4);
 
   //paliwo
 {  wartosc := gracz.paliwo/gracz.maxpaliwa*(height-120);
@@ -876,11 +887,11 @@ begin
   glPushmatrix;
 
     glcolor4f(1,1,1, 0.7);
-    rysuj_ikone(3,590,28, 7);
-    rysuj_ikone(4,590,17, 7);
+    rysuj_ikone(3,currentScreenParams.HudWidth - 50,28, 7);
+    rysuj_ikone(4,currentScreenParams.HudWidth - 50,17, 7);
     glColor4f(0.3,0.7,1,0.6);
-    pisz2d(inttostr(round(ziemia.grawitacja*10000)), 610, 28, 4);
-    pisz2d(inttostr(round(1000-ziemia.gestoscpowietrza*1000)), 610, 17, 4);
+    pisz2d(inttostr(round(ziemia.grawitacja*10000)), currentScreenParams.HudWidth - 30, 28, 4);
+    pisz2d(inttostr(round(1000-ziemia.gestoscpowietrza*1000)), currentScreenParams.HudWidth - 30, 17, 4);
 
 {    glcolor4f(0.7,1.0,1.0,0.4);
     glTranslatef(width-120,30,0);
@@ -983,11 +994,30 @@ begin
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
 
-  gluPerspective(katwidzenia, 640/480, 0.2, odlwidzenia);
+  gluPerspective(katwidzenia, currentScreenParams.Aspect, 0.2, odlwidzenia);
   glMatrixMode(GL_MODELVIEW);
   glLoadIdentity();
 
   glEnable(GL_FOG);
+end;
+
+//---------------------------------------------------------------------------
+procedure DrawPanoramicStripes(width, height: integer);
+begin
+  //pasy panoramiczne
+  glBegin(GL_QUADS);
+     glColor3f(0,0,0);
+     glVertex2f( -1 - currentScreenParams.MenuOffsetX,-1);
+     glVertex2f( width+1 + currentScreenParams.MenuOffsetX,-1);
+     glVertex2f( width+1 + currentScreenParams.MenuOffsetX, 90);
+     glVertex2f( -1 - currentScreenParams.MenuOffsetX, 90);
+  glEnd();
+  glBegin(GL_QUADS);
+     glVertex2f( -1 - currentScreenParams.MenuOffsetX,height-90);
+     glVertex2f( width+1 + currentScreenParams.MenuOffsetX,height-90);
+     glVertex2f( width+1 + currentScreenParams.MenuOffsetX,height+1);
+     glVertex2f( -1 - currentScreenParams.MenuOffsetX,height+1);
+  glEnd();
 end;
 
 //---------------------------------------------------------------------------
@@ -998,9 +1028,7 @@ a,z:integer;
 begin
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
-  width:=640;
-  height:=480;
-  gluOrtho2D(0,width,0,height);
+  SetGluOrtho2DForMenu(width, height);
   glMatrixMode(GL_MODELVIEW);
   glLoadIdentity();
   glDisable(GL_FOG);
@@ -1010,28 +1038,14 @@ begin
   glDisable(GL_COLOR_MATERIAL);
   glPolygonMode(GL_FRONT, GL_FILL);
 
-  //pasy panoramiczne
-  glBegin(GL_QUADS);
-     glColor3f(0,0,0);
-     glVertex2f( -1,-1);
-     glVertex2f( width+1,-1);
-     glVertex2f( width+1 , 90);
-     glVertex2f( -1 , 90);
-  glEnd();
-  glBegin(GL_QUADS);
-     glVertex2f( -1,height-90);
-     glVertex2f( width+1,height-90);
-     glVertex2f( width+1,height+1);
-     glVertex2f( -1 ,height+1);
-  glEnd();
-
+  DrawPanoramicStripes(width, height);
 
 //  glEnable(GL_LIGHTING);
 //  glClear(GL_COLOR_BUFFER_BIT or GL_DEPTH_BUFFER_BIT); // czyszczenie buforow koloru i glebokosci
 
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
-  gluPerspective(40, 640/480, 0.2, odlwidzenia);
+  gluPerspective(40, currentScreenParams.Aspect, 0.2, odlwidzenia);
   glMatrixMode(GL_MODELVIEW);
   glLoadIdentity();
 
@@ -1041,9 +1055,7 @@ begin
 
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
-  width:=640;
-  height:=480;
-  gluOrtho2D(0,width,0,height);
+  SetGluOrtho2DForMenu(width, height);
   glMatrixMode(GL_MODELVIEW);
   glLoadIdentity();
   glDisable(GL_FOG);
@@ -1103,7 +1115,7 @@ begin
   glDisable(GL_BLEND);
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
-  gluPerspective(katwidzenia, 640/480, 0.2, odlwidzenia);
+  gluPerspective(katwidzenia, currentScreenParams.Aspect, 0.2, odlwidzenia);
   glMatrixMode(GL_MODELVIEW);
   glLoadIdentity();
   glEnable(GL_FOG);
@@ -1117,9 +1129,7 @@ a,z:integer;
 begin
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
-  width:=640;
-  height:=480;
-  gluOrtho2D(0,width,0,height);
+  SetGluOrtho2DForMenu(width, height);
   glMatrixMode(GL_MODELVIEW);
   glLoadIdentity();
   glDisable(GL_FOG);
@@ -1130,27 +1140,25 @@ begin
   glDisable(GL_COLOR_MATERIAL);
   glPolygonMode(GL_FRONT, GL_FILL);
 
-  //pasy panoramiczne
-  glBegin(GL_QUADS);
-     glColor3f(0,0,0);
-     glVertex2f( -1,-1);
-     glVertex2f( width+1,-1);
-     glVertex2f( width+1 , 90);
-     glVertex2f( -1 , 90);
-  glEnd();
-  glBegin(GL_QUADS);
-     glVertex2f( -1,height-90);
-     glVertex2f( width+1,height-90);
-     glVertex2f( width+1,height+1);
-     glVertex2f( -1 ,height+1);
-  glEnd();
+  DrawPanoramicStripes(width, height);
 
 
   if intro.czas>=30 then begin
      glColor4f(0.2,1,0.3,0.7);
      if gra.jakiemisje<>2 then
-        n:='MISJA '+inttostr(gra.planeta)+' ZAKOÑCZONA!'
-     else n:='MISJA '+inttostr(winieta.epizodmisja)+' ZAKOÑCZONA!';
+     begin
+       if gra.misjawypelniona then
+         n:='MISJA '+inttostr(gra.planeta)+' WYKONANA!'
+       else
+         n:='MISJA '+inttostr(gra.planeta)+' STRACONA...'
+     end
+     else
+     begin
+       if gra.misjawypelniona then
+         n:='MISJA '+inttostr(winieta.epizodmisja)+' WYKONANA!'
+       else
+         n:='MISJA '+inttostr(winieta.epizodmisja)+' STRACONA...'
+     end;
      a:=(intro.czas-30) div 2;
      if a>length(n) then a:=length(n);
      m:=copy(n,1,a);
@@ -1206,7 +1214,7 @@ begin
   glDisable(GL_BLEND);
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
-  gluPerspective(katwidzenia, 640/480, 0.2, odlwidzenia);
+  gluPerspective(katwidzenia, currentScreenParams.Aspect, 0.2, odlwidzenia);
   glMatrixMode(GL_MODELVIEW);
   glLoadIdentity();
   glEnable(GL_FOG);
@@ -2930,7 +2938,7 @@ glPushMatrix;
      glMatrixMode(GL_PROJECTION);
      glLoadIdentity();
 
-     gluPerspective(katwidzenia, 640 / 480, 0.2, 25000.0);
+     gluPerspective(katwidzenia, currentScreenParams.Aspect, 0.2, 25000.0);
      glMatrixMode(GL_MODELVIEW);
 
      if matka.widac<1 then begin
@@ -2981,7 +2989,7 @@ glPushMatrix;
   if gra.etap=1 then begin
      glMatrixMode(GL_PROJECTION);
      glLoadIdentity();
-     gluPerspective(katwidzenia, 640 / 480, 0.2, odlwidzenia);
+     gluPerspective(katwidzenia, currentScreenParams.Aspect, 0.2, odlwidzenia);
      glMatrixMode(GL_MODELVIEW);
      glLoadIdentity();
   end;
@@ -3000,7 +3008,7 @@ begin
      glMatrixMode(GL_PROJECTION);
      glLoadIdentity();
 
-     gluPerspective(katwidzenia, 640 / 480, 0.2, 30000.0);
+     gluPerspective(katwidzenia, currentScreenParams.Aspect, 0.2, 30000.0);
      glMatrixMode(GL_MODELVIEW);
   end;
 
@@ -3017,7 +3025,7 @@ begin
   if gra.etap=1 then begin
      glMatrixMode(GL_PROJECTION);
      glLoadIdentity();
-     gluPerspective(katwidzenia, 640 / 480, 0.2, odlwidzenia);
+     gluPerspective(katwidzenia, currentScreenParams.Aspect, 0.2, odlwidzenia);
      glMatrixMode(GL_MODELVIEW);
      glLoadIdentity();
   end;
@@ -3074,7 +3082,7 @@ case gra.etap of
    glMatrixMode(GL_PROJECTION);
    glLoadIdentity();
 
-   gluPerspective(katwidzenia, 640 / 480, 0.2, 9000.0);
+   gluPerspective(katwidzenia, currentScreenParams.Aspect, 0.2, 9000.0);
    glMatrixMode(GL_MODELVIEW);
    glLoadIdentity();
 
@@ -3120,7 +3128,7 @@ case gra.etap of
    glMatrixMode(GL_PROJECTION);
    glLoadIdentity();
 
-   gluPerspective(katwidzenia, 640 / 480, 0.2, 9000.0);
+   gluPerspective(katwidzenia, currentScreenParams.Aspect, 0.2, 9000.0);
    glMatrixMode(GL_MODELVIEW);
    glLoadIdentity();
 
@@ -3176,7 +3184,7 @@ begin
    glMatrixMode(GL_PROJECTION);
    glLoadIdentity();
 
-   gluPerspective(katwidzenia, 640 / 480, 0.2, 9000.0);
+   gluPerspective(katwidzenia, currentScreenParams.Aspect, 0.2, 9000.0);
    glMatrixMode(GL_MODELVIEW);
    glLoadIdentity();
 
@@ -3258,9 +3266,9 @@ begin
 
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
-  width:=640;
-  height:=480;
-  gluOrtho2D(0,width,0,height);
+
+  SetGluOrtho2DForMenu(width, height);
+
   glMatrixMode(GL_MODELVIEW);
   glLoadIdentity();
 
@@ -3283,20 +3291,20 @@ begin
   case winieta.corobi of
     0:begin//winieta
       if winieta.kursor=0 then glColor4f(0.2,1.0,0.2,0.7) else glColor4f(0.1,0.6,0.1,0.6);
-      pisz2d('nowa gra: misja pocz¹tkowa: '+inttostr(winieta.planetapocz), 640 div 2, height-250, 8+ord(winieta.kursor=0),1);
+      pisz2d('nowa gra: misja pocz¹tkowa: '+inttostr(winieta.planetapocz), currentScreenParams.MenuCenter, height-250, 8+ord(winieta.kursor=0),1);
       if winieta.kursor=1 then glColor4f(0.2,1.0,0.2,0.7) else glColor4f(0.1,0.6,0.1,0.6);
-      pisz2d('nowa gra: misje losowe: '+inttostr(winieta.poziomtrudnosci), 640 div 2, height-280, 8+ord(winieta.kursor=1),1);
+      pisz2d('nowa gra: misje losowe: '+inttostr(winieta.poziomtrudnosci), currentScreenParams.MenuCenter, height-280, 8+ord(winieta.kursor=1),1);
       if winieta.kursor=2 then glColor4f(0.2,1.0,0.2,0.7) else glColor4f(0.1,0.6,0.1,0.6);
-      pisz2d('misje dodatkowe', 640 div 2, height-310, 8+ord(winieta.kursor=2),1);
+      pisz2d('misje dodatkowe', currentScreenParams.MenuCenter, height-310, 8+ord(winieta.kursor=2),1);
       if winieta.kursor=3 then glColor4f(0.2,1.0,0.2,0.7) else glColor4f(0.1,0.6,0.1,0.6);
-      pisz2d('wczytanie gry', 640 div 2, height-340, 8+ord(winieta.kursor=3),1);
+      pisz2d('wczytanie gry', currentScreenParams.MenuCenter, height-340, 8+ord(winieta.kursor=3),1);
       if winieta.kursor=4 then glColor4f(0.2,1.0,0.2,0.7) else glColor4f(0.1,0.6,0.1,0.6);
-      pisz2d('wyjœcie', 640 div 2, height-370, 8+ord(winieta.kursor=4),1);
+      pisz2d('wyjœcie', currentScreenParams.MenuCenter, height-370, 8+ord(winieta.kursor=4),1);
 
 
       glColor4f(1.0,0.2,0.1,0.6);
-      pisz2d('2007 zombie mastah prodakshans', 640 div 2, 40, 5,1);
-      pisz2d('http://gad.art.pl/', 640 div 2, 23, 5,1);
+      pisz2d('2007 zombie mastah prodakshans', currentScreenParams.MenuCenter, 40, 5,1);
+      pisz2d('http://gad.art.pl/', currentScreenParams.MenuCenter, 23, 5,1);
 
       for a:=0 to high(skroltekst) do begin
           b1:=height-270+winieta.skrol div 3-a*15;
@@ -3306,19 +3314,19 @@ begin
                                                        else glColor4f(1.0,1.0,1.0,0.4);
 
           if (b1>=height-220) and (b1<=height-40) then
-             pisz2d(skroltekst[a], 640 div 2, b1, 6,1);
+             pisz2d(skroltekst[a], currentScreenParams.MenuCenter, b1, 6,1);
 
       end;
 
       glColor4f(0.5,0.7,1,0.8);
-      pisz2d('RETROFIRE', 640 div 2, height-50+abs(sin(licz*0.03)*5), 17,1);
+      pisz2d('RETROFIRE', currentScreenParams.MenuCenter, height-50+abs(sin(licz*0.03)*5), 17,1);
 
       end;
     1,3:begin//zapis, odczyt
 
       glColor4f(0.5,0.7,1,0.8);
-      if winieta.corobi=1 then pisz2d('ZAPIS GRY', 640 div 2, height-50, 13,1)
-                          else pisz2d('ODCZYT GRY', 640 div 2, height-50, 13,1);
+      if winieta.corobi=1 then pisz2d('ZAPIS GRY', currentScreenParams.MenuCenter, height-50, 13,1)
+                          else pisz2d('ODCZYT GRY', currentScreenParams.MenuCenter, height-50, 13,1);
 
 
       if winieta.kursor<=9 then b1:=height-80-winieta.kursor*35
@@ -3326,9 +3334,9 @@ begin
       glBegin(GL_QUADS);
         glColor4f(0.2, 0.2, 0.3, 0.4);
         glVertex2f(20,  b1);
-        glVertex2f(620, b1);
+        glVertex2f(currentScreenParams.MenuWidth - 20, b1);
         glColor4f(0, 0, 0.05, 0.2);
-        glVertex2f(620, b1-40);
+        glVertex2f(currentScreenParams.MenuWidth - 20, b1-40);
         glColor4f(0.2, 0.2, 0.3, 0.2);
         glVertex2f(20,  b1-40);
       glEnd;
@@ -3340,41 +3348,41 @@ begin
              case zapisy[a].rodzajgry of
                 0:begin
                   if winieta.kursor=a then glColor4f(0.2,1.0,0.2,0.7) else glColor4f(0.1,0.6,0.1,0.6);
-                  pisz2d(inttostr(a)+') NORMALNA GRA', 20, height-90-a*35, 5);
+                  pisz2d(inttostr(a)+') NORMALNA GRA', 30, height-90-a*35, 5);
                   end;
                 1:begin
                   if winieta.kursor=a then glColor4f(0.2,0.6,1.0,0.7) else glColor4f(0.1,0.5,0.6,0.6);
-                  pisz2d(inttostr(a)+') MISJE LOSOWE', 20, height-90-a*35, 5);
+                  pisz2d(inttostr(a)+') MISJE LOSOWE', 30, height-90-a*35, 5);
                   end;
                 2:begin
                   if winieta.kursor=a then glColor4f(1.0,0.3,0.2,0.7) else glColor4f(0.7,0.2,0.1,0.6);
-                  pisz2d(inttostr(a)+') MISJE DODATKOWE', 20, height-90-a*35, 4);
+                  pisz2d(inttostr(a)+') MISJE DODATKOWE', 30, height-90-a*35, 4);
                   pisz2d(zapisy[a].epizod, 50, height-99-a*35, 5);
                   end;
              end;
 
-             pisz2d(DateTimeToStr(zapisy[a].data), 50, height-110-a*35, 5);
+             pisz2d(DateTimeToStr(zapisy[a].data), 60, height-110-a*35, 5);
 
-             pisz2d('MISJA:'+inttostr(zapisy[a].planeta), 280, height-90-a*35, 5);
-             pisz2d('PKT:'+inttostr(zapisy[a].pkt), 280, height-110-a*35, 5);
+             pisz2d('MISJA:'+inttostr(zapisy[a].planeta), 340, height-90-a*35, 5);
+             pisz2d('PKT:'+inttostr(zapisy[a].pkt), 340, height-110-a*35, 5);
 
-             pisz2d('L¥DOWNIKI:'+inttostr(zapisy[a].zycia), 450, height-90-a*35, 5);
-             pisz2d('KASA:'+inttostr(zapisy[a].kasa), 450, height-110-a*35, 5);
+             pisz2d('L¥DOWNIKI:'+inttostr(zapisy[a].zycia), 510, height-90-a*35, 5);
+             pisz2d('KASA:'+inttostr(zapisy[a].kasa), 510, height-110-a*35, 5);
 
           end else begin
               if winieta.kursor=a then glColor4f(0.6,0.6,0.6,0.7) else glColor4f(0.4,0.4,0.4,0.6);
-              pisz2d('--PUSTY--', 640 div 2, height-100-a*35, 8,1);
+              pisz2d('--PUSTY--', currentScreenParams.MenuCenter, height-100-a*35, 8,1);
           end;
       end;
 
       if winieta.kursor=10 then glColor4f(0.2,1.0,0.2,0.7) else glColor4f(0.1,0.6,0.1,0.6);
-      pisz2d('WYJŒCIE', 640 div 2, height-450, 8,1);
+      pisz2d('WYJŒCIE', currentScreenParams.MenuCenter, height-450, 8,1);
 
       end;
     2:begin//sklep
 
       glColor4f(0.5,0.7,1,0.8);
-      pisz2d('SKLEP', 640 div 2, height-50, 13,1);
+      pisz2d('SKLEP', currentScreenParams.MenuCenter, height-50, 13,1);
 
       glColor4f(0.2,0.5,1,0.95);
       pisz2d('KASA: '+inttostr(gra.kasa), 50, height-90, 8);
@@ -3384,9 +3392,9 @@ begin
       glBegin(GL_QUADS);
         glColor4f(0.2, 0.2, 0.3, 0.4);
         glVertex2f(20,  b1);
-        glVertex2f(620, b1);
+        glVertex2f(currentScreenParams.MenuWidth - 20, b1);
         glColor4f(0, 0, 0.05, 0.2);
-        glVertex2f(620, b1-35);
+        glVertex2f(currentScreenParams.MenuWidth - 20, b1-35);
         glColor4f(0.2, 0.2, 0.3, 0.2);
         glVertex2f(20,  b1-35);
       glEnd;
@@ -3401,7 +3409,7 @@ begin
             4:begin r:=100; s:='UK£AD CH£ODZ¥CY'; end;
             5:begin r:=1; s:='£ADOWNOŒÆ'; end;
           end;
-//          pisz2d(s, 640 div 2, height-130-a*40, 8,1);
+//          pisz2d(s, currentScreenParams.MenuCenter, height-130-a*40, 8,1);
           pisz2d(s, 40, height-130-a*40, 8,0);
           pisz2d('MASZ: '+inttostr(round(upgrade[a,gra.poziomupgrade[a]].ile*r)), 40, height-145-a*40, 6);
           if gra.poziomupgrade[a]<9 then begin
@@ -3416,7 +3424,7 @@ begin
           if winieta.kursor=a then r:=0.7 else r:=0.4;
           for b:=0 to 9 do begin
               b1:=height-130-a*40;
-              b2:=415+b*20;
+              b2:= width - (20 * 11) +b*20;
               glBegin(GL_QUADS);
                 if b<=gra.poziomupgrade[a] then glColor4f(0.3,1, 0.2, r)
                                            else glColor4f(0.5,0.1, 0.05, r);
@@ -3446,7 +3454,7 @@ begin
       if winieta.kursor=a then r:=0.7 else r:=0.4;
       for b:=1 to 9 do begin
           b1:=height-130-a*40;
-          b2:=415+b*20;
+          b2:= width - (20 * 11) +b*20;
           glBegin(GL_QUADS);
             if b<=gra.zycia then glColor4f(0.3,1, 0.2, r)
                             else glColor4f(0.5,0.1, 0.05, r);
@@ -3461,7 +3469,7 @@ begin
 
 
       if winieta.kursor=7 then glColor4f(0.2,1.0,0.2,0.7) else glColor4f(0.1,0.6,0.1,0.6);
-      pisz2d('WYJŒCIE', 640 div 2, height-430, 8,1);
+      pisz2d('WYJŒCIE', currentScreenParams.MenuCenter, height-430, 8,1);
 
       end;
     4:begin//wybor misji dodatkowej
@@ -3483,13 +3491,13 @@ begin
           end;
       end else begin
          glColor4f(0.8,0.2,0.1,0.6);
-         pisz2d('BRAK MISJI DODATKOWYCH!', 640 div 2, width div 2, 10,1);
+         pisz2d('BRAK MISJI DODATKOWYCH!', currentScreenParams.MenuCenter, width div 2, 10,1);
 
       end;
 
       if gra.koniecgry then begin
          glColor4f(0.1,0.6,0.1,0.6);
-         pisz2d('esc - powrót do winiety', 640 div 2, 30, 8,1);
+         pisz2d('esc - powrót do winiety', currentScreenParams.MenuCenter, 30, 8,1);
       end;
 
       end;
@@ -3524,7 +3532,7 @@ begin
    glMatrixMode(GL_PROJECTION);
    glLoadIdentity();
 
-   gluPerspective(katwidzenia, 640 / 480, 0.2, 9000.0);
+   gluPerspective(katwidzenia, currentScreenParams.Aspect, 0.2, 9000.0);
    glMatrixMode(GL_MODELVIEW);
    glLoadIdentity();
 
@@ -3639,9 +3647,7 @@ begin
 
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-    width:=640;
-    height:=480;
-    gluOrtho2D(0,width,0,height);
+    SetGluOrtho2DForMenu(width, height);
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
 
@@ -3669,41 +3675,28 @@ begin
 
           if (glowneintro.czas2>=70) and (glowneintro.czas2<=90) then begin
              glColor4f(0.8,0.8,0.8, ((90-glowneintro.czas2)/20)*0.1);
-             pisz2d(teksty[glowneintro.scena-1].s, 320,240, 10+(5*(glowneintro.czas2-70)),1);
+             pisz2d(teksty[glowneintro.scena-1].s, currentScreenParams.MenuCenter,240, 10+(5*(glowneintro.czas2-70)),1);
           end;
 
           for a:=0 to teksty[glowneintro.scena-1].i do begin
               glColor4f(0.5,1,0.5,(r*0.15)/((1+teksty[glowneintro.scena-1].i-a)/2) );
               pisz2d( teksty[glowneintro.scena-1].s,
                       //320-30+glowneintro.czas2/5,
-                      320-sin(a*56)*130 +(glowneintro.czas2/5)*cos(a*61),
+                      currentScreenParams.MenuCenter -sin(a*56)*130 +(glowneintro.czas2/5)*cos(a*61),
                       240-cos(a*61)*20 ,
                       30,
                       1);
           end;
 
           glColor4f(0.5,1,0.5,r*0.8);
-          pisz2d(teksty[glowneintro.scena-1].s, 320, 240, 10,1);
+          pisz2d(teksty[glowneintro.scena-1].s, currentScreenParams.MenuCenter, 240, 10,1);
 
        end;
 
     glDepthMask(GL_TRUE);
     glDisable(GL_BLEND);
 
-  //pasy panoramiczne
-  glBegin(GL_QUADS);
-     glColor3f(0,0,0);
-     glVertex2f( -1,-1);
-     glVertex2f( width+1,-1);
-     glVertex2f( width+1 , 90);
-     glVertex2f( -1 , 90);
-  glEnd();
-  glBegin(GL_QUADS);
-     glVertex2f( -1,height-90);
-     glVertex2f( width+1,height-90);
-     glVertex2f( width+1,height+1);
-     glVertex2f( -1 ,height+1);
-  glEnd();
+  DrawPanoramicStripes(width, height);
 
     
   glPopMatrix;
@@ -3724,7 +3717,7 @@ nz:=abs(ziemia.pz)*3;
 
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
-  gluPerspective(katwidzenia, 640/480, 0.2, 5000.0);
+  gluPerspective(katwidzenia, currentScreenParams.Aspect, 0.2, 5000.0);
 
   glMatrixMode(GL_MODELVIEW);
   glNormal3f(0,-1,0);
@@ -3848,7 +3841,7 @@ nz:=abs(ziemia.pz)*3;
 
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
-  gluPerspective(katwidzenia, 640/480, 0.2, odlwidzenia);
+  gluPerspective(katwidzenia, currentScreenParams.Aspect, 0.2, odlwidzenia);
   glMatrixMode(GL_MODELVIEW);
 end;
 

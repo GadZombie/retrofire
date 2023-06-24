@@ -12,10 +12,8 @@ object Form2: TForm2
   Font.Name = 'MS Sans Serif'
   Font.Style = []
   FormStyle = fsStayOnTop
-  OldCreateOrder = False
   Position = poMainFormCenter
   OnCreate = FormCreate
-  PixelsPerInch = 96
   TextHeight = 13
   object Panel1: TPanel
     Left = 0
@@ -45,6 +43,7 @@ object Form2: TForm2
       ParentFont = False
       Layout = tlCenter
       WordWrap = True
+      ExplicitHeight = 32
     end
   end
   object PowerTimer1: TPowerTimer

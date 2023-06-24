@@ -4,8 +4,7 @@ interface
 
 uses
   Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
-  Dialogs, PowerTimers, PowerInputs, StdCtrls, ExtCtrls, PowerTypes,
-  PowerDraw3;
+  Dialogs, PowerTimers, PowerInputs, StdCtrls, ExtCtrls, PowerTypes;
 
 type
   TForm2 = class(TForm)

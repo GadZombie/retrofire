@@ -12,13 +12,11 @@ object Form1: TForm1
   Font.Height = -11
   Font.Name = 'Tahoma'
   Font.Style = []
-  OldCreateOrder = False
   Position = poScreenCenter
   OnCreate = FormCreate
   DesignSize = (
     411
     543)
-  PixelsPerInch = 96
   TextHeight = 13
   object GroupBox1: TGroupBox
     Left = 0
@@ -28,6 +26,7 @@ object Form1: TForm1
     Anchors = [akLeft, akTop, akRight]
     Caption = 'Grafika'
     TabOrder = 0
+    ExplicitWidth = 407
     object Label3: TLabel
       Left = 8
       Top = 53
@@ -48,16 +47,16 @@ object Form1: TForm1
       Width = 105
       Height = 21
       Style = csDropDownList
-      ItemHeight = 13
-      ItemIndex = 3
+      ItemIndex = 0
       TabOrder = 0
-      Text = '1024x768'
+      Text = '320x240'
       Items.Strings = (
         '320x240'
         '640x480'
         '800x600'
         '1024x768'
-        '1280x1024')
+        '1280x1024'
+        '1920x1080')
     end
     object cbbity: TComboBox
       Left = 120
@@ -65,7 +64,6 @@ object Form1: TForm1
       Width = 89
       Height = 21
       Style = csDropDownList
-      ItemHeight = 13
       ItemIndex = 2
       TabOrder = 1
       Text = '32bit'
@@ -80,7 +78,6 @@ object Form1: TForm1
       Width = 89
       Height = 21
       Style = csDropDownList
-      ItemHeight = 13
       ItemIndex = 2
       TabOrder = 2
       Text = '75Hz'
@@ -112,15 +109,10 @@ object Form1: TForm1
       Height = 29
       Max = 13
       Min = 2
-      Orientation = trHorizontal
-      Frequency = 1
       Position = 6
-      SelEnd = 0
-      SelStart = 0
       TabOrder = 4
       ThumbLength = 14
       TickMarks = tmBoth
-      TickStyle = tsAuto
     end
     object TrJasnosc: TTrackBar
       Left = 136
@@ -128,15 +120,10 @@ object Form1: TForm1
       Width = 272
       Height = 29
       Min = 2
-      Orientation = trHorizontal
-      Frequency = 1
       Position = 2
-      SelEnd = 0
-      SelStart = 0
       TabOrder = 5
       ThumbLength = 14
       TickMarks = tmBoth
-      TickStyle = tsAuto
     end
     object ChKrzaki: TCheckBox
       Left = 8
@@ -157,6 +144,7 @@ object Form1: TForm1
     Anchors = [akLeft, akTop, akRight]
     Caption = 'D'#378'wi'#281'k'
     TabOrder = 1
+    ExplicitWidth = 407
     object Label1: TLabel
       Left = 8
       Top = 56
@@ -177,7 +165,6 @@ object Form1: TForm1
       Width = 395
       Height = 21
       Style = csDropDownList
-      ItemHeight = 13
       ItemIndex = 1
       TabOrder = 0
       Text = 'Directsound'
@@ -191,15 +178,10 @@ object Form1: TForm1
       Width = 272
       Height = 29
       Max = 25
-      Orientation = trHorizontal
-      Frequency = 1
       Position = 25
-      SelEnd = 0
-      SelStart = 0
       TabOrder = 1
       ThumbLength = 14
       TickMarks = tmBoth
-      TickStyle = tsAuto
     end
     object TrVolMuz: TTrackBar
       Left = 136
@@ -207,15 +189,10 @@ object Form1: TForm1
       Width = 272
       Height = 29
       Max = 25
-      Orientation = trHorizontal
-      Frequency = 1
       Position = 10
-      SelEnd = 0
-      SelStart = 0
       TabOrder = 2
       ThumbLength = 14
       TickMarks = tmBoth
-      TickStyle = tsAuto
     end
   end
   object btnok: TButton
@@ -227,6 +204,8 @@ object Form1: TForm1
     Caption = 'Zapisz i zamknij'
     TabOrder = 2
     OnClick = btnokClick
+    ExplicitLeft = 303
+    ExplicitTop = 515
   end
   object btnanuluj: TButton
     Left = 211
@@ -237,6 +216,8 @@ object Form1: TForm1
     Caption = 'Anuluj'
     TabOrder = 3
     OnClick = btnanulujClick
+    ExplicitLeft = 207
+    ExplicitTop = 515
   end
   object GroupBox3: TGroupBox
     Left = 0
@@ -246,6 +227,8 @@ object Form1: TForm1
     Anchors = [akLeft, akTop, akRight, akBottom]
     Caption = 'Klawisze'
     TabOrder = 4
+    ExplicitWidth = 407
+    ExplicitHeight = 263
     DesignSize = (
       411
       264)
@@ -271,6 +254,8 @@ object Form1: TForm1
       BevelKind = bkSoft
       BorderStyle = bsNone
       TabOrder = 0
+      ExplicitWidth = 398
+      ExplicitHeight = 222
     end
   end
   object PowerInput1: TPowerInput
