@@ -11,7 +11,6 @@ object Form1: TForm1
   Font.Height = -11
   Font.Name = 'MS Sans Serif'
   Font.Style = []
-  OldCreateOrder = False
   Position = poScreenCenter
   OnClose = FormClose
   OnCreate = FormCreate
@@ -19,7 +18,6 @@ object Form1: TForm1
   OnMouseMove = FormMouseMove
   OnMouseUp = FormMouseUp
   OnResize = FormResize
-  PixelsPerInch = 96
   TextHeight = 13
   object PowerTimer1: TPowerTimer
     FPS = 60
