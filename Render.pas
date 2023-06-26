@@ -1957,10 +1957,7 @@ begin
 
   glPushMatrix;
   glTranslatef(gracz.x, gracz.y, gracz.z);
-  glRotatef(gracz.dz * 6, gracz.wykrecsila, 0, 0);
-  glRotatef(-gracz.dx * 6, 0, 0, gracz.wykrecsila);
-  glRotatef(gracz.kier, 0, -1, 0);
-  glRotatef(180, 0, 1, 0);
+  PlayerObjectTransform;
 
   zni := gracz.silaskrzywien;
 
@@ -3088,9 +3085,7 @@ begin
             // glScalef(2,10,2);
           end;
 
-          glRotatef(kier - 90, 0, -1, 0);
-          glRotatef(kierdol, 0, 0, -1);
-          glRotatef(obrot, 1, 0, 0);
+          FighterObjectTransform(a);
           glCallList(l_mysliwiec);
 
           rysuj_swiatelko(-7.2, 0.7, -3, 6, 1, 1, 0.9, 0.7 + random * 0.05);

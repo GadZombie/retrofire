@@ -11,7 +11,8 @@ interface
 
 uses directinput8, OpenGl, gl, Glu, glext, unittex, obj, sysutils, classes,
   windows,
-  fmod, fmodtypes, fmoderrors, fmodpresets, powerinputs, forms;
+  fmod, fmodtypes, fmoderrors, fmodpresets, powerinputs, forms,
+  ZGLMathProcs, ZGLGraphMath;
 
 const
   PROGRAM_VERSION = '1.1';
@@ -448,6 +449,10 @@ procedure nowa_gra(wczytaj_nr: integer; jaka: integer);
 
 procedure start;
 procedure FrameMath;
+
+procedure PlayerObjectTransform;
+procedure FighterObjectTransform(FighterId: integer);
+function FighterObjectTransformProc(FighterId: integer): TTransformProc;
 
 implementation
 
@@ -1246,6 +1251,59 @@ begin
   *)
 end;
 
+
+procedure PlayerObjectTransform;
+begin
+  glRotatef(gracz.dz * 6, gracz.wykrecsila, 0, 0);
+  glRotatef(-gracz.dx * 6, 0, 0, gracz.wykrecsila);
+  glRotatef(gracz.kier, 0, -1, 0);
+  glRotatef(180, 0, 1, 0);
+end;
+
+procedure GetTransformedPositionAndDirectionVector(
+  BeginPosition,
+  DirectionVec: TVec3D;
+  out BeginPositionTransformed: TVec3D;
+  out DirectionVecTransformed: TVec3D;
+  TransformProc: TTransformProc);
+begin
+  DirectionVec.x := BeginPosition.x + DirectionVec.x;
+  DirectionVec.y := BeginPosition.y + DirectionVec.y;
+  DirectionVec.z := BeginPosition.z + DirectionVec.z;
+
+  GetTransformedPosition(Vec3DZero, BeginPosition, BeginPositionTransformed, TransformProc);
+  GetTransformedPosition(Vec3DZero, DirectionVec, DirectionVecTransformed, TransformProc);
+
+  DirectionVecTransformed.x := DirectionVecTransformed.x - BeginPositionTransformed.x;
+  DirectionVecTransformed.y := DirectionVecTransformed.y - BeginPositionTransformed.y;
+  DirectionVecTransformed.z := DirectionVecTransformed.z - BeginPositionTransformed.z;
+end;
+
+procedure MakeFire(SourcePosition, SourceSpeed, Offset: TVec3D; power: extended; DirectionVector: TVec3D; TransformProc: TTransformProc;
+  size: double; fadeSpeed: double = 0.01);
+var
+  a: integer;
+  s1: real;
+  enginePosition, fireDirectionVec: TVec3D;
+begin
+  normalizeVec(DirectionVector);
+  GetTransformedPositionAndDirectionVector(
+    Vec3D(SourcePosition.x, SourcePosition.y, SourcePosition.z), DirectionVector,
+    enginePosition, fireDirectionVec, TransformProc);
+
+  nowy_dym(
+    Offset.x + enginePosition.x - SourceSpeed.x,
+    Offset.y + enginePosition.y - SourceSpeed.y,
+    Offset.z + enginePosition.z - SourceSpeed.z,
+
+    fireDirectionVec.x * power + SourceSpeed.x + (random - 0.5) * 0.02,
+    fireDirectionVec.y * power + SourceSpeed.y + (random - 0.5) * 0.02,
+    fireDirectionVec.z * power + SourceSpeed.z + (random - 0.5) * 0.02,
+
+    size,
+    0, fadeSpeed);
+end;
+
 // ---------------------------------------------------------------------------
 procedure ruch_gracza;
 var
@@ -1373,18 +1431,39 @@ begin
       if gracz.dy < 1 * moc then
         gracz.dy := gracz.dy + 0.01 * moc;
 
-      nowy_dym(gracz.x + sin((gracz.kier) * pi180) * 1.0, gracz.y + gracz.nacisk * 5 - 4,
-        gracz.z - cos((gracz.kier) * pi180) * 1.0, (random - 0.5) / 20 + sin((gracz.kier) * pi180) * 0.1 + gracz.dx / 2,
-        -0.9 + gracz.dy / 2, (random - 0.5) / 20 - cos((gracz.kier) * pi180) * 0.1 + gracz.dz / 2,
-        (0.7 + random / 2) * moc, 0, 0.01 - (moc - 1) * 0.003);
-      nowy_dym(gracz.x + sin((gracz.kier + 120) * pi180) * 1.0, gracz.y + gracz.nacisk * 5 - 4,
-        gracz.z - cos((gracz.kier + 120) * pi180) * 1.0, (random - 0.5) / 20 + sin((gracz.kier + 120) * pi180) * 0.1 +
-        gracz.dx / 2, -0.9 + gracz.dy / 2, (random - 0.5) / 20 - cos((gracz.kier + 120) * pi180) * 0.1 + gracz.dz / 2,
-        (0.7 + random / 2) * moc, 0, 0.01 - (moc - 1) * 0.003);
-      nowy_dym(gracz.x + sin((gracz.kier + 240) * pi180) * 1.0, gracz.y + gracz.nacisk * 5 - 4,
-        gracz.z - cos((gracz.kier + 240) * pi180) * 1.0, (random - 0.5) / 20 + sin((gracz.kier + 240) * pi180) * 0.1 +
-        gracz.dx / 2, -0.9 + gracz.dy / 2, (random - 0.5) / 20 - cos((gracz.kier + 240) * pi180) * 0.1 + gracz.dz / 2,
-        (0.7 + random / 2) * moc, 0, 0.01 - (moc - 1) * 0.003);
+      //right
+      MakeFire(
+        Vec3D(1.1, gracz.nacisk * 5 - 3, -1.0),
+        Vec3D(gracz.dx, gracz.dy, gracz.dz),
+        Vec3D(gracz.x, gracz.y, gracz.z),
+        0.9,
+        Vec3D((random - 0.5) * 0.05 + 0.1, -1, (random - 0.5) * 0.05 - 0.05),
+        PlayerObjectTransform,
+        (0.7 + random / 2) * moc,
+        0.01 - (moc - 1) * 0.003);
+
+      //left
+      MakeFire(
+        Vec3D(-1.1, gracz.nacisk * 5 - 3, -1.0),
+        Vec3D(gracz.dx, gracz.dy, gracz.dz),
+        Vec3D(gracz.x, gracz.y, gracz.z),
+        0.9,
+        Vec3D((random - 0.5) * 0.05 - 0.1, -1, (random - 0.5) * 0.05 - 0.05),
+        PlayerObjectTransform,
+        (0.7 + random / 2) * moc,
+        0.01 - (moc - 1) * 0.003);
+
+      //front
+      MakeFire(
+        Vec3D(0, gracz.nacisk * 5 - 3, 1.1),
+        Vec3D(gracz.dx, gracz.dy, gracz.dz),
+        Vec3D(gracz.x, gracz.y, gracz.z),
+        0.9,
+        Vec3D((random - 0.5) * 0.05, -1, (random - 0.5) * 0.05 + 0.15),
+        PlayerObjectTransform,
+        (0.7 + random / 2) * moc,
+        0.01 - (moc - 1) * 0.003);
+
       gracz.swiatlodol := gracz.swiatlodol + 0.1;
       if gracz.swiatlodol > 1 then
         gracz.swiatlodol := 1;
@@ -1416,10 +1495,14 @@ begin
       if gracz.dy > -1 then
         gracz.dy := gracz.dy - 0.01;
 
-      nowy_dym(gracz.x + sin((gracz.kier + 180) * pi180) * 3.5, gracz.y + 1.5 + gracz.nacisk * 5,
-        gracz.z - cos((gracz.kier + 180) * pi180) * 3.5, (random - 0.5) / 20 + sin((gracz.kier) * pi180) * 0.1 +
-        gracz.dx, 0.9 + gracz.dy, (random - 0.5) / 20 - cos((gracz.kier) * pi180) * 0.1 + gracz.dz, 0.4 + random / 2,
-        0, 0.015);
+      MakeFire(
+        Vec3D(0, gracz.nacisk * 5 + 0.9, -3),
+        Vec3D(gracz.dx, gracz.dy, gracz.dz),
+        Vec3D(gracz.x, gracz.y, gracz.z),
+        0.7,
+        Vec3D((random - 0.5) * 0.05, 1, (random - 0.5) * 0.05),
+        PlayerObjectTransform,
+        0.4 + random / 2, 0.015);
 
       gracz.swiatlogora := gracz.swiatlogora + 0.1;
       if gracz.swiatlogora > 1 then
@@ -1461,10 +1544,13 @@ begin
         gracz.szyb := 0.05 * moc;
 
       if (form1.PwrInp.Keys[klawisze[5]]) then
-        nowy_dym(gracz.x + sin((gracz.kier + 180) * pi180) * 4.0, gracz.y + gracz.nacisk * 5,
-          gracz.z - cos((gracz.kier + 180) * pi180) * 4.0, +sin((gracz.kier + 180) * pi180) * 0.9 + (random - 0.5) / 5 +
-          gracz.dx, (random - 0.5) / 8 + gracz.dy, -cos((gracz.kier + 180) * pi180) * 0.9 + (random - 0.5) / 5 +
-          gracz.dz, 0.7 + random / 2, 0);
+        MakeFire(
+          Vec3D(0, gracz.nacisk * 5 + 0.05, -3.2),
+          Vec3D(gracz.dx, gracz.dy, gracz.dz),
+          Vec3D(gracz.x, gracz.y, gracz.z),
+          0.9, Vec3D((random - 0.5) * 0.05, (random - 0.5) * 0.05, -1),
+          PlayerObjectTransform,
+          0.7 + random / 2);
 
       gracz.swiatlotyl := gracz.swiatlotyl + 0.1;
       if gracz.swiatlotyl > 1 then
@@ -1505,9 +1591,14 @@ begin
       if (gracz.szybkier > -6) then
         gracz.szybkier := gracz.szybkier - 0.04;
 
-      nowy_dym(gracz.x + sin((gracz.kier + 110) * pi180) * 4.0, gracz.y + gracz.nacisk * 5,
-        gracz.z - cos((gracz.kier + 110) * pi180) * 4.0, +sin((gracz.kier + 180) * pi180) * 0.5 + gracz.dx,
-        (random - 0.5) / 8 + gracz.dy, -cos((gracz.kier + 180) * pi180) * 0.5 + gracz.dz, 0.7 + random / 2, 0);
+      MakeFire(
+        Vec3D(-3.6, gracz.nacisk * 5, -0.5),
+        Vec3D(gracz.dx, gracz.dy, gracz.dz),
+        Vec3D(gracz.x, gracz.y, gracz.z),
+        0.5,
+        Vec3D((random - 0.5) * 0.03, (random - 0.5) * 0.03, -1),
+        PlayerObjectTransform,
+        0.7 + random / 2);
 
       gracz.swiatlolewo := gracz.swiatlolewo + 0.1;
       if gracz.swiatlolewo > 1 then
@@ -1536,9 +1627,14 @@ begin
       if (gracz.szybkier < 6) then
         gracz.szybkier := gracz.szybkier + 0.04;
 
-      nowy_dym(gracz.x + sin((gracz.kier - 110) * pi180) * 4.0, gracz.y + gracz.nacisk * 5,
-        gracz.z - cos((gracz.kier - 110) * pi180) * 4.0, +sin((gracz.kier + 180) * pi180) * 0.5 + gracz.dx,
-        (random - 0.5) / 8 + gracz.dy, -cos((gracz.kier + 180) * pi180) * 0.5 + gracz.dz, 0.7 + random / 2, 0);
+      MakeFire(
+        Vec3D(3.6, gracz.nacisk * 5, -0.5),
+        Vec3D(gracz.dx, gracz.dy, gracz.dz),
+        Vec3D(gracz.x, gracz.y, gracz.z),
+        0.5,
+        Vec3D((random - 0.5) * 0.03, (random - 0.5) * 0.03, -1),
+        PlayerObjectTransform,
+        0.7 + random / 2);
 
       gracz.swiatloprawo := gracz.swiatloprawo + 0.1;
       if gracz.swiatloprawo > 1 then
@@ -2676,15 +2772,33 @@ end;
 
 // ---------------------------------------------------------------------------
 
+procedure FighterObjectTransform(FighterId: integer);
+begin
+  glRotatef(mysliwiec[FighterId].kier - 90, 0, -1, 0);
+  glRotatef(mysliwiec[FighterId].kierdol, 0, 0, -1);
+  glRotatef(mysliwiec[FighterId].obrot, 1, 0, 0);
+end;
+
+function FighterObjectTransformProc(FighterId: integer): TTransformProc;
+begin
+  result := procedure()
+  begin
+    FighterObjectTransform(FighterId);
+  end;
+end;
+
+
 // ---------------------------------------------------------------------------
 procedure ruch_mysliwcow;
 var
   a, b, nx, nz: integer;
-  s, gx1, gz1: real;
+  s, gx1, gz1,
+  dx, dy, dz: real;
   wysadz: boolean;
   k, k2: real;
   k1, nk1: integer;
   skreca, okstrzal: boolean;
+
 begin
   for a := 0 to high(mysliwiec) do
     with mysliwiec[a] do
@@ -2698,9 +2812,13 @@ begin
         _y := y;
         _z := z;
 
-        x := x + sin(kier * pi180) * szybkosc;
-        y := y - sin(kierdol * pi180) * szybkosc;
-        z := z - cos(kier * pi180) * szybkosc;
+        dx := sin(kier * pi180) * szybkosc;
+        dy := - sin(kierdol * pi180) * szybkosc;
+        dz := - cos(kier * pi180) * szybkosc;
+
+        x := x + dx;
+        y := y + dy;
+        z := z + dz;
 
         if x < ziemia.px then
         begin
@@ -2753,15 +2871,23 @@ begin
           end;
         end;
 
-        nowy_dym(x + cos(kier * pi180) * cos(kierdol * pi180) * 2.5 - sin(kier * pi180) * cos(kierdol * pi180) * 5,
-          y + cos(kierdol * pi180) + sin(kierdol * pi180) * 5, z + sin(kier * pi180) * cos(kierdol * pi180) * 2.5 +
-          cos(kier * pi180) * cos(kierdol * pi180) * 5, -sin(kier * pi180) * cos(kierdol * pi180) * 1,
-          sin(kierdol * pi180) * 1, cos(kier * pi180) * cos(kierdol * pi180) * 1, 1 + random / 2, 0, 0.06);
+        MakeFire(
+          Vec3D(-5.5, 0.5, 2.5),
+          Vec3D(dx, dy, dz),
+          Vec3D(x, y, z),
+          2,
+          Vec3D(-1, (random - 0.5) * 0.05, (random - 0.5) * 0.05),//Vec3D((random - 0.5) * 0.05, (random - 0.5) * 0.05, -1),
+          FighterObjectTransformProc(a),
+          1 + random / 1.9, 0.06);
 
-        nowy_dym(x + cos(kier * pi180) * -cos(kierdol * pi180) * 2.5 - sin(kier * pi180) * cos(kierdol * pi180) * 5,
-          y + cos(kierdol * pi180) + sin(kierdol * pi180) * 5, z + sin(kier * pi180) * -cos(kierdol * pi180) * 2.5 +
-          cos(kier * pi180) * cos(kierdol * pi180) * 5, -sin(kier * pi180) * cos(kierdol * pi180) * 1,
-          sin(kierdol * pi180) * 1, cos(kier * pi180) * cos(kierdol * pi180) * 1, 1 + random / 2, 0, 0.06);
+        MakeFire(
+          Vec3D(-5.5, 0.5, -2.5),
+          Vec3D(dx, dy, dz),
+          Vec3D(x, y, z),
+          2,
+          Vec3D(-1, (random - 0.5) * 0.05, (random - 0.5) * 0.05),//Vec3D((random - 0.5) * 0.05, (random - 0.5) * 0.05, -1),
+          FighterObjectTransformProc(a),
+          1 + random / 1.9, 0.06);
 
         if (x > -ziemia.px / 2) and (gra.jestkamera[0, 0] < ziemia.px / 2) then
           gx1 := gra.jestkamera[0, 0] - ziemia.px * 2
