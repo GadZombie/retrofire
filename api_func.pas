@@ -26,7 +26,7 @@ var
   currentScreenParams: TCurrentScreenParams;
 
 const
-  MENU_WIDTH = 900;
+  MENU_WIDTH = 640;
   MENU_HEIGHT = 480;
   HUD_WIDTH = 640;
   HUD_HEIGHT = 480;

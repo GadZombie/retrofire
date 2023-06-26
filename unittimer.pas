@@ -1135,19 +1135,19 @@ end;
 
 // ---------------------------------------------------------------------------
 procedure uszkodz(odspodu: boolean; sila: real);
+type
+  TObjElement = record
+    nr, // nr elementu
+    przyp: integer; // przyporzadkuj do elementu o numerze; -1=zaden
+    x, y, z: real; // max odchylenia w osi
+    spod: boolean;
+  end;
 const
-el:
-array [0 .. 12] of record nr, // nr elementu
-przyp: integer; // przyporzadkuj do elementu o numerze; -1=zaden
-x, y, z: real; // max odchylenia w osi
-spod:
-boolean;
-end
-= ((nr: 2; przyp: - 1; x: 10; y: 10; z: 10; spod: true), (nr: 3; przyp: 2), (nr: 4; przyp: - 1; x: 10; y: 10; z: 10;
-  spod: true), (nr: 5; przyp: 4), (nr: 6; przyp: - 1; x: 10; y: 10; z: 10; spod: true), (nr: 7; przyp: 6), (nr: 8;
-  przyp: - 1; x: 10; y: 0; z: 0), (nr: 9; przyp: - 1; x: 10; y: 0; z: 0), (nr: 15; przyp: - 1; x: 16; y: 16; z: 16),
-  (nr: 16; przyp: - 1; x: 40; y: 40; z: 40; spod: true), (nr: 17; przyp: 16), (nr: 18; przyp: - 1; x: 10; y: 0; z: 0),
-  (nr: 19; przyp: - 1; x: 10; y: 0; z: 0));
+  el: array [0 .. 12] of TObjElement = ((nr: 2; przyp: - 1; x: 10; y: 10; z: 10; spod: true), (nr: 3; przyp: 2), (nr: 4;
+    przyp: - 1; x: 10; y: 10; z: 10; spod: true), (nr: 5; przyp: 4), (nr: 6; przyp: - 1; x: 10; y: 10; z: 10;
+    spod: true), (nr: 7; przyp: 6), (nr: 8; przyp: - 1; x: 10; y: 0; z: 0), (nr: 9; przyp: - 1; x: 10; y: 0; z: 0),
+    (nr: 15; przyp: - 1; x: 16; y: 16; z: 16), (nr: 16; przyp: - 1; x: 40; y: 40; z: 40; spod: true), (nr: 17;
+    przyp: 16), (nr: 18; przyp: - 1; x: 10; y: 0; z: 0), (nr: 19; przyp: - 1; x: 10; y: 0; z: 0));
 
 var
   a: integer;
