@@ -697,17 +697,19 @@ begin
   case gra.rodzajmisji of
     0:
       begin
-        pisz2d('jest:' + inttostr(gra.ilepilotow + gracz.pilotow), 10, height - 10, 4);
-        pisz2d('na pok³adzie:' + inttostr(gracz.pilotow) + '/' + inttostr(gracz.ladownosc), 90, height - 10, 4);
-        pisz2d('zginê³o:' + inttostr(gra.zginelo), currentScreenParams.HudWidth - 160, height - 10, 4, 2);
-        pisz2d('uratowanych:' + inttostr(gra.zabranych) + '/' + inttostr(gra.minimum),
-          currentScreenParams.HudWidth - 10, height - 10, 4, 2);
+        pisz2d('MISJA: ZABIERZ LUDZI', 10, height - 10, 5);
+
+        pisz2d('na pok³adzie:' + inttostr(gracz.pilotow) + '/' + inttostr(gracz.ladownosc), currentScreenParams.HudWidth - 10, height - 10, 4, 2);
+        pisz2d('pozosta³o:' + inttostr(gra.ilepilotow + gracz.pilotow), currentScreenParams.HudWidth - 10, height - 20, 4, 2);
+        pisz2d('uratowanych:' + inttostr(gra.zabranych) + '/' + inttostr(gra.minimum), currentScreenParams.HudWidth - 10, height - 30, 4, 2);
+        pisz2d('zginê³o:' + inttostr(gra.zginelo), currentScreenParams.HudWidth - 10, height - 40, 4, 2);
       end;
     1:
       begin
-        pisz2d('jest:' + inttostr(gra.iledzialek), 10, height - 10, 4);
-        pisz2d('zniszczonych:' + inttostr(gra.dzialekzniszczonych) + '/' + inttostr(gra.dzialekminimum),
-          currentScreenParams.HudWidth - 10, height - 10, 4, 2);
+        pisz2d('MISJA: ZNISZCZ DZIA£KA WROGA', 10, height - 10, 5);
+
+        pisz2d('zniszczonych:' + inttostr(gra.dzialekzniszczonych) + '/' + inttostr(gra.dzialekminimum), currentScreenParams.HudWidth - 10, height - 20, 4, 2);
+        pisz2d('pozosta³o:' + inttostr(gra.iledzialek), currentScreenParams.HudWidth - 10, height - 10, 4, 2);
       end;
   end;
 
@@ -732,8 +734,6 @@ begin
     glColor4f(1, 1, 1, 0.7);
   pisz2d(inttostr(gra.czas div 60) + ':' + l2t(gra.czas mod 60, 2), currentScreenParams.HudWidth / 2,
     height - 12, 7, 1);
-
-  // pisz2d('L¹downiki:'+inttostr(gra.zycia), width-20, height-45, 4,2);
 
   glColor4f(1, 1, 1, 0.7);
 
@@ -1121,7 +1121,7 @@ begin
   if (gracz.zyje and gracz.stoi and gracz.namatce) and (gra.pkt = 0) then
   begin
     glColor4f(1.0, 1.0, 1.0, 0.8 - abs(sin(licz / 30) * 0.6));
-    pisz2d('PODNIEŒ L¥DOWNIK I ZLEÆ NA DÓ£, POD STATEK-MATKÊ', width div 2, height - 90, 5, 1);
+    pisz2d('PODNIEŒ L¥DOWNIK I LEÆ W DÓ£, POD STATEK-MATKÊ', width div 2, height - 90, 5, 1);
   end;
 
   if (gra.koniecgry) then

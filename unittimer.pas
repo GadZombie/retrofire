@@ -1,10 +1,3 @@
-{
-  obiekty:
-  w 3dsmax exportowac jako FBX,
-  w wings importowac i exportowac jako obj
-
-}
-
 unit unittimer;
 
 interface
