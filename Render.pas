@@ -2,7 +2,8 @@ unit render;
 
 interface
 
-uses Windows, OpenGl, Gl, Glu, Api_Func, unitTimer, sysutils, obj;
+uses Windows, OpenGl, Gl, Glu, Api_Func, unitTimer, sysutils, obj,
+  Language, GlobalConsts;
 
 procedure RenderScene;
 procedure RenderFrame;
@@ -23,21 +24,10 @@ procedure tworz_obiekty;
 
 implementation
 
-uses unit1, unittex, Forms;
+uses unit1, unittex, Forms, GlobalTypes;
 
 const
   katwidzenia = 70;
-  skroltekst: array [0 .. 35] of string = ('POMYS£ NA GRÊ', 'GRZEGORZ DROZD', '', '', '', 'PROGRAM', 'GRZEGORZ DROZD',
-    '', '', '', 'GRAFIKA', 'GRZEGORZ DROZD', '', '', '', 'MUZYKA W MENU', 'FATER (PRO-CREATION, THE ODOURS)',
-    'WWW.PRO-CREATION.PL', 'WWW.THEODOURS.NET', '', '', '', 'T£O MUZYCZNE W GRZE I INTRO/OUTRO', 'GRZEGORZ DROZD', '',
-    '', '', 'TESTOWANIE', 'KRZYSZTOF RZEPKA', 'GRZEGORZ DROZD', '', '2007 GADZ.PL', '2023 FIXES AND UPDATES',
-    'WERSJA ' + PROGRAM_VERSION, 'HTTPS://GADZ.PL/', '');
-
-type
-  TMainIntroLine = record
-    s: string;
-    i: byte;
-  end;
 
 var
   mat_spec: array [0 .. 3] of GLFloat = (
@@ -645,6 +635,110 @@ begin
 end;
 
 // ---------------------------------------------------------------------------
+procedure DrawHudShape(const width, height: integer);
+const
+{  U_H = 30;
+
+  UL_H = 60;
+  UL_SLIDE_FROM = 170;
+  UL_SLIDE_TO = 230;
+
+  UR_H = 50;
+  UR_SLIDE_TO = 170;
+  UR_SLIDE_FROM = 110;
+}
+  TOP_H = 30;
+  BOTTOM_H = 50;
+  LEFT_W = 20;
+  RIGHT_W = 20;
+
+begin
+{ TODO: I'll think about it again... not sure if I like it
+  glColor4f(0, 0, 0, 0.4);
+
+  glBegin(GL_POLYGON);
+    glVertex2f(-1, height + 1);
+    glVertex2f(-1, height - UL_H);
+    glVertex2f(UL_SLIDE_FROM, height - UL_H);
+    glVertex2f(UL_SLIDE_TO, height - U_H);
+    glVertex2f(UL_SLIDE_TO, height + 1);
+  glEnd();
+
+  glBegin(GL_POLYGON);
+    glVertex2f(UL_SLIDE_TO, height + 1);
+    glVertex2f(UL_SLIDE_TO, height - U_H);
+
+    glVertex2f(width - UR_SLIDE_TO, height - U_H);
+    glVertex2f(width - UR_SLIDE_TO, height + 1);
+  glEnd();
+
+  glBegin(GL_POLYGON);
+    glVertex2f(width - UR_SLIDE_TO, height + 1);
+    glVertex2f(width - UR_SLIDE_TO, height - U_H);
+    glVertex2f(width - UR_SLIDE_FROM, height - UR_H);
+    glVertex2f(width + 1, height - UR_H);
+    glVertex2f(width + 1, height + 1);
+
+  glEnd();
+
+  glBegin(GL_QUADS);
+  glColor4f(0, 0, 0, 0.5);
+  glVertex2f(-1, -1);
+  glVertex2f(width + 1, -1);
+  glColor4f(0, 0, 0, 0.0);
+  glVertex2f(width + 1, 50);
+  glVertex2f(-1, 50);
+  glEnd();
+
+  glBegin(GL_QUADS);
+  glColor4f(0, 0, 0, 0);
+  glVertex2f(-1, height - 50);
+  glVertex2f(width + 1, height - 50);
+  glColor4f(0, 0, 0, 0.5);
+  glVertex2f(width + 1, height + 1);
+  glVertex2f(-1, height + 1);
+  glEnd();
+ }
+
+  glBegin(GL_QUADS);
+  glColor4f(0, 0, 0, 0.7);
+  glVertex2f(-1, -1);
+  glVertex2f(width + 1, -1);
+  glColor4f(0, 0, 0, 0.0);
+  glVertex2f(width + 1, BOTTOM_H);
+  glVertex2f(-1, BOTTOM_H);
+  glEnd();
+
+  glBegin(GL_QUADS);
+  glColor4f(0, 0, 0, 0);
+  glVertex2f(-1, height - TOP_H);
+  glVertex2f(width + 1, height - TOP_H);
+  glColor4f(0, 0, 0, 0.7);
+  glVertex2f(width + 1, height + 1);
+  glVertex2f(-1, height + 1);
+  glEnd();
+
+  glBegin(GL_QUADS);
+  glColor4f(0, 0, 0, 0.5);
+  glVertex2f(-1, height + 1);
+  glVertex2f(-1, -1);
+  glColor4f(0, 0, 0, 0.0);
+  glVertex2f(LEFT_W, -1);
+  glVertex2f(LEFT_W, height + 1);
+  glEnd();
+
+  glBegin(GL_QUADS);
+  glColor4f(0, 0, 0, 0.0);
+  glVertex2f(width - RIGHT_W, height + 1);
+  glVertex2f(width - RIGHT_W, -1);
+  glColor4f(0, 0, 0, 0.5);
+  glVertex2f(width + 1, -1);
+  glVertex2f(width + 1, height + 1);
+  glEnd();
+
+
+end;
+
 procedure rysuj_liczniki;
 
 const
@@ -676,55 +770,40 @@ begin
   glDisable(GL_COLOR_MATERIAL);
   glPolygonMode(GL_FRONT, GL_FILL);
 
-  glBegin(GL_QUADS);
-  glColor4f(0, 0, 0, 0.5);
-  glVertex2f(-1, -1);
-  glVertex2f(width + 1, -1);
-  glColor4f(0, 0, 0, 0.0);
-  glVertex2f(width + 1, 50);
-  glVertex2f(-1, 50);
-  glEnd();
-  glBegin(GL_QUADS);
-  glColor4f(0, 0, 0, 0);
-  glVertex2f(-1, height - 25);
-  glVertex2f(width + 1, height - 25);
-  glColor4f(0, 0, 0, 0.5);
-  glVertex2f(width + 1, height + 1);
-  glVertex2f(-1, height + 1);
-  glEnd();
+  DrawHudShape(width, height);
 
   glColor4f(1, 1, 1, 0.5);
   case gra.rodzajmisji of
     0:
       begin
-        pisz2d('MISJA: ZABIERZ LUDZI', 10, height - 10, 5);
+        pisz2d(STR_MISSION_RESCUE_PEOPLE, 10, height - 10, 5);
 
-        pisz2d('na pok³adzie:' + inttostr(gracz.pilotow) + '/' + inttostr(gracz.ladownosc), currentScreenParams.HudWidth - 10, height - 10, 4, 2);
-        pisz2d('pozosta³o:' + inttostr(gra.ilepilotow + gracz.pilotow), currentScreenParams.HudWidth - 10, height - 20, 4, 2);
-        pisz2d('uratowanych:' + inttostr(gra.zabranych) + '/' + inttostr(gra.minimum), currentScreenParams.HudWidth - 10, height - 30, 4, 2);
-        pisz2d('zginê³o:' + inttostr(gra.zginelo), currentScreenParams.HudWidth - 10, height - 40, 4, 2);
+        pisz2d(STR_MISSION_BOARDED + inttostr(gracz.pilotow) + '/' + inttostr(gracz.ladownosc), currentScreenParams.HudWidth - 10, height - 10, 4, 2);
+        pisz2d(STR_MISSION_LEFT + inttostr(gra.ilepilotow + gracz.pilotow), currentScreenParams.HudWidth - 10, height - 20, 4, 2);
+        pisz2d(STR_MISSION_RESCUED + inttostr(gra.zabranych) + '/' + inttostr(gra.minimum), currentScreenParams.HudWidth - 10, height - 30, 4, 2);
+        pisz2d(STR_MISSION_KILLED + inttostr(gra.zginelo), currentScreenParams.HudWidth - 10, height - 40, 4, 2);
       end;
     1:
       begin
-        pisz2d('MISJA: ZNISZCZ DZIA£KA WROGA', 10, height - 10, 5);
+        pisz2d(STR_MISSION_DESTROY_ENEMY, 10, height - 10, 5);
 
-        pisz2d('zniszczonych:' + inttostr(gra.dzialekzniszczonych) + '/' + inttostr(gra.dzialekminimum), currentScreenParams.HudWidth - 10, height - 20, 4, 2);
-        pisz2d('pozosta³o:' + inttostr(gra.iledzialek), currentScreenParams.HudWidth - 10, height - 10, 4, 2);
+        pisz2d(STR_MISSION_DESTROYED + inttostr(gra.dzialekzniszczonych) + '/' + inttostr(gra.dzialekminimum), currentScreenParams.HudWidth - 10, height - 20, 4, 2);
+        pisz2d(STR_MISSION_LEFT + inttostr(gra.iledzialek), currentScreenParams.HudWidth - 10, height - 10, 4, 2);
       end;
   end;
 
   // cheaty
   glColor4f(0.4, 0.8, 1, 0.8);
   if cheaty.god then
-    pisz2d('NIEZNISZCZALNOŒÆ', 5, height - 25, 3.2);
+    pisz2d(STR_CHEAT_SHIELDS, 10, height - 35, 3.2);
   if cheaty.fuel then
-    pisz2d('MAX PALIWA', 5, height - 31, 3.2);
+    pisz2d(STR_CHEAT_FUEL, 10, height - 41, 3.2);
   if cheaty.weapon then
-    pisz2d('MAX BRONI', 5, height - 37, 3.2);
+    pisz2d(STR_CHEAT_WEAPONS, 10, height - 47, 3.2);
   if cheaty.load then
-    pisz2d('MAX £ADOWNOŒCI', 5, height - 43, 3.2);
+    pisz2d(STR_CHEAT_LOAD, 10, height - 53, 3.2);
   if cheaty.time then
-    pisz2d('MAX CZASU', 5, height - 49, 3.2);
+    pisz2d(STR_CHEAT_TIME, 10, height - 59, 3.2);
 
   if gra.czas < 20 then
     glColor4f(1, 0.2, 0, 0.9)
@@ -1058,12 +1137,12 @@ begin
     if (gracz.paliwo > 0) and (gracz.paliwo < 40) and (licz mod 50 <= 24) then
     begin
       glcolor3f(1, 0, 0);
-      pisz2d('PALIWO SIÊ KOÑCZY!', width div 2, 60, 7, 1);
+      pisz2d(STR_WARN_LOW_FUEL, width div 2, 60, 7, 1);
     end
     else if (gracz.paliwo <= 0) then
     begin
       glcolor3f(1, 0, 0);
-      pisz2d('KONIEC PALIWA', width div 2, 60, 7, 1);
+      pisz2d(STR_WARN_NO_FUEL, width div 2, 60, 7, 1);
     end;
 
     if (licz mod 20 <= 10) then
@@ -1071,12 +1150,12 @@ begin
       if (gracz.temp >= 280) then
       begin
         glcolor3f(1, 1, 0);
-        pisz2d('TEMPERATURA KRYTYCZNA!', width div 2, 60, 7, 1);
+        pisz2d(STR_WARN_TEMP_CRITICAL, width div 2, 60, 7, 1);
       end
       else if (gracz.temp >= 240) then
       begin
         glcolor3f(1, 1, 0);
-        pisz2d('TEMPERATURA!', width div 2, 60, 7, 1);
+        pisz2d(STR_WARN_HIGH_TEMP, width div 2, 60, 7, 1);
       end;
     end;
 
@@ -1085,33 +1164,33 @@ begin
       if (gracz.y >= 2800) then
       begin
         glcolor3f(1, 1, 0);
-        pisz2d('JESTEŒ ZA WYSOKO!', width div 2, 80, 7, 1);
+        pisz2d(STR_WARN_TOO_HIGH, width div 2, 80, 7, 1);
       end;
     end;
 
     if (gra.czas > 0) and (gra.czas < 60) and (licz mod 40 <= 20) then
     begin
       glcolor3f(1, 0, 0);
-      pisz2d('CZAS SIÊ KOÑCZY!', width div 2, 90, 7, 1);
+      pisz2d(STR_WARN_TIME_OUT, width div 2, 90, 7, 1);
     end;
   end;
 
   if (gracz.zlywsrodku) and (licz mod 20 <= 13) then
   begin
     glcolor3f(1, 0.2, 0.1);
-    pisz2d('ALARM! WRÓG NA POK£ADZIE!', width div 2, 90, 9, 1);
+    pisz2d(STR_WARN_ENEMY_ON_BOARD, width div 2, 90, 9, 1);
   end;
 
   if (gra.czas = 0) then
   begin
     glcolor3f(1, 0, 0);
-    pisz2d('KONIEC CZASU', width div 2, 90, 7, 1);
+    pisz2d(STR_WARN_TIME_OVER, width div 2, 90, 7, 1);
   end;
 
   if not gracz.zyje then
   begin
     glcolor3f(1, 0, 0);
-    pisz2d('L¥DOWNIK ZNISZCZONY!', width div 2, height - 60, 7, 1);
+    pisz2d(STR_WARN_LANDER_DESTROYED, width div 2, height - 60, 7, 1);
   end;
 
   { if gra.ilepilotow=0 then
@@ -1121,29 +1200,29 @@ begin
   if (gracz.zyje and gracz.stoi and gracz.namatce) and (gra.pkt = 0) then
   begin
     glColor4f(1.0, 1.0, 1.0, 0.8 - abs(sin(licz / 30) * 0.6));
-    pisz2d('PODNIEŒ L¥DOWNIK I LEÆ W DÓ£, POD STATEK-MATKÊ', width div 2, height - 90, 5, 1);
+    pisz2d(STR_START_TIP, width div 2, height - 90, 5, 1);
   end;
 
   if (gra.koniecgry) then
   begin
     glcolor3f(0.3, 0.8, 1);
-    pisz2d('KONIEC GRY!', width div 2, height div 2, 12, 1);
+    pisz2d(STR_GAME_OVER, width div 2, height div 2, 12, 1);
   end
   else if (gra.moznakonczyc and ((gracz.stoi and gracz.namatce) or (not gracz.zyje))) then
   begin
     glColor4f(0.7, 0.3, 1.0, 0.8);
-    pisz2d('MISJA ZAKOÑCZONA!', width div 2, height div 2 + 70, 7, 1);
-    pisz2d('WCIŒNIJ -' + form1.PwrInp.KeyName[klawisze[8]] + '- BY KONTYNUOWAÆ', width div 2, height div 2 + 45, 6, 1);
+    pisz2d(STR_MISSION_FINISHED, width div 2, height div 2 + 70, 7, 1);
+    pisz2d(Format(STR_PRESS_KEY_TO_CONTINUE, [form1.PwrInp.KeyName[klawisze[8]]]), width div 2, height div 2 + 45, 6, 1);
   end;
 
   if (gra.pauza) then
   begin
     glColor4f(1.0, 0.8, 0.1, 0.8);
-    pisz2d('PAUZA', width div 2, height div 2 + 40, 10, 1);
+    pisz2d(STR_PAUSED, width div 2, height div 2 + 40, 10, 1);
 
     glColor4f(0.4, 0.8, 0.3, 0.8);
-    pisz2d('WCIŒNIJ ESC BY KONTYNUOWAÆ GRÊ', width div 2, height div 2, 7, 1);
-    pisz2d('WCIŒNIJ Q BY przerwaæ', width div 2, height div 2 - 30, 7, 1);
+    pisz2d(Format(STR_PRESS_KEY_TO_CONTINUE_GAME, ['ESC']), width div 2, height div 2, 7, 1);
+    pisz2d(Format(STR_PRESS_KEY_TO_QUIT, ['Q']), width div 2, height div 2 - 30, 7, 1);
   end;
 
   { pisz2d('czas='+inttostr(cheaty.czas_od_ostatniej_litery), 50, height -50, 5);
@@ -1236,9 +1315,9 @@ begin
   begin
     glColor4f(0.2, 1, 0.3, 0.7);
     if gra.jakiemisje <> 2 then
-      n := 'MISJA ' + inttostr(gra.planeta) + ', ' + gra.nazwaplanety
+      n := STR_MISSION + ' ' + inttostr(gra.planeta) + ', ' + gra.nazwaplanety
     else
-      n := 'MISJA ' + inttostr(winieta.epizodmisja) + ', ' + gra.nazwaplanety;
+      n := STR_MISSION + ' ' + inttostr(winieta.epizodmisja) + ', ' + gra.nazwaplanety;
     a := (intro.czas - 30) div 2;
     if a > length(n) then
       a := length(n);
@@ -1312,16 +1391,16 @@ begin
     if gra.jakiemisje <> 2 then
     begin
       if gra.misjawypelniona then
-        n := 'MISJA ' + inttostr(gra.planeta) + ' WYKONANA!'
+        n := STR_MISSION + ' ' + inttostr(gra.planeta) + ' ' + STR_MISSION_ACCOMPLISHED
       else
-        n := 'MISJA ' + inttostr(gra.planeta) + ' STRACONA...'
+        n := STR_MISSION + ' ' + inttostr(gra.planeta) + ' ' + STR_MISSION_FAILED
     end
     else
     begin
       if gra.misjawypelniona then
-        n := 'MISJA ' + inttostr(winieta.epizodmisja) + ' WYKONANA!'
+        n := STR_MISSION + ' ' + inttostr(winieta.epizodmisja) + ' ' + STR_MISSION_ACCOMPLISHED
       else
-        n := 'MISJA ' + inttostr(winieta.epizodmisja) + ' STRACONA...'
+        n := STR_MISSION + ' ' + inttostr(winieta.epizodmisja) + ' ' + STR_MISSION_FAILED
     end;
     a := (intro.czas - 30) div 2;
     if a > length(n) then
@@ -1340,17 +1419,18 @@ begin
         n := gra.tekstoutrowin;
         if gra.zycia >= 1 then // n:=n+#13'PRZYGOTUJ SIÊ DO NASTÊPNEJ...'
         else
-          n := n + #13'NIESTETY ZGIN¥£EŒ...';
+          n := n + #13 + STR_MISSION_YOU_ARE_DEAD;
 
-        pisz2d('PREMIA ZA POZOZSTA£Y CZAS:'#13' PKT: ' + inttostr(gra.czas * 4) + ', KASA: ' + inttostr(gra.czas),
+        pisz2d(Format(STR_MISSION_END_TIME_LEFT_BONUS, [gra.czas * 4, gra.czas]),
           40, 70, 5);
         if gra.rodzajmisji = 0 then
-          pisz2d('PREMIA ZA WZIÊCIE DODATKOWYCH PILOTÓW:'#13' PKT: ' + inttostr((gra.zabranych - gra.minimum) * 350) +
-            ', KASA: ' + inttostr((gra.zabranych - gra.minimum) * 30), 40, 50, 5)
+          pisz2d(Format(STR_MISSION_END_SURVIVORS_BONUS,
+            [(gra.zabranych - gra.minimum) * 350, (gra.zabranych - gra.minimum) * 30]),
+            40, 50, 5)
         else if gra.rodzajmisji = 1 then
-          pisz2d('PREMIA ZA ZNISZCZENIE DODATKOWYCH DZIA£EK:'#13' PKT: ' +
-            inttostr((gra.dzialekzniszczonych - gra.dzialekminimum) * 350) + ', KASA: ' +
-            inttostr((gra.dzialekzniszczonych - gra.dzialekminimum) * 30), 40, 50, 5);
+          pisz2d(Format(STR_MISSION_END_TURRETS_BONUS,
+            [(gra.dzialekzniszczonych - gra.dzialekminimum) * 350, (gra.dzialekzniszczonych - gra.dzialekminimum) * 30]),
+            40, 50, 5);
 
       end
       else
@@ -3618,36 +3698,36 @@ begin
           glColor4f(0.2, 1.0, 0.2, 0.7)
         else
           glColor4f(0.1, 0.6, 0.1, 0.6);
-        pisz2d('nowa gra: misja pocz¹tkowa: ' + inttostr(winieta.planetapocz), currentScreenParams.MenuCenter,
+        pisz2d(Format(STR_TITLE_NEW_GAME_NORMAL, [winieta.planetapocz]), currentScreenParams.MenuCenter,
           height - 250, 8 + ord(winieta.kursor = 0), 1);
         if winieta.kursor = 1 then
           glColor4f(0.2, 1.0, 0.2, 0.7)
         else
           glColor4f(0.1, 0.6, 0.1, 0.6);
-        pisz2d('nowa gra: misje losowe: ' + inttostr(winieta.poziomtrudnosci), currentScreenParams.MenuCenter,
+        pisz2d(Format(STR_TITLE_NEW_GAME_RANDOM, [winieta.poziomtrudnosci]), currentScreenParams.MenuCenter,
           height - 280, 8 + ord(winieta.kursor = 1), 1);
         if winieta.kursor = 2 then
           glColor4f(0.2, 1.0, 0.2, 0.7)
         else
           glColor4f(0.1, 0.6, 0.1, 0.6);
-        pisz2d('misje dodatkowe', currentScreenParams.MenuCenter, height - 310, 8 + ord(winieta.kursor = 2), 1);
+        pisz2d(STR_TITLE_ADDITIONAL_MISSIONS, currentScreenParams.MenuCenter, height - 310, 8 + ord(winieta.kursor = 2), 1);
         if winieta.kursor = 3 then
           glColor4f(0.2, 1.0, 0.2, 0.7)
         else
           glColor4f(0.1, 0.6, 0.1, 0.6);
-        pisz2d('wczytanie gry', currentScreenParams.MenuCenter, height - 340, 8 + ord(winieta.kursor = 3), 1);
+        pisz2d(STR_TITLE_LOAD_GAME, currentScreenParams.MenuCenter, height - 340, 8 + ord(winieta.kursor = 3), 1);
         if winieta.kursor = 4 then
           glColor4f(0.2, 1.0, 0.2, 0.7)
         else
           glColor4f(0.1, 0.6, 0.1, 0.6);
-        pisz2d('wyjœcie', currentScreenParams.MenuCenter, height - 370, 8 + ord(winieta.kursor = 4), 1);
+        pisz2d(STR_TITLE_EXIT, currentScreenParams.MenuCenter, height - 370, 8 + ord(winieta.kursor = 4), 1);
 
         glColor4f(1.0, 0.2, 0.1, 0.6);
-        pisz2d('WERSJA ' + PROGRAM_VERSION, currentScreenParams.MenuCenter, 57, 4, 1);
-        pisz2d('2007 - 2023 gadz.pl', currentScreenParams.MenuCenter, 40, 5, 1);
+        pisz2d(STR_TITLE_VERSION + PROGRAM_VERSION, currentScreenParams.MenuCenter, 57, 4, 1);
+        pisz2d(PROGRAM_COPYRIGHT, currentScreenParams.MenuCenter, 40, 5, 1);
         pisz2d('https://gadz.pl/', currentScreenParams.MenuCenter, 23, 5, 1);
 
-        for a := 0 to high(skroltekst) do
+        for a := 0 to high(titleScrollLines) do
         begin
           b1 := height - 270 + winieta.skrol div 3 - a * 15;
 
@@ -3659,7 +3739,7 @@ begin
             glColor4f(1.0, 1.0, 1.0, 0.4);
 
           if (b1 >= height - 220) and (b1 <= height - 40) then
-            pisz2d(skroltekst[a], currentScreenParams.MenuCenter, b1, 6, 1);
+            pisz2d(titleScrollLines[a], currentScreenParams.MenuCenter, b1, 6, 1);
 
         end;
 
@@ -3672,9 +3752,9 @@ begin
 
         glColor4f(0.5, 0.7, 1, 0.8);
         if winieta.corobi = 1 then
-          pisz2d('ZAPIS GRY', currentScreenParams.MenuCenter, height - 50, 13, 1)
+          pisz2d(STR_TITLE_LS_SAVE_GAME, currentScreenParams.MenuCenter, height - 50, 13, 1)
         else
-          pisz2d('ODCZYT GRY', currentScreenParams.MenuCenter, height - 50, 13, 1);
+          pisz2d(STR_TITLE_LS_LOAD_GAME, currentScreenParams.MenuCenter, height - 50, 13, 1);
 
         if winieta.kursor <= 9 then
           b1 := height - 80 - winieta.kursor * 35
@@ -3702,7 +3782,7 @@ begin
                     glColor4f(0.2, 1.0, 0.2, 0.7)
                   else
                     glColor4f(0.1, 0.6, 0.1, 0.6);
-                  pisz2d(inttostr(a) + ') NORMALNA GRA', 30, height - 90 - a * 35, 5);
+                  pisz2d(inttostr(a) + ') ' + STR_TITLE_LS_NORMAL_GAME, 30, height - 90 - a * 35, 5);
                 end;
               1:
                 begin
@@ -3710,7 +3790,7 @@ begin
                     glColor4f(0.2, 0.6, 1.0, 0.7)
                   else
                     glColor4f(0.1, 0.5, 0.6, 0.6);
-                  pisz2d(inttostr(a) + ') MISJE LOSOWE', 30, height - 90 - a * 35, 5);
+                  pisz2d(inttostr(a) + ') ' + STR_TITLE_LS_RANDOM_GAME, 30, height - 90 - a * 35, 5);
                 end;
               2:
                 begin
@@ -3718,18 +3798,18 @@ begin
                     glColor4f(1.0, 0.3, 0.2, 0.7)
                   else
                     glColor4f(0.7, 0.2, 0.1, 0.6);
-                  pisz2d(inttostr(a) + ') MISJE DODATKOWE', 30, height - 90 - a * 35, 4);
+                  pisz2d(inttostr(a) + ') ' + STR_TITLE_LS_ADDITIONAL_GAME, 30, height - 90 - a * 35, 4);
                   pisz2d(zapisy[a].epizod, 50, height - 99 - a * 35, 5);
                 end;
             end;
 
             pisz2d(DateTimeToStr(zapisy[a].data), 60, height - 110 - a * 35, 5);
 
-            pisz2d('MISJA:' + inttostr(zapisy[a].planeta), 340, height - 90 - a * 35, 5);
-            pisz2d('PKT:' + inttostr(zapisy[a].pkt), 340, height - 110 - a * 35, 5);
+            pisz2d(STR_TITLE_LS_STATE_MISSION + inttostr(zapisy[a].planeta), 320, height - 90 - a * 35, 5);
+            pisz2d(STR_TITLE_LS_STATE_SCORE + inttostr(zapisy[a].pkt), 320, height - 110 - a * 35, 5);
 
-            pisz2d('L¥DOWNIKI:' + inttostr(zapisy[a].zycia), 510, height - 90 - a * 35, 5);
-            pisz2d('KASA:' + inttostr(zapisy[a].kasa), 510, height - 110 - a * 35, 5);
+            pisz2d(STR_TITLE_LS_STATE_LANDERS + inttostr(zapisy[a].zycia), 510, height - 90 - a * 35, 5);
+            pisz2d(STR_TITLE_LS_STATE_CASH + inttostr(zapisy[a].kasa), 510, height - 110 - a * 35, 5);
 
           end
           else
@@ -3738,7 +3818,7 @@ begin
               glColor4f(0.6, 0.6, 0.6, 0.7)
             else
               glColor4f(0.4, 0.4, 0.4, 0.6);
-            pisz2d('--PUSTY--', currentScreenParams.MenuCenter, height - 100 - a * 35, 8, 1);
+            pisz2d(STR_TITLE_LS_EMPTY, currentScreenParams.MenuCenter, height - 100 - a * 35, 8, 1);
           end;
         end;
 
@@ -3746,17 +3826,17 @@ begin
           glColor4f(0.2, 1.0, 0.2, 0.7)
         else
           glColor4f(0.1, 0.6, 0.1, 0.6);
-        pisz2d('WYJŒCIE', currentScreenParams.MenuCenter, height - 450, 8, 1);
+        pisz2d(STR_TITLE_LS_RETURN, currentScreenParams.MenuCenter, height - 450, 8, 1);
 
       end;
     2:
       begin // sklep
 
         glColor4f(0.5, 0.7, 1, 0.8);
-        pisz2d('SKLEP', currentScreenParams.MenuCenter, height - 50, 13, 1);
+        pisz2d(STR_TITLE_SH_SHOP, currentScreenParams.MenuCenter, height - 50, 13, 1);
 
         glColor4f(0.2, 0.5, 1, 0.95);
-        pisz2d('KASA: ' + inttostr(gra.kasa), 50, height - 90, 8);
+        pisz2d(STR_TITLE_SH_CASH + inttostr(gra.kasa), 50, height - 90, 8);
 
         if winieta.kursor <= 6 then
           b1 := height - 120 - winieta.kursor * 40
@@ -3782,32 +3862,32 @@ begin
             0:
               begin
                 r := 1;
-                s := 'ZBIORNIK PALIWA';
+                s := STR_TITLE_SH_FUEL_TANK;
               end;
             1:
               begin
                 r := 1;
-                s := 'RAKIETY';
+                s := STR_TITLE_SH_ROCKETS;
               end;
             2:
               begin
                 r := 1;
-                s := 'DZIA£O MASZYNOWE';
+                s := STR_TITLE_SH_GUN;
               end;
             3:
               begin
                 r := 100;
-                s := 'OS£ONA';
+                s := STR_TITLE_SH_SHIELD;
               end;
             4:
               begin
                 r := 100;
-                s := 'UK£AD CH£ODZ¥CY';
+                s := STR_TITLE_SH_COOLING_SYSTEM;
               end;
             5:
               begin
                 r := 1;
-                s := '£ADOWNOŒÆ';
+                s := STR_TITLE_SH_LOAD_CAPACITY;
               end;
           else
             begin
@@ -3817,7 +3897,7 @@ begin
           end;
           // pisz2d(s, currentScreenParams.MenuCenter, height-130-a*40, 8,1);
           pisz2d(s, 40, height - 130 - a * 40, 8, 0);
-          pisz2d('MASZ: ' + inttostr(round(upgrade[a, gra.poziomupgrade[a]].ile * r)), 40, height - 145 - a * 40, 6);
+          pisz2d(STR_TITLE_SH_OWNED + inttostr(round(upgrade[a, gra.poziomupgrade[a]].ile * r)), 40, height - 145 - a * 40, 6);
           if gra.poziomupgrade[a] < 9 then
           begin
             if upgrade[a, gra.poziomupgrade[a] + 1].cena <= gra.kasa then
@@ -3834,8 +3914,8 @@ begin
               else
                 glColor4f(0.6, 0.1, 0.1, 0.6);
             end;
-            pisz2d('KUP: ' + inttostr(round(upgrade[a, gra.poziomupgrade[a] + 1].ile * r)) + ', CENA: ' +
-              inttostr(upgrade[a, gra.poziomupgrade[a] + 1].cena), width - 40, height - 145 - a * 40, 6, 2);
+            pisz2d(Format(STR_TITLE_SH_BUY, [round(upgrade[a, gra.poziomupgrade[a] + 1].ile * r),
+              upgrade[a, gra.poziomupgrade[a] + 1].cena]), width - 40, height - 145 - a * 40, 6, 2);
           end;
 
           if winieta.kursor = a then
@@ -3867,8 +3947,8 @@ begin
           glColor4f(0.2, 1.0, 0.2, 0.7)
         else
           glColor4f(0.1, 0.6, 0.1, 0.6);
-        pisz2d('DODATKOWY L¥DOWNIK', 40, height - 370, 8, 0);
-        pisz2d('MASZ: ' + inttostr(gra.zycia), 40, height - 385, 6);
+        pisz2d(STR_TITLE_SH_LANDER, 40, height - 370, 8, 0);
+        pisz2d(STR_TITLE_SH_OWNED + inttostr(gra.zycia), 40, height - 385, 6);
         if gra.zycia < 9 then
         begin
           if cenazycia <= gra.kasa then
@@ -3885,7 +3965,7 @@ begin
             else
               glColor4f(0.6, 0.1, 0.1, 0.6);
           end;
-          pisz2d('KUP, CENA: ' + inttostr(cenazycia), width - 40, height - 385, 6, 2);
+          pisz2d(Format(STR_TITLE_SH_BUY_LANDER, [cenazycia]), width - 40, height - 385, 6, 2);
         end;
 
         a := 6;
@@ -3917,7 +3997,7 @@ begin
           glColor4f(0.2, 1.0, 0.2, 0.7)
         else
           glColor4f(0.1, 0.6, 0.1, 0.6);
-        pisz2d('WYJŒCIE', currentScreenParams.MenuCenter, height - 430, 8, 1);
+        pisz2d(STR_TITLE_LS_RETURN, currentScreenParams.MenuCenter, height - 430, 8, 1);
 
       end;
     4:
@@ -3944,22 +4024,21 @@ begin
                 glColor4f(0.2, 1.0, 0.2, 0.7)
               else
                 glColor4f(0.1, 0.6, 0.1, 0.6);
-              pisz2d(inttostr(1 + a + b1) + ': ' + epizody[a + b1].tytul + ', MISJI:' +
-                inttostr(length(epizody[a + b1].misje)), 50, height - 70 - a * 15, 7);
+              pisz2d(Format(STR_TITLE_AM_MISSION, [(1 + a + b1), epizody[a + b1].tytul, (length(epizody[a + b1].misje))]), 50, height - 70 - a * 15, 7);
             end;
           end;
         end
         else
         begin
           glColor4f(0.8, 0.2, 0.1, 0.6);
-          pisz2d('BRAK MISJI DODATKOWYCH!', currentScreenParams.MenuCenter, width div 2, 10, 1);
+          pisz2d(STR_TITLE_AM_NO_MISSIONS, currentScreenParams.MenuCenter, width div 2, 10, 1);
 
         end;
 
         if gra.koniecgry then
         begin
           glColor4f(0.1, 0.6, 0.1, 0.6);
-          pisz2d('esc - powrót do winiety', currentScreenParams.MenuCenter, 30, 8, 1);
+          pisz2d(STR_TITLE_AM_RETURN, currentScreenParams.MenuCenter, 30, 8, 1);
         end;
 
       end;
@@ -3973,12 +4052,6 @@ end;
 
 // ---------------------------------------------------------------------------
 procedure pokaz_glowneintro;
-
-const
-  teksty: array [0 .. 3] of TMainIntroLine = ((s: 'GADZ.PL'; i: 3), (s: 'PREZENTUJE'; i: 2), (s: 'GRÊ GRZEGORZA DROZDA';
-    i: 2), (s: 'RETROFIRE'; i: 4));
-  ilenapisow = 4;
-
 var
   width, height, a, b1, b2, b: integer;
   viewMatrix: array [0 .. 15] of GLFloat;
@@ -4018,8 +4091,8 @@ begin
 
   if glowneintro.czas <= 150 then
     r := glowneintro.czas / 150
-  else if glowneintro.czas >= (200 + ilenapisow * 300) - 200 then
-    r := ((400 + ilenapisow * 300) - glowneintro.czas) / 200
+  else if glowneintro.czas >= (200 + length(mainIntroLines) * 300) - 200 then
+    r := ((400 + length(mainIntroLines) * 300) - glowneintro.czas) / 200
   else
     r := 1;
 
@@ -4123,7 +4196,7 @@ begin
 
   glDisable(GL_CULL_FACE);
 
-  if (glowneintro.scena >= 1) and (glowneintro.scena <= ilenapisow) then
+  if (glowneintro.scena >= 1) and (glowneintro.scena <= length(mainIntroLines)) then
   begin
     if glowneintro.czas2 <= 40 then
       r := glowneintro.czas2 / 40
@@ -4135,21 +4208,21 @@ begin
     if (glowneintro.czas2 >= 70) and (glowneintro.czas2 <= 90) then
     begin
       glColor4f(0.8, 0.8, 0.8, ((90 - glowneintro.czas2) / 20) * 0.1);
-      pisz2d(teksty[glowneintro.scena - 1].s, currentScreenParams.MenuCenter, 240,
+      pisz2d(mainIntroLines[glowneintro.scena - 1].s, currentScreenParams.MenuCenter, 240,
         10 + (5 * (glowneintro.czas2 - 70)), 1);
     end;
 
-    for a := 0 to teksty[glowneintro.scena - 1].i do
+    for a := 0 to mainIntroLines[glowneintro.scena - 1].i do
     begin
-      glColor4f(0.5, 1, 0.5, (r * 0.15) / ((1 + teksty[glowneintro.scena - 1].i - a) / 2));
-      pisz2d(teksty[glowneintro.scena - 1].s,
+      glColor4f(0.5, 1, 0.5, (r * 0.15) / ((1 + mainIntroLines[glowneintro.scena - 1].i - a) / 2));
+      pisz2d(mainIntroLines[glowneintro.scena - 1].s,
         // 320-30+glowneintro.czas2/5,
         currentScreenParams.MenuCenter - sin(a * 56) * 130 + (glowneintro.czas2 / 5) * cos(a * 61),
         240 - cos(a * 61) * 20, 30, 1);
     end;
 
     glColor4f(0.5, 1, 0.5, r * 0.8);
-    pisz2d(teksty[glowneintro.scena - 1].s, currentScreenParams.MenuCenter, 240, 10, 1);
+    pisz2d(mainIntroLines[glowneintro.scena - 1].s, currentScreenParams.MenuCenter, 240, 10, 1);
 
   end;
 

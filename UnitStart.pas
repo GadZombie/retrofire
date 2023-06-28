@@ -8,9 +8,11 @@ uses
 
 type
   TFormStart = class(TForm)
-    Panel1: TPanel;
-    Label1: TLabel;
+    pnlBack: TPanel;
+    lbTitle: TLabel;
     progres: TProgressBar;
+    lbLoading: TLabel;
+    procedure FormCreate(Sender: TObject);
   private
     { Private declarations }
   public
@@ -21,7 +23,15 @@ var
   FormStart: TFormStart;
 
 implementation
+uses
+  Language, GlobalConsts;
 
 {$R *.dfm}
+
+procedure TFormStart.FormCreate(Sender: TObject);
+begin
+  lbTitle.Caption := PROGRAM_TITLE + ' ' + STR_PROGRAM_VER + ' ' + PROGRAM_VERSION;
+  lbLoading.Caption := STR_APP_LOADING;
+end;
 
 end.

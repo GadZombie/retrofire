@@ -2,13 +2,11 @@ unit unittimer;
 
 interface
 
-uses directinput8, OpenGl, gl, Glu, glext, unittex, obj, sysutils, classes,
+uses
+  directinput8, OpenGl, gl, Glu, glext, unittex, obj, sysutils, classes,
   windows,
   fmod, fmodtypes, fmoderrors, fmodpresets, powerinputs, forms,
   ZGLMathProcs, ZGLGraphMath;
-
-const
-  PROGRAM_VERSION = '1.1';
 
 type
   TUpgradeItem = record
@@ -59,7 +57,7 @@ const
   cenazycia = 3000;
   maxoslonablysk = 1.2;
   maxcheats = 6;
-  cheatcodes: array [0 .. maxcheats] of string = ('FULL', 'GOD', 'FUEL', 'WEAPON', 'LIFES', 'LOAD', 'TIME');
+  cheatcodes: array [0 .. maxcheats] of string = ('FULL', 'GOD', 'FUEL', 'WEAPON', 'LIVES', 'LOAD', 'TIME');
 
 type
   TWektor = array [0 .. 3] of GLFloat;
@@ -381,7 +379,7 @@ type
     god: boolean; // niezniszczalnosc
     fuel: boolean; // paliwo sie nie zmniejsza
     weapon: boolean; // caly czas max wszystkich broni
-    lifes: boolean; // max dodatkowych ladownikow
+    lives: boolean; // max dodatkowych ladownikow
     load: boolean; // max ladownosci
     time: boolean; // max czasu
 
@@ -449,7 +447,7 @@ function FighterObjectTransformProc(FighterId: integer): TTransformProc;
 
 implementation
 
-uses Render, unit1, UnitStart;
+uses Render, unit1, UnitStart, Language;
 
 // ---------------------------------------------------------------------------
 FUNCTION l2t(liczba: int64; ilosc_lit: byte): string;
@@ -1247,9 +1245,14 @@ end;
 
 procedure PlayerObjectTransform;
 begin
+  glRotatef(gracz.dz * 4 * gracz.wykrecsila, 1, 0, 0);
+  glRotatef(-gracz.dx * 4 * gracz.wykrecsila, 0, 0, 1);
+  glRotatef(gracz.kier, 0, -1, 0);
+{
   glRotatef(gracz.dz * 6, gracz.wykrecsila, 0, 0);
   glRotatef(-gracz.dx * 6, 0, 0, gracz.wykrecsila);
   glRotatef(gracz.kier, 0, -1, 0);
+}
   glRotatef(180, 0, 1, 0);
 end;
 
@@ -1682,6 +1685,8 @@ begin
     gracz.dz := gracz.dz * ziemia.gestoscpowietrza;
 
     gracz.wykrecsila := sqrt2(sqr(gracz.dx) + sqr(gracz.dz));
+    if gracz.wykrecsila > 2 then
+      gracz.wykrecsila := 2;
 
     gracz.namatce := (gracz.y <= gdzie_y(gracz.x, gracz.z, gracz.y) + 5) and (gracz.y > matka.y - 75);
 
@@ -3305,12 +3310,44 @@ begin
           end
           else
           begin
-            if ani > 0 then
+            s := sqrt2(sqr(gracz.x - x) + sqr(gracz.y - y) + sqr(gracz.z - z));
+            if (s >= 100) and (s <= 300) then
             begin
-              ani := ani + 6 + random(3);
-              if ani >= 360 then
+              if rodzani = 1 then
+              begin
+                ani := ani + 6 + random(3);
+                if (random(20) = 0) and (y <= gdzie_y(x, z, y)) then
+                begin
+                  dy := 0.1 + random * 0.04;
+                  y := gdzie_y(x, z, y);
+                end;
+                if ani >= 360 then
+                begin
+                  if random(2) = 0 then
+                  begin
+                    ani := 0;
+                    rodzani := 0;
+                  end
+                  else
+                    dec(ani, 360);
+                end;
+              end
+              else
+              begin
                 ani := 0;
-              rodzani := 0;
+                if random(50) = 0 then
+                  rodzani := 1;
+              end;
+            end
+            else
+            begin
+              if ani > 0 then
+              begin
+                ani := ani + 6 + random(3);
+                if ani >= 360 then
+                  ani := 0;
+                rodzani := 0;
+              end;
             end;
           end;
         end; // else ani:=0;
@@ -3373,10 +3410,12 @@ begin
               end;
               if y <= gdzie_y(x, z, y) then
               begin
-                dy := 0.13;
+                dy := 0.1 + random * 0.04;//0.13
                 y := gdzie_y(x, z, y);
               end;
             end;
+
+
             if gracz.stoi and (gracz.grlot = nalotnisku) and ((gracz.pilotow < gracz.ladownosc) or (zly)) and
               (uciekaodgracza <= 0) then
             begin // biegna do gracza
@@ -4084,7 +4123,7 @@ begin
             3:
               cheaty.weapon := not cheaty.weapon;
             4:
-              cheaty.lifes := not cheaty.lifes;
+              cheaty.lives := not cheaty.lives;
             5:
               cheaty.load := not cheaty.load;
             6:
@@ -4147,10 +4186,10 @@ begin
     gracz.ilerakiet := gracz.maxrakiet;
     gracz.iledzialko := gracz.maxdzialko;
   end;
-  if cheaty.lifes then
+  if cheaty.lives then
   begin
     gra.zycia := 9;
-    cheaty.lifes := false;
+    cheaty.lives := false;
   end;
   if cheaty.load then
   begin
@@ -4330,7 +4369,7 @@ begin
         gra.jestkamera[0, 1] := gracz.dy * 0.8 + gracz.y;
         gra.jestkamera[0, 2] := gracz.dz * 0.8 + gracz.z - cos((gracz.kier) * pi180);
         gra.jestkamera[1, 0] := gracz.dx * 0.8 + gracz.x + sin((gracz.kier) * pi180) * 10;
-        gra.jestkamera[1, 1] := gracz.dy * 0.8 + gracz.y + gracz.dy * 3;
+        gra.jestkamera[1, 1] := gracz.dy * 0.8 + gracz.y + gracz.dy * 1;
         gra.jestkamera[1, 2] := gracz.dz * 0.8 + gracz.z - cos((gracz.kier) * pi180) * 10;
         gra.jestkamera[2, 0] := gracz.dx / 6;
         gra.jestkamera[2, 1] := 1;
@@ -4841,7 +4880,7 @@ begin
     0:
       begin // winieta
         inc(winieta.skrol);
-        if winieta.skrol >= 2550 then
+        if winieta.skrol >= length(titleScrollLines) * 15 * 3 + 930 {2550} then
           winieta.skrol := 0;
 
         if form1.PwrInp.KeyPressed[DIK_DOWN] then
@@ -5524,7 +5563,7 @@ begin
         f.Free;
         f := nil;
       end;
-      MessageBox(form1.Handle, pchar('B³¹d podczas odczytu pliku ' + nazwa), 'B³¹d',
+      MessageBox(form1.Handle, pchar(Format(STR_APP_ERROR_OPENING_FILE, [nazwa])), STR_APP_ERROR,
         MB_OK + MB_TASKMODAL + MB_ICONERROR);
     end;
   finally
@@ -6076,13 +6115,6 @@ begin
           if gra.minimum > length(pilot) then
             gra.minimum := length(pilot);
           gra.dzialekminimum := 0;
-
-          gra.nazwaplanety := 'PLANETA ' + losujnazwe; // XYBUIAO';
-          gra.tekstintro := 'URATUJ CO NAJMNIEJ %1 LUDZI Z WSZYSTKICH %2' + #13 +
-            'ZANIM WYSADZIMY PLANETÊ. CZAS NA WYKONANIE MISJI: %5.'#13 + 'POWODZENIA!';
-          gra.tekstoutrowin := 'UDA£O CI SIÊ WYKONAÆ MISJÊ!';
-          gra.tekstoutrolost := 'NIE WYKONA£EŒ MISJI!'#13 + 'ZA£OGA STATKU-MATKI NIE CHCE CIÊ WIÊCEJ WIDZIEÆ'#13 +
-            'PRZEZ TO, ¯E NIE URATOWA£EŒ ICH LUDZI... PRZEZ CIEBIE'#13 + 'WSZYSCY POZOSTALI NA PLANECIE ZGIN¥.';
         end;
       1:
         begin
@@ -6090,16 +6122,28 @@ begin
           gra.dzialekminimum := round(length(dzialko) * (0.5 + (gra.planeta / 200)));
           if gra.dzialekminimum > length(dzialko) then
             gra.dzialekminimum := length(dzialko);
-
-          gra.nazwaplanety := 'PLANETA ' + losujnazwe; // XYBUIAO';
-          gra.tekstintro := 'ZNISZCZ CO NAJMNIEJ %3 DZIA£ WROGA Z WSZYSTKICH %4'#13 +
-            'Z PLANETY. CZAS NA WYKONANIE MISJI: %5.'#13 + 'POWODZENIA!';
-          gra.tekstoutrowin := 'UDA£O CI SIÊ WYKONAÆ MISJÊ!';
-          gra.tekstoutrolost := 'NIE WYKONA£EŒ MISJI!'#13 + 'NASZA PLANETA ZOSTA£A OPANOWANA PRZEZ WROGA, BO'#13 +
-            'ZAWIOD£EŒ...';
-
         end;
     end;
+
+  if not MISSIONS_USE_STORYLINE or losowy then
+    case gra.rodzajmisji of
+      0:
+        begin
+          gra.nazwaplanety := STR_MISSION_PLANET + ' ' + losujnazwe;
+          gra.tekstintro := STR_MISSION_RESCUE_TASK;
+          gra.tekstoutrowin := STR_MISSION_RESCUE_WIN;
+          gra.tekstoutrolost := STR_MISSION_RESCUE_LOST;
+        end;
+      1:
+        begin
+          gra.nazwaplanety := STR_MISSION_PLANET + ' ' + losujnazwe;
+          gra.tekstintro := STR_MISSION_DESTROY_TASK;
+          gra.tekstoutrowin := STR_MISSION_DESTROY_WIN;
+          gra.tekstoutrolost := STR_MISSION_DESTROY_LOST;
+        end;
+    end;
+
+
 
   while pos('%1', gra.tekstintro) > 0 do
   begin
@@ -6420,7 +6464,7 @@ begin
   cheaty.god := false;
   cheaty.fuel := false;
   cheaty.weapon := false;
-  cheaty.lifes := false;
+  cheaty.lives := false;
   cheaty.load := false;
   cheaty.time := false;
   setlength(cheaty.wpisany_tekst, 0);
