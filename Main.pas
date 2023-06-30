@@ -1,4 +1,4 @@
-unit Unit1;
+unit Main;
 
 interface
 
@@ -11,7 +11,7 @@ uses
   directinput8;
 
 type
-  TForm1 = class(TForm)
+  TfrmMain = class(TForm)
     PowerTimer1: TPowerTimer;
     PwrInp: TPowerInput;
     TimerCzas: TTimer;
@@ -64,7 +64,7 @@ type
   end;
 
 var
-  Form1: TForm1;
+  frmMain: TfrmMain;
   ustawienia: TSettings;
 
   klawisze: array [0 .. 49] of byte;
@@ -98,7 +98,7 @@ uses unittimer, UnitStart;
 
 {$R *.dfm}
 
-procedure TForm1.wczytajkfg;
+procedure TfrmMain.wczytajkfg;
 var
   f: tstream;
   a, X, Y: Integer;
@@ -171,7 +171,7 @@ begin
 
 end;
 
-procedure TForm1.wczytaj_dzwiek(nazwa: string; dzw: Integer; loop: boolean; czy_3d: boolean = true;
+procedure TfrmMain.wczytaj_dzwiek(nazwa: string; dzw: Integer; loop: boolean; czy_3d: boolean = true;
   glosnosc: Integer = 50);
 var
   s: string;
@@ -203,7 +203,7 @@ begin
   FormStart.progres.StepIt;
 end;
 
-procedure TForm1.graj_dzwiek(dzw: Integer; X, Y, z: real; czy_3d: boolean = true);
+procedure TfrmMain.graj_dzwiek(dzw: Integer; X, Y, z: real; czy_3d: boolean = true);
 begin
   if dzwieki[dzw].gra then
   begin
@@ -234,7 +234,7 @@ begin
   FSOUND_SetPaused(dzwieki[dzw].kanal, false);
 end;
 
-procedure TForm1.stop_dzwiek(dzw: Integer);
+procedure TfrmMain.stop_dzwiek(dzw: Integer);
 begin
   // if dzwieki[dzw].gra then begin
   FSOUND_StopSound(dzwieki[dzw].kanal);
@@ -243,7 +243,7 @@ begin
 end;
 
 // do mysliwcow i rakiet dzwieki:
-function TForm1.graj_dzwiek_kanal(dzw: Integer; X, Y, z, sx, sy, sz: real; kanal: longint): longint;
+function TfrmMain.graj_dzwiek_kanal(dzw: Integer; X, Y, z, sx, sy, sz: real; kanal: longint): longint;
 var
   posv: TFSoundVector;
 begin
@@ -276,7 +276,7 @@ begin
   result := kanal;
 end;
 
-procedure TForm1.fmodstart;
+procedure TfrmMain.fmodstart;
 begin
   h := GetStdHandle(STD_INPUT_HANDLE);
   h1 := GetStdHandle(STD_OUTPUT_HANDLE);
@@ -360,7 +360,7 @@ begin
 
 end;
 
-procedure TForm1.muzyke_wlacz(i: Integer; loop: boolean);
+procedure TfrmMain.muzyke_wlacz(i: Integer; loop: boolean);
 var
   s: string;
 begin
@@ -399,12 +399,12 @@ begin
   FSOUND_SetVolumeAbsolute(muzchannel, ustawienia.volmuz);
 end;
 
-procedure TForm1.muzyke_wylacz;
+procedure TfrmMain.muzyke_wylacz;
 begin
   FSOUND_SetPaused(muzchannel, true);
 end;
 
-procedure TForm1.FormCreate(Sender: TObject);
+procedure TfrmMain.FormCreate(Sender: TObject);
 var
   PixelFormat: GLuint;
   rectScreen: TRECT;
@@ -459,11 +459,11 @@ begin
   end
   else
   begin
-    Form1.clientWidth := ustawienia.rozdzx;
-    Form1.clientHeight := ustawienia.rozdzy;
+    frmMain.clientWidth := ustawienia.rozdzx;
+    frmMain.clientHeight := ustawienia.rozdzy;
   end;
 
-  h_DC := GetDC(Form1.Handle);
+  h_DC := GetDC(frmMain.Handle);
   PixelFormat := ChoosePixelFormat(h_DC, @pfd);
   if (PixelFormat = 0) then
   begin
@@ -508,22 +508,22 @@ begin
 
 end;
 
-procedure TForm1.FormResize(Sender: TObject);
+procedure TfrmMain.FormResize(Sender: TObject);
 begin
-  GLResizeScene(Form1.clientWidth, Form1.clientHeight);
+  GLResizeScene(frmMain.clientWidth, frmMain.clientHeight);
 end;
 
-procedure TForm1.PowerTimer1Render(Sender: TObject);
+procedure TfrmMain.PowerTimer1Render(Sender: TObject);
 begin
   RenderScene;
 end;
 
-procedure TForm1.PowerTimer1Process(Sender: TObject);
+procedure TfrmMain.PowerTimer1Process(Sender: TObject);
 begin
   FrameMath;
 end;
 
-procedure TForm1.FormMouseDown(Sender: TObject; Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
+procedure TfrmMain.FormMouseDown(Sender: TObject; Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
 begin
   if Button = mbleft then
     myszguzikl := true
@@ -531,7 +531,7 @@ begin
     myszguzikp := true;
 end;
 
-procedure TForm1.FormMouseUp(Sender: TObject; Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
+procedure TfrmMain.FormMouseUp(Sender: TObject; Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
 begin
   if Button = mbleft then
     myszguzikl := false
@@ -539,18 +539,18 @@ begin
     myszguzikp := false;
 end;
 
-procedure TForm1.FormMouseMove(Sender: TObject; Shift: TShiftState; X, Y: Integer);
+procedure TfrmMain.FormMouseMove(Sender: TObject; Shift: TShiftState; X, Y: Integer);
 begin
   myszsx := X;
   myszsy := Y;
 end;
 
-procedure TForm1.TimerCzasTimer(Sender: TObject);
+procedure TfrmMain.TimerCzasTimer(Sender: TObject);
 begin
   dec(gra.czas);
 end;
 
-procedure TForm1.FormClose(Sender: TObject; var Action: TCloseAction);
+procedure TfrmMain.FormClose(Sender: TObject; var Action: TCloseAction);
 begin
   if fullscreen then
   begin

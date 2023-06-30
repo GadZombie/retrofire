@@ -5,7 +5,7 @@ uses
   Sysutils,
   OpenGl,
   api_func in 'api_func.pas',
-  Unit1 in 'Unit1.pas' {Form1},
+  Main in 'Main.pas' {frmMain},
   unittimer in 'unittimer.pas',
   Render in 'Render.pas',
   UnitTex in 'UnitTex.pas',
@@ -18,14 +18,19 @@ uses
   fmodtypes in '..\..\KomponentyBiblioteki\FMOD_DX10.1\api\delphi\fmodtypes.pas',
   GL in '..\..\KomponentyBiblioteki\ZombiEGL\GL.pas',
   GLext in '..\..\KomponentyBiblioteki\ZombiEGL\GLext.pas',
-  GLU in '..\..\KomponentyBiblioteki\ZombiEGL\GLU.pas';
+  GLU in '..\..\KomponentyBiblioteki\ZombiEGL\GLU.pas',
+  ZGLMathProcs in '..\..\KomponentyBiblioteki\ZombiEGL\ZGLMathProcs.pas',
+  ZGLGraphMath in '..\..\KomponentyBiblioteki\ZombiEGL\ZGLGraphMath.pas',
+  Language in 'Language.pas',
+  GlobalConsts in 'GlobalConsts.pas',
+  GlobalTypes in 'GlobalTypes.pas';
 
 {$R *.RES}
 
 begin
   Application.Initialize;
   Application.Title := 'Retrofire';
-  Application.CreateForm(TForm1, Form1);
+  Application.CreateForm(TfrmMain, frmMain);
   Application.CreateForm(TFormStart, FormStart);
   FormStart.Show;
   FormStart.Update;

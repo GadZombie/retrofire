@@ -33,7 +33,7 @@ const
 
 implementation
 
-uses Render, unit1, Controls, unittimer;
+uses Render, Main, Controls, unittimer;
 
 // Inicjacja OpenGl
 
@@ -207,7 +207,7 @@ end;
   exit;
   end;
 
-  h_wnd:=form1.Handle;
+  h_wnd:=frmMain.Handle;
   {  h_Wnd := CreateWindow(
   'OpenGL WinClass',
   'basecode', // Tytul programu

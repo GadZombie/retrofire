@@ -24,7 +24,7 @@ procedure tworz_obiekty;
 
 implementation
 
-uses unit1, unittex, Forms, GlobalTypes;
+uses Main, unittex, Forms, GlobalTypes;
 
 const
   katwidzenia = 70;
@@ -1212,7 +1212,7 @@ begin
   begin
     glColor4f(0.7, 0.3, 1.0, 0.8);
     pisz2d(STR_MISSION_FINISHED, width div 2, height div 2 + 70, 7, 1);
-    pisz2d(Format(STR_PRESS_KEY_TO_CONTINUE, [form1.PwrInp.KeyName[klawisze[8]]]), width div 2, height div 2 + 45, 6, 1);
+    pisz2d(Format(STR_PRESS_KEY_TO_CONTINUE, [frmMain.PwrInp.KeyName[klawisze[8]]]), width div 2, height div 2 + 45, 6, 1);
   end;
 
   if (gra.pauza) then
@@ -1227,7 +1227,7 @@ begin
 
   { pisz2d('czas='+inttostr(cheaty.czas_od_ostatniej_litery), 50, height -50, 5);
     for a:=0 to high(cheaty.wpisany_tekst) do
-    pisz2d( Form1.PwrInp.KeyName[cheaty.wpisany_tekst[a]], 50+a*10, height -80, 5);
+    pisz2d( frmMain.PwrInp.KeyName[cheaty.wpisany_tekst[a]], 50+a*10, height -80, 5);
   }
   glPointSize(0);
 
@@ -1328,24 +1328,13 @@ begin
 
     if intro.czas >= z then
     begin
-      { case gra.rodzajmisji of
-        0:n:='URATUJ CO NAJMNIEJ '+inttostr(gra.minimum)+' LUDZI Z WSZYSTKICH '+inttostr(gra.ilepilotow)+#13+
-        'ZANIM WYSADZIMY PLANETÊ. CZAS NA WYKONANIE MISJI: '+ inttostr(gra.czas div 60)+':'+l2t(gra.czas mod 60,2)+'.'#13+
-        'POWODZENIA!';
-        1:n:='ZNISZCZ CO NAJMNIEJ '+inttostr(gra.dzialekminimum)+' DZIA£ WROGA Z WSZYSTKICH '+inttostr(gra.iledzialek)+#13+
-        'Z PLANETY. CZAS NA WYKONANIE MISJI: '+ inttostr(gra.czas div 60)+':'+l2t(gra.czas mod 60,2)+'.'#13+
-        'POWODZENIA!';
-        end; }
       n := gra.tekstintro;
 
       a := (intro.czas - z);
       if a > length(n) then
         a := length(n);
       m := copy(n, 1, a);
-      { glColor4f(0.0,0.1,0.0,0.7);
-        pisz2d(m, 41, gra.pozycjaYtekstuintro-20-1, 5);
-        glColor4f(0.1,0.8,0.1,0.7);
-        pisz2d(m, 40, gra.pozycjaYtekstuintro-20, 5); }
+
       pisz2d_otoczka(m, 40, gra.pozycjaYtekstuintro - 20, 5, 0, 0.1, 0.8, 0.1, 0.8, 0.0, 0.1, 0.0, 0.7);
     end;
   end;
@@ -1435,19 +1424,6 @@ begin
       end
       else
       begin
-        { case gra.rodzajmisji of
-          0:begin
-          n:='NIE WYKONA£EŒ MISJI!'#13+
-          'ZA£OGA STATKU-MATKI NIE CHCE CIÊ WIÊCEJ WIDZIEÆ'#13+
-          'PRZEZ TO, ¯E NIE URATOWA£EŒ ICH LUDZI... PRZEZ CIEBIE'#13+
-          'WSZYSCY POZOSTALI NA PLANECIE ZGIN¥.';
-          end;
-          1:begin
-          n:='NIE WYKONA£EŒ MISJI!'#13+
-          'NASZA PLANETA ZOSTA£A OPANOWANA PRZEZ WROGA, BO'#13+
-          'ZAWIOD£EŒ...';
-          end;
-          end; }
         n := gra.tekstoutrolost;
       end;
       a := (intro.czas - z) div 2;
@@ -3742,6 +3718,12 @@ begin
             pisz2d(titleScrollLines[a], currentScreenParams.MenuCenter, b1, 6, 1);
 
         end;
+
+        glColor4f(0.5, 0.7, 1, 0.07);
+        pisz2d('RETROFIRE', currentScreenParams.MenuCenter, height - 50, 55 + abs(sin(licz * 0.003) * 5), 1);
+
+        glColor4f(0.5, 0.7, 1, 0.11);
+        pisz2d('RETROFIRE', currentScreenParams.MenuCenter, height - 50, 38 + (sin(66 + licz * 0.0021) * 4), 1);
 
         glColor4f(0.5, 0.7, 1, 0.8);
         pisz2d('RETROFIRE', currentScreenParams.MenuCenter, height - 50 + abs(sin(licz * 0.03) * 5), 17, 1);
