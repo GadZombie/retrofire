@@ -2225,6 +2225,90 @@ var
   right, up: array [0 .. 2] of GLFloat;
   // ={viewMatrix[0], viewMatrix[4], viewMatrix[8]};
   viewMatrix: array [0 .. 15] of GLFloat;
+
+  procedure DrawViewfinder;
+  const
+    H_CENTER = 0;
+    V_CENTER = 0;
+    W_Z = -10;
+
+    VIEWFINDER_HEIGHT = 2;
+    VIEWFINDER_WIDTH = 2;
+    VIEWFINDER_FROM = 0.2;
+    VIEWFINDER_Y = 1.9;
+
+    HORIZON_X_FROM = 4;
+    HORIZON_WIDTH = 8;
+    HORIZON_Y_POS = 3;
+
+    VERTICAL_Y_FROM = 1;
+    VERTICAL_Y_TO = 5;
+    VERTICAL_X_POS = 3.9;
+
+    HORIZ_SHIFT_NUM = 3;
+    HORIZ_SHIFT_X_FROM = 4.3;
+    HORIZ_SHIFT_X_TO = 4.7;
+    HORIZ_SHIFT_Y_STEP = 0.3;
+  var
+    n, m: integer;
+  begin
+    glPushMatrix;
+    glRotatef(33, -1, 0, 0);
+    wylacz_teksture;
+    glEnable(GL_COLOR_MATERIAL);
+    glEnable(GL_BLEND);
+    glBegin(GL_LINES);
+
+    if gracz.namierzone < 0 then
+    begin
+      glColor4f(1, 1, 1, 0.5);
+      // viewfinder - vertical
+      glVertex3f(0, VIEWFINDER_Y + VIEWFINDER_FROM, W_Z);
+      glVertex3f(0, VIEWFINDER_Y + VIEWFINDER_HEIGHT, W_Z);
+      glVertex3f(0, VIEWFINDER_Y - VIEWFINDER_FROM, W_Z);
+      glVertex3f(0, VIEWFINDER_Y - VIEWFINDER_HEIGHT, W_Z);
+      // viewfinder - horizontal
+      glVertex3f(VIEWFINDER_FROM, VIEWFINDER_Y, W_Z);
+      glVertex3f(VIEWFINDER_WIDTH, VIEWFINDER_Y, W_Z);
+      glVertex3f(-VIEWFINDER_FROM, VIEWFINDER_Y, W_Z);
+      glVertex3f(-VIEWFINDER_WIDTH, VIEWFINDER_Y, W_Z);
+    end;
+
+    glColor4f(1, 1, 1, 0.15);
+    // horizon
+    glVertex3f(-HORIZON_WIDTH, HORIZON_Y_POS, W_Z);
+    glVertex3f(-HORIZON_X_FROM, HORIZON_Y_POS, W_Z);
+    glVertex3f(HORIZON_X_FROM, HORIZON_Y_POS, W_Z);
+    glVertex3f(HORIZON_WIDTH, HORIZON_Y_POS, W_Z);
+
+    //vertical - left
+    glVertex3f(-VERTICAL_X_POS, VERTICAL_Y_FROM, W_Z);
+    glVertex3f(-VERTICAL_X_POS, VERTICAL_Y_TO, W_Z);
+    //vertical - right
+    glVertex3f(VERTICAL_X_POS, VERTICAL_Y_FROM, W_Z);
+    glVertex3f(VERTICAL_X_POS, VERTICAL_Y_TO, W_Z);
+
+    m := -1;
+    while (m <= 1) do
+    begin
+      for n := 1 to HORIZ_SHIFT_NUM do
+      begin
+        glVertex3f(HORIZ_SHIFT_X_FROM, HORIZON_Y_POS + n * HORIZ_SHIFT_Y_STEP * m, W_Z);
+        glVertex3f(HORIZ_SHIFT_X_TO, HORIZON_Y_POS + n * HORIZ_SHIFT_Y_STEP * m, W_Z);
+
+        glVertex3f(-HORIZ_SHIFT_X_FROM, HORIZON_Y_POS + n * HORIZ_SHIFT_Y_STEP * m, W_Z);
+        glVertex3f(-HORIZ_SHIFT_X_TO, HORIZON_Y_POS + n * HORIZ_SHIFT_Y_STEP * m, W_Z);
+      end;
+      inc(m, 2);
+    end;
+
+    glEnd();
+    glDisable(GL_BLEND);
+    glDisable(GL_COLOR_MATERIAL);
+
+    glPopMatrix;
+  end;
+
 begin
   rysuj_oslone_gracza(false);
   glDisable(GL_LIGHT1);
@@ -2238,12 +2322,15 @@ begin
   // glRotatef(90,0,1,0);
 
   glRotatef(gracz.kier, 0, -1, 0);
-  glTranslatef(0, -1, -1);
+  glRotatef(10, 1, 0, 0);
+  glTranslatef(0, -0.8, -1);
 
   // glGetFloatv(GL_MODELVIEW_MATRIX, @ttt);
 
   // glScalef(5,5,5);
   pokaz_obiekt(obiekt[ob_kokpit]);
+
+  DrawViewfinder;
 
   glPopMatrix;
 
@@ -2281,6 +2368,7 @@ begin
     wylacz_teksture;
     glPopMatrix;
   end;
+
 end;
 
 // ---------------------------------------------------------------------------

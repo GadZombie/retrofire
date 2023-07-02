@@ -232,6 +232,7 @@ type
     stoi: boolean;
     ani: integer;
     rodzani: byte;
+    rescued: boolean;
 
     uciekaodgracza: integer; // ile czasu jeszcze ucieka od gracza, zamiast wsiadac; potrzebne do wysadzania ich
 
@@ -1004,6 +1005,7 @@ begin
       stoi := false;
 
       uciekaodgracza := czasuciekaniaodgracza;
+      rescued := false;
 
       miejscenamatce := -9999;
 
@@ -2063,14 +2065,18 @@ begin
     if not gracz.namatce and (frmMain.PwrInp.KeyPressed[klawisze[17]]) and (gracz.pilotow > 0) then
     begin
 
-      dec(gra.kasa, 10);
-      // uwaga! jesli by to sie zmienilo, to przy zabieraniu pilotow
+{      dec(gra.kasa, 10);
       dec(gra.pkt, 110); // trzeba dawac tyle samo kasy i punktow!!!!!
+      }
       dec(gracz.pilotow);
 
       if (gracz.grlot >= 0) then
       begin // zywy
-        nowy_pilot(gracz.x, gracz.y, gracz.z, false, 1, gracz.grlot, 250);
+        a := nowy_pilot(gracz.x, gracz.y, gracz.z, false, 1, gracz.grlot, 250);
+        if a >= 0 then
+        begin
+          pilot[a].rescued := true;
+        end;
       end
       else
       begin // martwy
@@ -2080,6 +2086,8 @@ begin
           frmMain.graj_dzwiek((22 + ord(pilot[a].zly) * 4 + random(4)), pilot[a].x, pilot[a].y, pilot[a].z);
           pilot[a].dy := -0.3 - random / 2;
           pilot[a].palisie := false;
+          if pilot[a].zawszewidac and not pilot[a].zly then
+            inc(gra.zginelo);
         end;
       end;
 
@@ -3425,10 +3433,17 @@ begin
                 if not zly then
                 begin
                   inc(gracz.pilotow);
-                  inc(gra.kasa, 10);
-                  // uwaga! jesli by to sie zmienilo, to przy wyrzucaniu pilotow
-                  inc(gra.pkt, 110);
-                  // trzeba bedzie odbierac tyle samo kasy i punktow!!!!!
+                  if not rescued then
+                  begin
+                    rescued := true;
+                    inc(gra.kasa, 10);
+                    // uwaga! jesli by to sie zmienilo, to przy wyrzucaniu pilotow
+                    inc(gra.pkt, 110);
+                    // trzeba bedzie odbierac tyle samo kasy i punktow!!!!!
+                    gracz.paliwo := gracz.paliwo + 8;
+                    if gracz.paliwo > gracz.maxpaliwa then
+                      gracz.paliwo := gracz.maxpaliwa;
+                  end;
                 end
                 else
                   inc(gracz.zlychpilotow);
@@ -4210,6 +4225,7 @@ const
 var
   a, b: integer;
   c, c1, x1, z1: real;
+  kx, ky, kz: extended;
   bylakamera: array [0 .. 2] of real;
 begin
   bylakamera[0] := gra.jestkamera[0, 0];
@@ -4254,15 +4270,28 @@ begin
       end;
     2:
       begin
-        gra.kamera[0, 0] := gracz.x - sin((gracz.kier - gracz.szybkier * 2) * pi180) * 50;
-        gra.kamera[0, 1] := gracz.y + 20 + gracz.y / 15 - gracz.dy * 70;
-        gra.kamera[0, 2] := gracz.z + cos((gracz.kier - gracz.szybkier * 2) * pi180) * 50;
-        gra.kamera[1, 0] := gracz.x + gracz.dx * 10 + sin((gracz.kier - gracz.szybkier * 2) * pi180) * 10;
-        gra.kamera[1, 1] := gracz.y + gracz.dy;
-        gra.kamera[1, 2] := gracz.z + gracz.dz * 10 - cos((gracz.kier - gracz.szybkier * 2) * pi180) * 10;
-        gra.kamera[2, 0] := 0;
-        gra.kamera[2, 1] := 1;
-        gra.kamera[2, 2] := 0;
+        kx := {gracz.dx + }sin((gracz.kier) * pi180);
+        ky := -0.5 +  gracz.dy / 2;
+        kz := {gracz.dz }- cos((gracz.kier) * pi180);
+        normalize3D(kx, ky, kz);
+
+        gra.kamera[0, 0] := gracz.x - kx * 60;
+        gra.kamera[0, 1] := gracz.y - ky * 60;
+        gra.kamera[0, 2] := gracz.z - kz * 60;
+
+        gra.kamera[1, 0] := gracz.x + kx * 50;
+        gra.kamera[1, 1] := gracz.y + ky * 50;
+        gra.kamera[1, 2] := gracz.z + kz * 50;
+
+        c := Distance2D(0, 0, gracz.dx, gracz.dz);
+        kx := gracz.dx;
+        ky := 1 + c;
+        kz := gracz.dz;
+        normalize3D(kx, ky, kz);
+
+        gra.kamera[2, 0] := kx;
+        gra.kamera[2, 1] := ky;
+        gra.kamera[2, 2] := kz;
       end;
     3:
       begin
@@ -4365,15 +4394,31 @@ begin
       end;
     7:
       begin // ze srodka
-        gra.jestkamera[0, 0] := gracz.dx * 0.8 + gracz.x + sin((gracz.kier) * pi180);
-        gra.jestkamera[0, 1] := gracz.dy * 0.8 + gracz.y;
-        gra.jestkamera[0, 2] := gracz.dz * 0.8 + gracz.z - cos((gracz.kier) * pi180);
-        gra.jestkamera[1, 0] := gracz.dx * 0.8 + gracz.x + sin((gracz.kier) * pi180) * 10;
-        gra.jestkamera[1, 1] := gracz.dy * 0.8 + gracz.y + gracz.dy * 1;
-        gra.jestkamera[1, 2] := gracz.dz * 0.8 + gracz.z - cos((gracz.kier) * pi180) * 10;
-        gra.jestkamera[2, 0] := gracz.dx / 6;
+        gra.jestkamera[0, 0] := gracz.dx * 1 + gracz.x + sin((gracz.kier) * pi180);
+        gra.jestkamera[0, 1] := gracz.dy * 1 + gracz.y + 3;
+        gra.jestkamera[0, 2] := gracz.dz * 1 + gracz.z - cos((gracz.kier) * pi180);
+        gra.jestkamera[1, 0] := gracz.dx * 1 + gracz.x + sin((gracz.kier) * pi180) * 10;
+        gra.jestkamera[1, 1] := gracz.dy * 1 + gracz.y - 1{ + gracz.dy * 1};
+        gra.jestkamera[1, 2] := gracz.dz * 1 + gracz.z - cos((gracz.kier) * pi180) * 10;
+
+//        gra.jestkamera[0, 0] := gracz.dx * 0.8 + gracz.x + sin((gracz.kier) * pi180);
+//        gra.jestkamera[0, 1] := {gracz.dy * 0.8 + }gracz.y + 3;
+//        gra.jestkamera[0, 2] := gracz.dz * 0.8 + gracz.z - cos((gracz.kier) * pi180);
+//        gra.jestkamera[1, 0] := gracz.dx * 0.8 + gracz.x + sin((gracz.kier) * pi180) * 10;
+//        gra.jestkamera[1, 1] := {gracz.dy * 0.8 + }gracz.y{ + gracz.dy * 1};
+//        gra.jestkamera[1, 2] := gracz.dz * 0.8 + gracz.z - cos((gracz.kier) * pi180) * 10;
+        {gra.jestkamera[2, 0] := gracz.dx / 6;
         gra.jestkamera[2, 1] := 1;
-        gra.jestkamera[2, 2] := gracz.dz / 6;
+        gra.jestkamera[2, 2] := gracz.dz / 6;}
+
+        kx := gracz.dx / 6;
+        ky := 1;
+        kz := gracz.dz / 6;
+        normalize3D(kx, ky, kz);
+
+        gra.kamera[2, 0] := kx;
+        gra.kamera[2, 1] := ky;
+        gra.kamera[2, 2] := kz;
 
         { glRotatef(gracz.dz*6, gracz.wykrecsila,0,0);
           glRotatef(-gracz.dx*6, 0,0,gracz.wykrecsila);
