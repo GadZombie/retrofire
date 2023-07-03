@@ -357,19 +357,6 @@ type
     skrol: integer;
   end;
 
-  TSaveGame = record
-    jest: boolean;
-
-    rodzajgry: byte;
-
-    data: Tdatetime;
-    poziomupgrade: array [0 .. 5] of integer;
-    pkt, kasa: int64;
-    planeta, zycia: integer;
-    epizod: string; { nazwa epizodu w przypadku misji dodatkowych }
-
-  end;
-
   TEpisode = record
     tytul: string;
     misje: array of string;
@@ -413,7 +400,6 @@ var
   intro: TIntro;
   glowneintro: TMainIntro;
   winieta: TTitleScreen;
-  zapisy: array [0 .. 9] of TSaveGame;
   epizody: array of TEpisode;
   cheaty: TCheatCodes;
   cheatcodes_n: array [0 .. maxcheats] of array of byte;
@@ -423,8 +409,6 @@ var
 function jaki_to_kat(dx, dy: real): real;
 FUNCTION l2t(liczba: int64; ilosc_lit: byte): string;
 function sqrt2(v: real): real;
-procedure zapiszstring(var plik: TStream; t: string);
-function wczytajstring(var plik: TStream): string;
 
 procedure normalize(var vec: array of GLFloat);
 function cross_prod(in1, in2: TWektor): TWektor;
@@ -448,7 +432,7 @@ function FighterObjectTransformProc(FighterId: integer): TTransformProc;
 
 implementation
 
-uses Render, Main, UnitStart, Language;
+uses Render, Main, UnitStart, Language, uSfx, uConfig, uSaveGame;
 
 // ---------------------------------------------------------------------------
 FUNCTION l2t(liczba: int64; ilosc_lit: byte): string;
@@ -547,173 +531,7 @@ begin
       mysliwiec[a].dzw_slychac := false;
     end;
   end;
-  frmMain.stop_dzwiek(2);
-end;
-
-// ---------------------------------------------------------------------------
-procedure zapiszgre(numer: integer);
-var
-  a, b: integer;
-  f: TStream;
-begin
-  with zapisy[numer] do
-  begin
-    jest := true;
-    rodzajgry := gra.jakiemisje;
-    data := now;
-    for a := 0 to 5 do
-      poziomupgrade[a] := gra.poziomupgrade[a];
-    pkt := gra.pkt;
-    kasa := gra.kasa;
-    if gra.jakiemisje <> 2 then
-    begin
-      planeta := gra.planeta + 1;
-      epizod := '';
-    end
-    else
-    begin
-      planeta := winieta.epizodmisja + 1;
-      epizod := epizody[winieta.epizod].tytul;
-    end;
-    zycia := gra.zycia;
-  end;
-
-  f := nil;
-  try
-    try
-      f := TFileStream.Create('zapisy.sav', fmCreate);
-
-      for a := 0 to high(zapisy) do
-      begin
-        f.WriteBuffer(zapisy[a].jest, sizeof(zapisy[a].jest));
-        f.WriteBuffer(zapisy[a].rodzajgry, sizeof(zapisy[a].rodzajgry));
-        f.WriteBuffer(zapisy[a].data, sizeof(zapisy[a].data));
-        for b := 0 to 5 do
-          f.WriteBuffer(zapisy[a].poziomupgrade[b], sizeof(zapisy[a].poziomupgrade[b]));
-        f.WriteBuffer(zapisy[a].pkt, sizeof(zapisy[a].pkt));
-        f.WriteBuffer(zapisy[a].kasa, sizeof(zapisy[a].kasa));
-        f.WriteBuffer(zapisy[a].planeta, sizeof(zapisy[a].planeta));
-        zapiszstring(f, zapisy[a].epizod);
-        f.WriteBuffer(zapisy[a].zycia, sizeof(zapisy[a].zycia));
-      end;
-
-      f.Free;
-      f := nil;
-    except
-      if f <> nil then
-      begin
-        f.Free;
-        f := nil;
-      end;
-      // MessageBox(Handle, pchar('B³¹d podczas zapisu pliku'#13#10+nazwa), 'B³¹d', MB_OK+MB_TASKMODAL+MB_ICONERROR);
-    end;
-  finally
-    if f <> nil then
-    begin
-      f.Free;
-      f := nil;
-    end;
-  end;
-
-end;
-
-// ---------------------------------------------------------------------------
-procedure wczytajzapisy;
-var
-  a, b: integer;
-  f: TStream;
-begin
-  for a := 0 to high(zapisy) do
-    zapisy[a].jest := false;
-
-  if fileexists('zapisy.sav') then
-  begin
-    f := nil;
-    try
-      try
-        f := TFileStream.Create('zapisy.sav', fmOpenRead);
-
-        for a := 0 to high(zapisy) do
-        begin
-          f.readBuffer(zapisy[a].jest, sizeof(zapisy[a].jest));
-          f.readBuffer(zapisy[a].rodzajgry, sizeof(zapisy[a].rodzajgry));
-          f.readBuffer(zapisy[a].data, sizeof(zapisy[a].data));
-          for b := 0 to 5 do
-            f.readBuffer(zapisy[a].poziomupgrade[b], sizeof(zapisy[a].poziomupgrade[b]));
-          f.readBuffer(zapisy[a].pkt, sizeof(zapisy[a].pkt));
-          f.readBuffer(zapisy[a].kasa, sizeof(zapisy[a].kasa));
-          f.readBuffer(zapisy[a].planeta, sizeof(zapisy[a].planeta));
-          zapisy[a].epizod := wczytajstring(f);
-          f.readBuffer(zapisy[a].zycia, sizeof(zapisy[a].zycia));
-        end;
-
-        f.Free;
-        f := nil;
-      except
-        if f <> nil then
-        begin
-          f.Free;
-          f := nil;
-        end;
-        // MessageBox(Handle, pchar('B³¹d podczas zapisu pliku'#13#10+nazwa), 'B³¹d', MB_OK+MB_TASKMODAL+MB_ICONERROR);
-      end;
-    finally
-      if f <> nil then
-      begin
-        f.Free;
-        f := nil;
-      end;
-    end;
-  end;
-
-  // sprawdzenie, czy epizody z zapisanych gier istnieja
-  for a := 0 to high(zapisy) do
-    if (zapisy[a].jest) and (zapisy[a].rodzajgry = 2) then
-    begin
-      if length(epizody) >= 1 then
-      begin
-        b := 0;
-        while (b <= high(epizody)) and (zapisy[a].epizod <> epizody[b].tytul) do
-          inc(b);
-        if b > high(epizody) then
-          zapisy[a].jest := false;
-
-      end
-      else
-        zapisy[a].jest := false;
-    end;
-
-end;
-
-// ---------------------------------------------------------------------------
-procedure wczytajgre(numer: integer);
-var
-  a, b: integer;
-begin
-  with zapisy[numer] do
-  begin
-    for a := 0 to 5 do
-      gra.poziomupgrade[a] := poziomupgrade[a];
-    gra.pkt := pkt;
-    gra.kasa := kasa;
-    gra.planeta := planeta - 1;
-    gra.zycia := zycia;
-    gra.jakiemisje := rodzajgry;
-    if rodzajgry = 2 then
-    begin
-      b := 0;
-      while (b <= high(epizody)) and (zapisy[numer].epizod <> epizody[b].tytul) do
-        inc(b);
-      if b <= high(epizody) then
-      begin
-        winieta.epizod := b;
-        winieta.epizodmisja := gra.planeta;
-      end
-      else
-        gra.jakiemisje := 0;
-
-    end;
-  end;
+  Sfx.stop_dzwiek(2);
 end;
 
 // ---------------------------------------------------------------------------
@@ -1325,7 +1143,7 @@ begin
     if (gracz.namierzone >= 0) and ((gracz.namierzone <> gracz._namierzone) or
       (gracz.conamierzone <> gracz._conamierzone)) then
     begin
-      frmMain.graj_dzwiek(19, 0, 0, 0, false);
+      Sfx.graj_dzwiek(19, 0, 0, 0, false);
     end;
     gracz._namierzone := gracz.namierzone;
     gracz._conamierzone := gracz.conamierzone;
@@ -1412,17 +1230,17 @@ begin
 
     ilegrzeje := 0;
     // dopalacz do gory
-    if (gracz.paliwo > 0) and ((frmMain.PwrInp.Keys[klawisze[2]]) or (frmMain.PwrInp.Keys[klawisze[3]]) or
+    if (gracz.paliwo > 0) and ((GameController.Control(2).Active) or (GameController.Control(3).Active) or
       (gracz.zlywsrodku and (gracz.y < gdzie_y(gracz.x, gracz.z, gracz.y) + 350))) then
     begin
-      if (frmMain.PwrInp.Keys[klawisze[3]]) then
+      if (GameController.Control(3).Active) then
       begin
         moc := 2;
         gracz.temp := gracz.temp + 1;
       end
       else
         moc := 1;
-      frmMain.graj_dzwiek(2, gracz.x, gracz.y, gracz.z);
+      Sfx.graj_dzwiek(2, gracz.x, gracz.y, gracz.z);
       dzwiekognia := true;
 
       inc(ilegrzeje, 3);
@@ -1484,9 +1302,9 @@ begin
     end;
 
     // dopalacz w dol
-    if (gracz.paliwo > 0) and (frmMain.PwrInp.Keys[klawisze[4]]) then
+    if (gracz.paliwo > 0) and (GameController.Control(4).Active) then
     begin
-      frmMain.graj_dzwiek(2, gracz.x, gracz.y, gracz.z);
+      Sfx.graj_dzwiek(2, gracz.x, gracz.y, gracz.z);
       dzwiekognia := true;
 
       inc(ilegrzeje, 1);
@@ -1523,25 +1341,25 @@ begin
     end;
 
     // dopalacz do przodu
-    if (gracz.paliwo > 0) and ((frmMain.PwrInp.Keys[klawisze[5]]) or ((frmMain.PwrInp.Keys[klawisze[0]]) and
-      (frmMain.PwrInp.Keys[klawisze[1]]))) then
+    if (gracz.paliwo > 0) and ((GameController.Control(5).Active) or ((GameController.Control(0).Active) and
+      (GameController.Control(1).Active))) then
     begin
-      frmMain.graj_dzwiek(2, gracz.x, gracz.y, gracz.z);
+      Sfx.graj_dzwiek(2, gracz.x, gracz.y, gracz.z);
       dzwiekognia := true;
-      if (frmMain.PwrInp.Keys[klawisze[5]]) then
+      if (GameController.Control(5).Active) then
         moc := 1
       else
         moc := 0;
-      if (frmMain.PwrInp.Keys[klawisze[0]]) then
+      if (GameController.Control(0).Active) then
         moc := moc + 0.3;
-      if (frmMain.PwrInp.Keys[klawisze[1]]) then
+      if (GameController.Control(1).Active) then
         moc := moc + 0.3;
       gracz.szyb := gracz.szyb + 0.001 * moc;
 
       if gracz.szyb > 0.05 * moc then
         gracz.szyb := 0.05 * moc;
 
-      if (frmMain.PwrInp.Keys[klawisze[5]]) then
+      if (GameController.Control(5).Active) then
         MakeFire(
           Vec3D(0, gracz.nacisk * 5 + 0.05, -3.2),
           Vec3D(gracz.dx, gracz.dy, gracz.dz),
@@ -1582,9 +1400,9 @@ begin
     end;
 
     // dopalacz w lewo
-    if (gracz.paliwo > 0) and (frmMain.PwrInp.Keys[klawisze[0]]) then
+    if (gracz.paliwo > 0) and (GameController.Control(0).Active) then
     begin
-      frmMain.graj_dzwiek(2, gracz.x, gracz.y, gracz.z);
+      Sfx.graj_dzwiek(2, gracz.x, gracz.y, gracz.z);
       dzwiekognia := true;
       if (gracz.szybkier > -6) then
         gracz.szybkier := gracz.szybkier - 0.04;
@@ -1618,9 +1436,9 @@ begin
       end;
     end;
     // dopalacz w prawo
-    if (gracz.paliwo > 0) and (frmMain.PwrInp.Keys[klawisze[1]]) then
+    if (gracz.paliwo > 0) and (GameController.Control(1).Active) then
     begin
-      frmMain.graj_dzwiek(2, gracz.x, gracz.y, gracz.z);
+      Sfx.graj_dzwiek(2, gracz.x, gracz.y, gracz.z);
       dzwiekognia := true;
       if (gracz.szybkier < 6) then
         gracz.szybkier := gracz.szybkier + 0.04;
@@ -1814,7 +1632,7 @@ begin
               if gracz.sila > gracz.maxsila then
                 gracz.sila := gracz.maxsila;
 
-              frmMain.graj_dzwiek(16, gracz.x, gracz.y, gracz.z, false);
+              Sfx.graj_dzwiek(16, gracz.x, gracz.y, gracz.z, false);
             end
             else if (gracz.pilotow > 0) then
             begin
@@ -1823,7 +1641,7 @@ begin
                 dec(gracz.pilotow);
                 nowy_pilot(gracz.x, gracz.y, gracz.z);
 
-                frmMain.graj_dzwiek(13, gracz.x, gracz.y, gracz.z);
+                Sfx.graj_dzwiek(13, gracz.x, gracz.y, gracz.z);
               end;
             end
             else if gracz.paliwo < gracz.maxpaliwa then
@@ -1832,7 +1650,7 @@ begin
               if gracz.paliwo > gracz.maxpaliwa then
                 gracz.paliwo := gracz.maxpaliwa;
 
-              frmMain.graj_dzwiek(16, gracz.x, gracz.y, gracz.z, false);
+              Sfx.graj_dzwiek(16, gracz.x, gracz.y, gracz.z, false);
             end
             else if (gracz.ilerakiet < gracz.maxrakiet) then
             begin
@@ -1840,7 +1658,7 @@ begin
               if gracz.ilerakiet > gracz.maxrakiet then
                 gracz.ilerakiet := gracz.maxrakiet;
 
-              frmMain.graj_dzwiek(16, gracz.x, gracz.y, gracz.z, false);
+              Sfx.graj_dzwiek(16, gracz.x, gracz.y, gracz.z, false);
             end
             else if (gracz.iledzialko < gracz.maxdzialko) then
             begin
@@ -1848,7 +1666,7 @@ begin
               if gracz.iledzialko > gracz.maxdzialko then
                 gracz.iledzialko := gracz.maxdzialko;
 
-              frmMain.graj_dzwiek(16, gracz.x, gracz.y, gracz.z, false);
+              Sfx.graj_dzwiek(16, gracz.x, gracz.y, gracz.z, false);
             end;
           end;
         end
@@ -1858,7 +1676,7 @@ begin
       end;
 
       if abs(gracz.dy) > 0.1 then
-        frmMain.graj_dzwiek(4, gracz.x, gracz.y, gracz.z);
+        Sfx.graj_dzwiek(4, gracz.x, gracz.y, gracz.z);
 
       gracz.dx := gracz.dx * 0.7;
       gracz.dz := gracz.dz * 0.7;
@@ -1879,7 +1697,7 @@ begin
         s := sqrt2(sqr(gracz.dx) + sqr(gracz.dz) + sqr(gracz.dy)) / 2;
         gracz.sila := gracz.sila - s;
         if abs(s) > 0.5 then
-          frmMain.graj_dzwiek(4, gracz.x, gracz.y, gracz.z);
+          Sfx.graj_dzwiek(4, gracz.x, gracz.y, gracz.z);
         uszkodz(false, s * 2);
 
         gracz.dx := -gracz.dx * 0.5;
@@ -1901,11 +1719,11 @@ begin
       end;
     end;
 
-    if ((frmMain.PwrInp.KeyPressed[klawisze[6]]) and (gracz.ilerakiet > 0)) or
-      ((frmMain.PwrInp.Keys[klawisze[7]]) and (gracz.iledzialko > 0) and (licz mod 7 = 0)) then
+    if ((GameController.Control(6).Pressed) and (gracz.ilerakiet > 0)) or
+      ((GameController.Control(7).Active) and (gracz.iledzialko > 0) and (licz mod 7 = 0)) then
     begin
 
-      if (frmMain.PwrInp.KeyPressed[klawisze[6]]) and (gracz.ilerakiet > 0) then
+      if (GameController.Control(6).Pressed) and (gracz.ilerakiet > 0) then
         rodzpoc := 0
       else
         rodzpoc := 1;
@@ -1917,10 +1735,10 @@ begin
 
       // FSOUND_PlaySoundEx(FSOUND_FREE, dzwieki[0], nil, False);
       if rodzpoc = 0 then
-        frmMain.graj_dzwiek(0, gracz.x + sin((45 + gracz.kier) * pi180) * (3 * gracz.stronastrzalu), gracz.y - 2,
+        Sfx.graj_dzwiek(0, gracz.x + sin((45 + gracz.kier) * pi180) * (3 * gracz.stronastrzalu), gracz.y - 2,
           gracz.z - cos((45 + gracz.kier) * pi180) * (3 * gracz.stronastrzalu))
       else
-        frmMain.graj_dzwiek(20, gracz.x + sin((45 + gracz.kier) * pi180) * (3 * gracz.stronastrzalu), gracz.y - 2,
+        Sfx.graj_dzwiek(20, gracz.x + sin((45 + gracz.kier) * pi180) * (3 * gracz.stronastrzalu), gracz.y - 2,
           gracz.z - cos((45 + gracz.kier) * pi180) * (3 * gracz.stronastrzalu));
 
       if (gracz.conamierzone = 0) and (gracz.namierzone >= 0) then
@@ -2012,7 +1830,7 @@ begin
 
     if (gracz.sila <= 0) and (not cheaty.god) then
     begin
-      frmMain.graj_dzwiek(5, gracz.x, gracz.y, gracz.z);
+      Sfx.graj_dzwiek(5, gracz.x, gracz.y, gracz.z);
       if gracz.sila < 0 then
         gracz.sila := 0;
 
@@ -2062,7 +1880,7 @@ begin
     // wysokosc gracza:       round(gracz.y-gdzie_y(gracz.x,gracz.z,gracz.y)-5);
 
     // wyrzucanie pilotow z ladownika
-    if not gracz.namatce and (frmMain.PwrInp.KeyPressed[klawisze[17]]) and (gracz.pilotow > 0) then
+    if not gracz.namatce and (GameController.Control(17).Pressed) and (gracz.pilotow > 0) then
     begin
 
 {      dec(gra.kasa, 10);
@@ -2083,7 +1901,7 @@ begin
         a := nowy_pilot(gracz.x, gracz.y, gracz.z, false, 0);
         if a >= 0 then
         begin
-          frmMain.graj_dzwiek((22 + ord(pilot[a].zly) * 4 + random(4)), pilot[a].x, pilot[a].y, pilot[a].z);
+          Sfx.graj_dzwiek((22 + ord(pilot[a].zly) * 4 + random(4)), pilot[a].x, pilot[a].y, pilot[a].z);
           pilot[a].dy := -0.3 - random / 2;
           pilot[a].palisie := false;
           if pilot[a].zawszewidac and not pilot[a].zly then
@@ -2091,13 +1909,13 @@ begin
         end;
       end;
 
-      frmMain.graj_dzwiek(13, gracz.x, gracz.y, gracz.z);
+      Sfx.graj_dzwiek(13, gracz.x, gracz.y, gracz.z);
     end;
 
   end; // gracz
 
   if not dzwiekognia then
-    frmMain.stop_dzwiek(2);
+    Sfx.stop_dzwiek(2);
 end;
 
 // ---------------------------------------------------------------------------
@@ -2211,7 +2029,7 @@ begin
               if s <= rozmiar then
               begin
                 if not pilot[b].palisie then
-                  frmMain.graj_dzwiek((22 + ord(pilot[b].zly) * 4 + random(4)), pilot[b].x, pilot[b].y, pilot[b].z);
+                  Sfx.graj_dzwiek((22 + ord(pilot[b].zly) * 4 + random(4)), pilot[b].x, pilot[b].y, pilot[b].z);
                 pilot[b].palisie := true;
               end;
             end;
@@ -2516,7 +2334,7 @@ begin
             ziemia.pk[nx, nz].kg := ziemia.pk[nx, nz].kg * s;
             ziemia.pk[nx, nz].kb := ziemia.pk[nx, nz].kb * s;
 
-            if ustawienia.krzaki then
+            if Config.Display.ShowGrass then
             begin
               if length(ziemia.pk[nx, nz].krzaki) > 0 then
                 for a1 := 0 to high(ziemia.pk[nx, nz].krzaki) do
@@ -2618,7 +2436,7 @@ begin
         begin
           if rodzaj = 0 then
           begin
-            frmMain.graj_dzwiek(1, x, y, z);
+            Sfx.graj_dzwiek(1, x, y, z);
             nowe_swiatlo(x, y, z);
             for b := 0 to 9 do
             begin
@@ -2628,7 +2446,7 @@ begin
           end
           else
           begin
-            frmMain.graj_dzwiek(21, x, y, z);
+            Sfx.graj_dzwiek(21, x, y, z);
             nowy_dym(x, y, z, (random - 0.5) / 3, (random) / 5, (random - 0.5) / 3, 1 + random * 2, 0,
               0.05 - random * 0.03);
           end;
@@ -2716,7 +2534,7 @@ begin
                   pilot[b].dz := pilot[b].dz + (pilot[b].z - z) / 60;
                 end;
 
-                frmMain.graj_dzwiek((22 + ord(pilot[b].zly) * 4 + random(4)), pilot[b].x, pilot[b].y, pilot[b].z);
+                Sfx.graj_dzwiek((22 + ord(pilot[b].zly) * 4 + random(4)), pilot[b].x, pilot[b].y, pilot[b].z);
                 if rodzaj = 0 then
                   pilot[b].palisie := true;
                 if pilot[b].sila < 0 then
@@ -2750,9 +2568,9 @@ begin
         if s < 300 then
         begin
           if not dzw_slychac then
-            dzw_kanal := frmMain.graj_dzwiek_kanal(18, x, y, z, _x, _y, _z, -1)
+            dzw_kanal := Sfx.graj_dzwiek_kanal(18, x, y, z, _x, _y, _z, -1)
           else
-            frmMain.graj_dzwiek_kanal(18, x, y, z, _x, _y, _z, dzw_kanal);
+            Sfx.graj_dzwiek_kanal(18, x, y, z, _x, _y, _z, dzw_kanal);
           dzw_slychac := true;
         end
         else
@@ -2867,7 +2685,7 @@ begin
           wysadz := true;
           zniszczony := true;
           xznasiatce(nx, nz, x, z);
-          frmMain.graj_dzwiek(4, x, y, z);
+          Sfx.graj_dzwiek(4, x, y, z);
           if (nx >= 0) and (nz >= 0) and (nx < ziemia.wx) and (nz < ziemia.wz) then
           begin
             ziemia.pk[nx, nz].p := ziemia.pk[nx, nz].p - 1 - random;
@@ -2913,9 +2731,9 @@ begin
         if s < 600 then
         begin
           if not dzw_slychac then
-            dzw_kanal := frmMain.graj_dzwiek_kanal(17, x, y, z, _x, _y, _z, -1)
+            dzw_kanal := Sfx.graj_dzwiek_kanal(17, x, y, z, _x, _y, _z, -1)
           else
-            frmMain.graj_dzwiek_kanal(17, x, y, z, _x, _y, _z, dzw_kanal);
+            Sfx.graj_dzwiek_kanal(17, x, y, z, _x, _y, _z, dzw_kanal);
           dzw_slychac := true;
         end
         else
@@ -3065,7 +2883,7 @@ begin
                 (random - 0.5), (-cos(kier * pi180) * cos(kierdol * pi180)) * (15 + gra.planeta / 15) +
                 (random - 0.5), 1, 1);
 
-              frmMain.graj_dzwiek(20, x, y, z);
+              Sfx.graj_dzwiek(20, x, y, z);
 
             end;
 
@@ -3076,7 +2894,7 @@ begin
             zniszczony := true; // zderzenie z graczem
 
             nowe_swiatlo(x, y, z);
-            frmMain.graj_dzwiek(4, x, y, z);
+            Sfx.graj_dzwiek(4, x, y, z);
             for b := 0 to 9 do
             begin
               nowy_dym(x, y, z, (random - 0.5) / 3, (random) / 5, (random - 0.5) / 3, 5 + random * 10, 0,
@@ -3204,7 +3022,7 @@ begin
 
         if wysadz then
         begin
-          frmMain.graj_dzwiek(1, x, y, z);
+          Sfx.graj_dzwiek(1, x, y, z);
           nowe_swiatlo(x, y, z, 2, 0.003);
           for b := 0 to 9 do
           begin
@@ -3286,7 +3104,7 @@ begin
           else
           begin
             if abs(dy) > 0.1 then
-              frmMain.graj_dzwiek(8, x, y, z);
+              Sfx.graj_dzwiek(8, x, y, z);
 
             dy := abs(dy / 4);
           end;
@@ -3449,7 +3267,7 @@ begin
                   inc(gracz.zlychpilotow);
                 if zly then
                   gracz.zlywsrodku := true;
-                frmMain.graj_dzwiek(13, x, y, z);
+                Sfx.graj_dzwiek(13, x, y, z);
               end;
               k := (jaki_to_kat(gracz.x - x, gracz.z - z));
 
@@ -3773,7 +3591,7 @@ begin
                         (random - 0.5) / 3, sin(kat * pi180) * s1 + (random - 0.5) / 3,
                         (-cos(kier * pi180) * cos(kat * pi180)) * s1 + (random - 0.5) / 3, 1);
 
-                      frmMain.graj_dzwiek(6, x, y, z);
+                      Sfx.graj_dzwiek(6, x, y, z);
                     end
                     else
                     begin
@@ -3782,7 +3600,7 @@ begin
                         (random - 0.5) / 3, sin(kat * pi180) * s1 + (random - 0.5) / 3,
                         (-cos(kier * pi180) * cos(kat * pi180)) * s1 + (random - 0.5) / 3, 1, 1);
 
-                      frmMain.graj_dzwiek(20, x, y, z);
+                      Sfx.graj_dzwiek(20, x, y, z);
 
                     end;
                   end;
@@ -3918,7 +3736,7 @@ begin
         if { (dy>0) and } (y >= matka.y - 25) and (y <= matka.y - 75) then
         begin
           if abs(dy) > 0.16 then
-            frmMain.graj_dzwiek(7, x, y, z);
+            Sfx.graj_dzwiek(7, x, y, z);
           if dy > 0 then
             dy := -abs(dy) / 2;
           dx := dx * 0.8;
@@ -3934,9 +3752,9 @@ begin
           begin
             case typ of
               0:
-                frmMain.graj_dzwiek(7, x, y, z);
+                Sfx.graj_dzwiek(7, x, y, z);
               1:
-                frmMain.graj_dzwiek(3, x, y, z);
+                Sfx.graj_dzwiek(3, x, y, z);
             end;
           end;
           dy := abs(dy) / 2;
@@ -4434,13 +4252,13 @@ begin
   if gracz.zyje then
   begin // alarmy!
     if (gracz.paliwo > 0) and (gracz.paliwo < 40) and (licz mod 50 = 0) then
-      frmMain.graj_dzwiek(9, 0, 0, 0, false);
+      Sfx.graj_dzwiek(9, 0, 0, 0, false);
 
     if (gracz.temp >= 240) and (licz mod 20 = 0) then
-      frmMain.graj_dzwiek(14, 0, 0, 0, false);
+      Sfx.graj_dzwiek(14, 0, 0, 0, false);
 
     if (gracz.zlywsrodku) and (licz mod 20 = 0) then
-      frmMain.graj_dzwiek(15, 0, 0, 0, false);
+      Sfx.graj_dzwiek(15, 0, 0, 0, false);
   end;
 
   gra.katkamera := jaki_to_kat(gra.jestkamera[0, 0] - gra.jestkamera[1, 0],
@@ -4455,21 +4273,21 @@ begin
   FSOUND_3D_Listener_SetAttributes(@listenerpos[0], @velv, sin(gra.katkamera * pi180) * 0.03, 0,
     -cos(gra.katkamera * pi180) * 0.03, 0.0, 0.03, 0);
 
-  if frmMain.PwrInp.Keys[klawisze[9]] then
+  if GameController.Control(9).Pressed then
     kamera := 0;
-  if frmMain.PwrInp.Keys[klawisze[10]] then
+  if GameController.Control(10).Pressed then
     kamera := 1;
-  if frmMain.PwrInp.Keys[klawisze[11]] then
+  if GameController.Control(11).Pressed then
     kamera := 2;
-  if frmMain.PwrInp.Keys[klawisze[12]] then
+  if GameController.Control(12).Pressed then
     kamera := 3;
-  if frmMain.PwrInp.Keys[klawisze[13]] then
+  if GameController.Control(13).Pressed then
     kamera := 4;
-  if frmMain.PwrInp.Keys[klawisze[14]] then
+  if GameController.Control(14).Pressed then
     kamera := 5;
-  if frmMain.PwrInp.Keys[klawisze[15]] then
+  if GameController.Control(15).Pressed then
     kamera := 6;
-  if frmMain.PwrInp.Keys[klawisze[16]] then
+  if GameController.Control(16).Pressed then
     kamera := 7;
 
   sprawdzaj_cheat_codes;
@@ -4600,7 +4418,7 @@ begin
   /// /////*****
 
   // misja wypelniona
-  if (gra.moznakonczyc and ((gracz.stoi and gracz.namatce) or (not gracz.zyje))) and (frmMain.PwrInp.Keys[klawisze[8]]) or
+  if (gra.moznakonczyc and ((gracz.stoi and gracz.namatce) or (not gracz.zyje))) and (GameController.Control(8).Active) or
     (gra.czas <= 0) then
   begin
     if gra.misjawypelniona then
@@ -4662,7 +4480,7 @@ begin
     winieta.corobi := 0;
     winieta.skrol := 0;
     FSOUND_SetPaused(muzchannel, true);
-    frmMain.muzyke_wlacz(1, true);
+    Sfx.muzyke_wlacz(1, true);
   end;
 end;
 
@@ -4685,8 +4503,8 @@ begin
     matka.widac := 1;
     matka.otwarcie_drzwi := 0;
     ziemia.widac := 0;
-    // frmMain.graj_dzwiek(10,0,0,0,false);
-    frmMain.muzyke_wlacz(2, false);
+    // Sfx.graj_dzwiek(10,0,0,0,false);
+    Sfx.muzyke_wlacz(2, false);
   end;
 
   inc(intro.czas);
@@ -4777,11 +4595,11 @@ begin
     matka.z := gracz.z;
     gracz.y := matka.y + 5;
 
-    // frmMain.stop_dzwiek(10);
-    frmMain.muzyke_wylacz;
+    // Sfx.stop_dzwiek(10);
+    Sfx.muzyke_wylacz;
 
     frmMain.TimerCzas.Enabled := true;
-    frmMain.muzyke_wlacz(0, true);
+    Sfx.muzyke_wlacz(0, true);
     FSOUND_SetPaused(muzchannel, false);
     FSOUND_Stream_SetTime(muzstream, 0);
   end;
@@ -4820,10 +4638,10 @@ begin
         end; }
       mysliwiec[a].jest := false;
     end;
-    if gra.misjawypelniona then // frmMain.graj_dzwiek(11,0,0,0,false)
-      frmMain.muzyke_wlacz(4, false)
-    else // frmMain.graj_dzwiek(12,0,0,0,false);
-      frmMain.muzyke_wlacz(3, false);
+    if gra.misjawypelniona then // Sfx.graj_dzwiek(11,0,0,0,false)
+      Sfx.muzyke_wlacz(4, false)
+    else // Sfx.graj_dzwiek(12,0,0,0,false);
+      Sfx.muzyke_wlacz(3, false);
   end;
 
   inc(intro.czas);
@@ -4895,21 +4713,21 @@ begin
 
   if intro.scena >= 3 then
   begin
-    { if gra.misjawypelniona then frmMain.stop_dzwiek(11)
-      else frmMain.stop_dzwiek(12); }
-    frmMain.muzyke_wylacz;
+    { if gra.misjawypelniona then Sfx.stop_dzwiek(11)
+      else Sfx.stop_dzwiek(12); }
+    Sfx.muzyke_wylacz;
     if gra.misjawypelniona and (gra.zycia >= 1) then
     begin
       // wejdz do zapisu po wygranej
       winieta.jest := true;
-      frmMain.muzyke_wlacz(1, true);
+      Sfx.muzyke_wlacz(1, true);
       winieta.corobi := 1;
     end
     else
     begin
       // wejdz do zapisu po przegranej i wznow niewypelniona misje
       winieta.jest := true;
-      frmMain.muzyke_wlacz(1, true);
+      Sfx.muzyke_wlacz(1, true);
       winieta.corobi := 1;
       dec(gra.planeta);
       if gra.jakiemisje = 2 then
@@ -4931,12 +4749,12 @@ begin
         if frmMain.PwrInp.KeyPressed[DIK_DOWN] then
         begin
           inc(winieta.kursor);
-          frmMain.graj_dzwiek(16, 0, 0, 0, false);
+          Sfx.graj_dzwiek(16, 0, 0, 0, false);
         end;
         if frmMain.PwrInp.KeyPressed[DIK_UP] then
         begin
           dec(winieta.kursor);
-          frmMain.graj_dzwiek(16, 0, 0, 0, false);
+          Sfx.graj_dzwiek(16, 0, 0, 0, false);
         end;
         if winieta.kursor < 0 then
           winieta.kursor := 4;
@@ -4949,7 +4767,7 @@ begin
               if (frmMain.PwrInp.KeyPressed[DIK_space]) or (frmMain.PwrInp.KeyPressed[DIK_RETURN]) then
               begin
                 winieta.jest := false;
-                frmMain.muzyke_wylacz;
+                Sfx.muzyke_wylacz;
                 nowa_gra(-1, 0);
               end;
               if frmMain.PwrInp.KeyPressed[DIK_RIGHT] then
@@ -4957,28 +4775,28 @@ begin
                 inc(winieta.planetapocz);
                 if winieta.planetapocz > 99 then
                   winieta.planetapocz := 1;
-                frmMain.graj_dzwiek(16, 0, 0, 0, false);
+                Sfx.graj_dzwiek(16, 0, 0, 0, false);
               end;
               if frmMain.PwrInp.KeyPressed[DIK_LEFT] then
               begin
                 dec(winieta.planetapocz);
                 if winieta.planetapocz < 1 then
                   winieta.planetapocz := 99;
-                frmMain.graj_dzwiek(16, 0, 0, 0, false);
+                Sfx.graj_dzwiek(16, 0, 0, 0, false);
               end;
               if frmMain.PwrInp.KeyPressed[DIK_PGDN] then
               begin
                 inc(winieta.planetapocz, 10);
                 if winieta.planetapocz > 99 then
                   dec(winieta.planetapocz, 99);
-                frmMain.graj_dzwiek(16, 0, 0, 0, false);
+                Sfx.graj_dzwiek(16, 0, 0, 0, false);
               end;
               if frmMain.PwrInp.KeyPressed[DIK_PGUP] then
               begin
                 dec(winieta.planetapocz, 10);
                 if winieta.planetapocz < 1 then
                   inc(winieta.planetapocz, 99);
-                frmMain.graj_dzwiek(16, 0, 0, 0, false);
+                Sfx.graj_dzwiek(16, 0, 0, 0, false);
               end;
             end;
           1:
@@ -4986,7 +4804,7 @@ begin
               if (frmMain.PwrInp.KeyPressed[DIK_space]) or (frmMain.PwrInp.KeyPressed[DIK_RETURN]) then
               begin
                 winieta.jest := false;
-                frmMain.muzyke_wylacz;
+                Sfx.muzyke_wylacz;
                 nowa_gra(-1, 1);
               end;
               if frmMain.PwrInp.KeyPressed[DIK_RIGHT] then
@@ -4994,28 +4812,28 @@ begin
                 inc(winieta.poziomtrudnosci);
                 if winieta.poziomtrudnosci > 99 then
                   winieta.poziomtrudnosci := 1;
-                frmMain.graj_dzwiek(16, 0, 0, 0, false);
+                Sfx.graj_dzwiek(16, 0, 0, 0, false);
               end;
               if frmMain.PwrInp.KeyPressed[DIK_LEFT] then
               begin
                 dec(winieta.poziomtrudnosci);
                 if winieta.poziomtrudnosci < 1 then
                   winieta.poziomtrudnosci := 99;
-                frmMain.graj_dzwiek(16, 0, 0, 0, false);
+                Sfx.graj_dzwiek(16, 0, 0, 0, false);
               end;
               if frmMain.PwrInp.KeyPressed[DIK_PGDN] then
               begin
                 inc(winieta.poziomtrudnosci, 10);
                 if winieta.poziomtrudnosci > 99 then
                   dec(winieta.poziomtrudnosci, 99);
-                frmMain.graj_dzwiek(16, 0, 0, 0, false);
+                Sfx.graj_dzwiek(16, 0, 0, 0, false);
               end;
               if frmMain.PwrInp.KeyPressed[DIK_PGUP] then
               begin
                 dec(winieta.poziomtrudnosci, 10);
                 if winieta.poziomtrudnosci < 1 then
                   inc(winieta.poziomtrudnosci, 99);
-                frmMain.graj_dzwiek(16, 0, 0, 0, false);
+                Sfx.graj_dzwiek(16, 0, 0, 0, false);
               end;
             end;
           2:
@@ -5042,12 +4860,12 @@ begin
         if frmMain.PwrInp.KeyPressed[DIK_DOWN] then
         begin
           inc(winieta.kursor);
-          frmMain.graj_dzwiek(16, 0, 0, 0, false);
+          Sfx.graj_dzwiek(16, 0, 0, 0, false);
         end;
         if frmMain.PwrInp.KeyPressed[DIK_UP] then
         begin
           dec(winieta.kursor);
-          frmMain.graj_dzwiek(16, 0, 0, 0, false);
+          Sfx.graj_dzwiek(16, 0, 0, 0, false);
         end;
         if winieta.kursor < 0 then
           winieta.kursor := 10;
@@ -5066,7 +4884,7 @@ begin
                   if zapisy[winieta.kursor].jest then
                   begin
                     winieta.jest := false;
-                    frmMain.muzyke_wylacz;
+                    Sfx.muzyke_wylacz;
                     nowa_gra(winieta.kursor, 0);
                   end;
                 end;
@@ -5091,12 +4909,12 @@ begin
         if frmMain.PwrInp.KeyPressed[DIK_DOWN] then
         begin
           inc(winieta.kursor);
-          frmMain.graj_dzwiek(16, 0, 0, 0, false);
+          Sfx.graj_dzwiek(16, 0, 0, 0, false);
         end;
         if frmMain.PwrInp.KeyPressed[DIK_UP] then
         begin
           dec(winieta.kursor);
-          frmMain.graj_dzwiek(16, 0, 0, 0, false);
+          Sfx.graj_dzwiek(16, 0, 0, 0, false);
         end;
         if winieta.kursor < 0 then
           winieta.kursor := 7;
@@ -5133,7 +4951,7 @@ begin
               if gra.jakiemisje <> 2 then
               begin
                 winieta.jest := false;
-                frmMain.muzyke_wylacz;
+                Sfx.muzyke_wylacz;
                 winieta.kursor := 0;
                 nowy_teren;
               end
@@ -5144,7 +4962,7 @@ begin
                 else
                 begin
                   winieta.jest := false;
-                  frmMain.muzyke_wylacz;
+                  Sfx.muzyke_wylacz;
                   winieta.kursor := 0;
                   nowy_teren(epizody[winieta.epizod].misje[winieta.epizodmisja]);
                 end;
@@ -5157,12 +4975,12 @@ begin
         if frmMain.PwrInp.KeyPressed[DIK_DOWN] then
         begin
           inc(winieta.epizod);
-          frmMain.graj_dzwiek(16, 0, 0, 0, false);
+          Sfx.graj_dzwiek(16, 0, 0, 0, false);
         end;
         if frmMain.PwrInp.KeyPressed[DIK_UP] then
         begin
           dec(winieta.epizod);
-          frmMain.graj_dzwiek(16, 0, 0, 0, false);
+          Sfx.graj_dzwiek(16, 0, 0, 0, false);
         end;
         if winieta.epizod < 0 then
           winieta.epizod := high(epizody);
@@ -5172,11 +4990,11 @@ begin
         if (frmMain.PwrInp.KeyPressed[DIK_space]) or (frmMain.PwrInp.KeyPressed[DIK_RETURN]) and (length(epizody) >= 1) then
         begin
           winieta.jest := false;
-          frmMain.muzyke_wylacz;
+          Sfx.muzyke_wylacz;
           if not gra.koniecgry then
           begin
             winieta.jest := false;
-            frmMain.muzyke_wylacz;
+            Sfx.muzyke_wylacz;
             winieta.kursor := 0;
             winieta.epizodmisja := 0;
             nowy_teren(epizody[winieta.epizod].misje[0]);
@@ -5205,7 +5023,7 @@ begin
 
   if glowneintro.czas = 0 then
   begin
-    // frmMain.graj_dzwiek(10,0,0,0,false);
+    // Sfx.graj_dzwiek(10,0,0,0,false);
   end;
 
   inc(glowneintro.czas);
@@ -5298,7 +5116,7 @@ begin
                 gra.pauza := false;
                 frmMain.TimerCzas.Enabled := false;
                 winieta.jest := true;
-                frmMain.muzyke_wlacz(1, true);
+                Sfx.muzyke_wlacz(1, true);
                 winieta.corobi := 0;
                 winieta.skrol := 0;
                 // FSOUND_SetPaused(muzchannel, true);
@@ -5374,64 +5192,6 @@ begin
     gracz.uszkodzenia[a] := false;
   gracz.randuszkodzenia := random(99999);
   gracz.silaskrzywien := 0;
-end;
-
-// ---------------------------------------------------------------------------
-procedure zapiszstring(var plik: TStream; t: string);
-var
-  buf: shortstring;
-  d: word;
-  m, l: longint;
-  bufa: array [0 .. 254] of byte;
-begin
-{$I-}
-  if t = '' then
-    t := #1#2;
-  l := length(t);
-  plik.WriteBuffer(l, sizeof(l));
-  m := 1;
-  while m <= length(t) do
-  begin
-    if length(t) - (m - 1) > 255 then
-      d := 255
-    else
-      d := length(t) - (m - 1);
-    buf := copy(t, m, d);
-    move(buf[1], bufa, d);
-    plik.WriteBuffer(bufa, d);
-    inc(m, d);
-  end;
-end;
-
-function wczytajstring(var plik: TStream): string;
-var
-  buf: shortstring;
-  bufa: array [0 .. 254] of byte;
-  d: word;
-  d1: byte;
-  m, dl: longint;
-  t: string;
-begin
-  plik.readBuffer(dl, sizeof(dl)); { length(t):=dl }
-  m := 1;
-  t := '';
-  while m <= dl do
-  begin
-    if dl - (m - 1) > 255 then
-      d := 255
-    else
-      d := dl - (m - 1);
-    plik.readBuffer(bufa, d);
-    move(bufa, buf[1], d);
-    d1 := d;
-    buf[0] := ansichar(d1);
-
-    t := t + copy(buf, 1, d);
-    inc(m, d);
-  end;
-  if t = #1#2 then
-    t := '';
-  wczytajstring := t;
 end;
 
 procedure wczytaj_teren(nazwa: string; gdzie: byte = 0);
@@ -6327,7 +6087,7 @@ begin
     end;
   end;
 
-  if ustawienia.krzaki then
+  if Config.Display.ShowGrass then
   begin
     // krzaki
     for az := 0 to ziemia.wz - 2 do
@@ -6493,7 +6253,7 @@ begin
   begin
     wczytajgre(wczytaj_nr);
     winieta.jest := true;
-    frmMain.muzyke_wlacz(1, true);
+    Sfx.muzyke_wlacz(1, true);
     winieta.corobi := 2;
   end
   else
@@ -6574,7 +6334,7 @@ var
   ch: char;
 
 begin
-  frmMain.fmodstart;
+  Sfx.fmodstart;
   randomize;
 
   // wczytaj tekstury

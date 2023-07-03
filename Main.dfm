@@ -14,10 +14,12 @@ object frmMain: TfrmMain
   Position = poScreenCenter
   OnClose = FormClose
   OnCreate = FormCreate
+  OnDestroy = FormDestroy
   OnMouseDown = FormMouseDown
   OnMouseMove = FormMouseMove
   OnMouseUp = FormMouseUp
   OnResize = FormResize
+  OnShow = FormShow
   TextHeight = 13
   object PowerTimer1: TPowerTimer
     FPS = 60

@@ -23,7 +23,12 @@ uses
   ZGLGraphMath in '..\..\KomponentyBiblioteki\ZombiEGL\ZGLGraphMath.pas',
   Language in 'Language.pas',
   GlobalConsts in 'GlobalConsts.pas',
-  GlobalTypes in 'GlobalTypes.pas';
+  GlobalTypes in 'GlobalTypes.pas',
+  uSpecialFolders in '..\..\KomponentyBiblioteki\SpecialFolders\uSpecialFolders.pas',
+  uGraphicModes in 'SetupNew\uGraphicModes.pas',
+  uConfig in 'uConfig.pas',
+  uSfx in 'uSfx.pas',
+  uSaveGame in 'uSaveGame.pas';
 
 {$R *.RES}
 

@@ -2,7 +2,7 @@ unit render;
 
 interface
 
-uses Windows, OpenGl, Gl, Glu, Api_Func, unitTimer, sysutils, obj,
+uses Windows, OpenGl, Gl, Glu, GLext, Api_Func, unitTimer, sysutils, obj,
   Language, GlobalConsts;
 
 procedure RenderScene;
@@ -24,7 +24,7 @@ procedure tworz_obiekty;
 
 implementation
 
-uses Main, unittex, Forms, GlobalTypes;
+uses Main, unittex, Forms, GlobalTypes, uConfig, uSaveGame;
 
 const
   katwidzenia = 70;
@@ -776,7 +776,7 @@ begin
   case gra.rodzajmisji of
     0:
       begin
-        pisz2d(STR_MISSION_RESCUE_PEOPLE, 10, height - 10, 5);
+        pisz2d(Format(STR_MISSION_RESCUE_PEOPLE, [gra.planeta]), 10, height - 10, 5);
 
         pisz2d(STR_MISSION_BOARDED + inttostr(gracz.pilotow) + '/' + inttostr(gracz.ladownosc), currentScreenParams.HudWidth - 10, height - 10, 4, 2);
         pisz2d(STR_MISSION_LEFT + inttostr(gra.ilepilotow + gracz.pilotow), currentScreenParams.HudWidth - 10, height - 20, 4, 2);
@@ -785,7 +785,7 @@ begin
       end;
     1:
       begin
-        pisz2d(STR_MISSION_DESTROY_ENEMY, 10, height - 10, 5);
+        pisz2d(Format(STR_MISSION_DESTROY_ENEMY, [gra.planeta]), 10, height - 10, 5);
 
         pisz2d(STR_MISSION_DESTROYED + inttostr(gra.dzialekzniszczonych) + '/' + inttostr(gra.dzialekminimum), currentScreenParams.HudWidth - 10, height - 20, 4, 2);
         pisz2d(STR_MISSION_LEFT + inttostr(gra.iledzialek), currentScreenParams.HudWidth - 10, height - 10, 4, 2);
@@ -1212,7 +1212,7 @@ begin
   begin
     glColor4f(0.7, 0.3, 1.0, 0.8);
     pisz2d(STR_MISSION_FINISHED, width div 2, height div 2 + 70, 7, 1);
-    pisz2d(Format(STR_PRESS_KEY_TO_CONTINUE, [frmMain.PwrInp.KeyName[klawisze[8]]]), width div 2, height div 2 + 45, 6, 1);
+    pisz2d(Format(STR_PRESS_KEY_TO_CONTINUE, [GameController.Control(8).GetAsString]), width div 2, height div 2 + 45, 6, 1);
   end;
 
   if (gra.pauza) then
@@ -1515,6 +1515,8 @@ begin
   if (ziemia.widac <= 0) then
     exit;
 
+  glEnable(GL_RESCALE_NORMAL);
+
   zwz10 := ziemia.wz * 10;
   zwx10 := ziemia.wx * 10;
 
@@ -1758,7 +1760,7 @@ var
   mat_2a, mat_2d, mat_2s: array [0 .. 3] of GLFloat;
   obrx, obry, obrz, odl, r, gx1, gz1: real;
 begin
-  if not ustawienia.krzaki then
+  if not Config.Display.ShowGrass then
     exit;
 
   if (ziemia.widac <= 0) then
@@ -2257,6 +2259,9 @@ var
     wylacz_teksture;
     glEnable(GL_COLOR_MATERIAL);
     glEnable(GL_BLEND);
+    glDisable(GL_LIGHTING);
+    glDisable(GL_FOG);
+
     glBegin(GL_LINES);
 
     if gracz.namierzone < 0 then
@@ -2305,6 +2310,8 @@ var
     glEnd();
     glDisable(GL_BLEND);
     glDisable(GL_COLOR_MATERIAL);
+    glEnable(GL_LIGHTING);
+    glEnable(GL_FOG);
 
     glPopMatrix;
   end;
@@ -2626,7 +2633,9 @@ begin
     // glFogf (GL_FOG_DENSITY, 0.0065);
     glFogf(GL_FOG_DENSITY, 0.0065 - matka.widac * 0.005);
 
+  glDisable(GL_RESCALE_NORMAL);
   pokaz_obiekt(obiekt[ob_matka]);
+  glEnable(GL_RESCALE_NORMAL);
 
   if (gra.etap <> 1) then
   begin
@@ -4635,9 +4644,9 @@ begin
   begin
     if not winieta.jest then
     begin
-      lmodel_ambient[0] := ustawienia.jasnosc;
-      lmodel_ambient[1] := ustawienia.jasnosc;
-      lmodel_ambient[2] := ustawienia.jasnosc;
+      lmodel_ambient[0] := Config.Display.Brightness / 10;
+      lmodel_ambient[1] := Config.Display.Brightness / 10;
+      lmodel_ambient[2] := Config.Display.Brightness / 10;
       lmodel_ambient[3] := 1.0;
       glLightModelfv(GL_LIGHT_MODEL_AMBIENT, @lmodel_ambient);
 
@@ -4647,6 +4656,7 @@ begin
 
       // definicja swiatel
       glEnable(GL_LIGHTING);
+      glEnable(GL_RESCALE_NORMAL);
 
       Ustaw_swiatla_w_grze;
 
