@@ -81,7 +81,8 @@ procedure wylacz_teksture();
 
 implementation
 
-uses SysUtils;
+uses
+  SysUtils, GlobalConsts;
 
 function LoadUncompressedTGA(var Texture: Texture; filename: string): boolean;
 // Nahraje nekomprimovanø TGA
@@ -363,7 +364,7 @@ var
   A: integer;
 begin
   Result := false;
-  if not LoadTGA(tgaFile, 'dane\' + nazwa) then
+  if not LoadTGA(tgaFile, DATA_FOLDER + nazwa) then
   begin
     // messagebox(0,'Nie wczytano textury','ERROR',MB_OK);
     Application.Terminate;
@@ -423,7 +424,7 @@ begin
   for A := 0 to ile - 1 do
   begin
 
-    if not LoadTGA(tgaFile1, 'dane\' + nazwa[A]) then
+    if not LoadTGA(tgaFile1, DATA_FOLDER + nazwa[A]) then
     begin
       MessageBox(0, pchar('Nie wczytano textury'#13#10 + nazwa[A]),
         'ERROR', MB_OK);

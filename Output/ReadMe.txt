@@ -1,19 +1,23 @@
 -------------------------------------------------------------------------------
 
 Retrofire
-version 1.1
+version 1.1.0 alfa
 
 -------------------------------------------------------------------------------
 
 a game by Grzegorz Drozd
 2007-2023 gadz.pl
 
+This is not the final version of this game. There are some changes currently
+made. I released this version just to show new changes but I'm sure there 
+will be more changes soon. Stay in touch!
+
 .... TODO
 
 -------------------------------------------------------------------------------
 
 Visit my website and check if there is a newer version of this game:
-http://gad.art.pl/opis.php?i=374
+https://gadz.pl/retrofire
 
 -------------------------------------------------------------------------------
 

@@ -57,7 +57,7 @@ var
 
 implementation
 uses
-  UnitStart, unittimer;
+  UnitStart, unittimer, GlobalConsts;
 
 procedure TSfx.wczytaj_dzwiek(nazwa: string; dzw: Integer; loop: boolean; czy_3d: boolean = true;
   glosnosc: Integer = 50);
@@ -68,9 +68,9 @@ begin
     setlength(dzwieki, dzw + 1);
 
   if czy_3d then
-    dzwieki[dzw].dz := FSOUND_Sample_Load(FSOUND_FREE, pansichar(ansistring('dane\' + nazwa)), FSOUND_HW3D, 0, 0)
+    dzwieki[dzw].dz := FSOUND_Sample_Load(FSOUND_FREE, pansichar(ansistring(DATA_FOLDER + nazwa)), FSOUND_HW3D, 0, 0)
   else
-    dzwieki[dzw].dz := FSOUND_Sample_Load(FSOUND_FREE, pansichar(ansistring('dane\' + nazwa)), FSOUND_HW2D, 0, 0);
+    dzwieki[dzw].dz := FSOUND_Sample_Load(FSOUND_FREE, pansichar(ansistring(DATA_FOLDER + nazwa)), FSOUND_HW2D, 0, 0);
   if dzwieki[dzw].dz = nil then
   begin
     s := 'Blad przy wczytywaniu dzieku ' + nazwa + #13#10 + FMOD_ErrorString(FSOUND_GetError());
@@ -247,7 +247,7 @@ begin
     muzchannel := FSOUND_Stream_Play(FSOUND_FREE, muzstream);
     FSOUND_SetPaused(muzchannel, true); }
 
-  muzstream := FSOUND_Stream_Open('dane\muzmenu.mp3', FSOUND_LOOP_NORMAL or FSOUND_NORMAL or FSOUND_HW2D, 0, 0);
+  muzstream := FSOUND_Stream_Open(DATA_FOLDER + 'muzmenu.mp3', FSOUND_LOOP_NORMAL or FSOUND_NORMAL or FSOUND_HW2D, 0, 0);
   muzchannel := FSOUND_Stream_PlayEx(FSOUND_FREE, muzstream, 0, false);
 
   FSOUND_SetSFXMasterVolume(Config.Sound.SoundVolume);
@@ -283,10 +283,10 @@ begin
   end;
 
   if loop then
-    muzstream := FSOUND_Stream_Open(pansichar(ansistring('dane\' + s + '.mp3')), FSOUND_LOOP_NORMAL or FSOUND_NORMAL or
+    muzstream := FSOUND_Stream_Open(pansichar(ansistring(DATA_FOLDER + s + '.mp3')), FSOUND_LOOP_NORMAL or FSOUND_NORMAL or
       FSOUND_HW2D, 0, 0)
   else
-    muzstream := FSOUND_Stream_Open(pansichar(ansistring('dane\' + s + '.mp3')), FSOUND_NORMAL or FSOUND_HW2D, 0, 0);
+    muzstream := FSOUND_Stream_Open(pansichar(ansistring(DATA_FOLDER + s + '.mp3')), FSOUND_NORMAL or FSOUND_HW2D, 0, 0);
   muzchannel := FSOUND_Stream_PlayEx(FSOUND_FREE, muzstream, 0, true);
   FSOUND_SetPaused(muzchannel, false);
 

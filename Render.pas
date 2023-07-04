@@ -2003,7 +2003,8 @@ procedure rysuj_gracza;
 
 const
   mata: array [0 .. 3] of GLFloat = (1.00, 1.00, 0.80, 1.0);
-
+  SHADOW_SIZE = 5;
+  SHADOW_SIZE_ADD = 8;
 var
   g, ax: integer;
   r, zni: real;
@@ -2184,7 +2185,7 @@ begin
     glDisable(GL_BLEND); }
   // glPopMatrix;
 
-  j := (gracz.y - gracz.cieny) / 600;
+  j := (gracz.y - gracz.cieny) / 400;
   if j > 0 then
   begin
     if j > 1 then
@@ -2198,16 +2199,16 @@ begin
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glEnable(GL_BLEND);
     glEnable(GL_COLOR_MATERIAL);
-    glColor4f(1, 1, 1, 1 - j);
+    glColor4f(1, 1, 1, 0.8 - j * 0.8);
     glBegin(GL_QUADS);
     glTexCoord2f(0, 1);
-    glVertex3f(-4 - 7 * j, gdzie_y(gracz.x - 4 - 7 * j, gracz.z + 4 + 7 * j, gracz.y) + 0.2, +4 + 7 * j);
+    glVertex3f(-SHADOW_SIZE - SHADOW_SIZE_ADD * j, gdzie_y(gracz.x - SHADOW_SIZE - SHADOW_SIZE_ADD * j, gracz.z + SHADOW_SIZE + SHADOW_SIZE_ADD * j, gracz.y) + 0.2, +SHADOW_SIZE + SHADOW_SIZE_ADD * j);
     glTexCoord2f(1, 1);
-    glVertex3f(+4 + 7 * j, gdzie_y(gracz.x + 4 + 7 * j, gracz.z + 4 + 7 * j, gracz.y) + 0.2, +4 + 7 * j);
+    glVertex3f(+SHADOW_SIZE + SHADOW_SIZE_ADD * j, gdzie_y(gracz.x + SHADOW_SIZE + SHADOW_SIZE_ADD * j, gracz.z + SHADOW_SIZE + SHADOW_SIZE_ADD * j, gracz.y) + 0.2, +SHADOW_SIZE + SHADOW_SIZE_ADD * j);
     glTexCoord2f(1, 0);
-    glVertex3f(+4 + 7 * j, gdzie_y(gracz.x + 4 + 7 * j, gracz.z - 4 - 7 * j, gracz.y) + 0.2, -4 - 7 * j);
+    glVertex3f(+SHADOW_SIZE + SHADOW_SIZE_ADD * j, gdzie_y(gracz.x + SHADOW_SIZE + SHADOW_SIZE_ADD * j, gracz.z - SHADOW_SIZE - SHADOW_SIZE_ADD * j, gracz.y) + 0.2, -SHADOW_SIZE - SHADOW_SIZE_ADD * j);
     glTexCoord2f(0, 0);
-    glVertex3f(-4 - 7 * j, gdzie_y(gracz.x - 4 - 7 * j, gracz.z - 4 - 7 * j, gracz.y) + 0.2, -4 - 7 * j);
+    glVertex3f(-SHADOW_SIZE - SHADOW_SIZE_ADD * j, gdzie_y(gracz.x - SHADOW_SIZE - SHADOW_SIZE_ADD * j, gracz.z - SHADOW_SIZE - SHADOW_SIZE_ADD * j, gracz.y) + 0.2, -SHADOW_SIZE - SHADOW_SIZE_ADD * j);
     glEnd;
     glDisable(GL_BLEND);
     wylacz_teksture;

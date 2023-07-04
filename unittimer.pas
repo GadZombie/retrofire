@@ -413,7 +413,7 @@ function sqrt2(v: real): real;
 procedure normalize(var vec: array of GLFloat);
 function cross_prod(in1, in2: TWektor): TWektor;
 
-function gdzie_y(x, z, y: real): real;
+function gdzie_y(x, z, y: extended): extended;
 procedure xznasiatce(var x: integer; var z: integer; nx, nz: real);
 
 function czy_zawadza_o_scenerie(x, y, z: real; var gx, gz: integer): boolean;
@@ -432,7 +432,8 @@ function FighterObjectTransformProc(FighterId: integer): TTransformProc;
 
 implementation
 
-uses Render, Main, UnitStart, Language, uSfx, uConfig, uSaveGame;
+uses
+  Render, Main, UnitStart, Language, uSfx, uConfig, uSaveGame, GlobalConsts;
 
 // ---------------------------------------------------------------------------
 FUNCTION l2t(liczba: int64; ilosc_lit: byte): string;
@@ -853,69 +854,69 @@ end;
 
 // ---------------------------------------------------------------------------
 // zwraca pozycje Y terenu w pozycji X i Z na ekranie (wzgledem poczatku ukladu wsp.)
-function gdzie_y(x, z, y: real): real;
+function gdzie_y(x, z, y: extended): extended;
 var
-  nx, nz: integer;
-  rx, rz: real;
-  ny1, ny2, ny11, ny22, nyz1, nyz2: real;
-  nyy: real;
+  intX, intZ: integer;
+  fracX, fracZ,
+  resizedX, resizedZ: extended;
 
-  dy1, dy2, dy3: real;
+  ny1, ny2, ny11, ny22, nyz1, nyz2: extended;
+  distY1, distY2, distY3: extended;
 
-  nx_p1, nz_p1: integer;
-
+  intXplus1, intZplus1: integer;
 begin
   if (y >= matka.y - 45) and (x >= matka.x - 530) and (x <= matka.x + 410) and
     (z >= matka.z - (x + matka.x + 530) / 2.52) and (z <= matka.z + (x + matka.x + 530) / 2.52) then
     result := matka.y
   else
   begin
-    nx := trunc((x - ziemia.px) / ziemia.wlk);
-    nz := trunc((z - ziemia.pz) / ziemia.wlk);
-
-    // if (nx>=0) and (nz>=0) and (nx<=ziemia.wx-1) and (nz<=ziemia.wz-1) then begin
-    rx := frac((x - ziemia.px) / ziemia.wlk);
-    rz := frac((z - ziemia.pz) / ziemia.wlk);
-
-    while nx < 0 do
-      nx := nx + ziemia.wx;
-    while nz < 0 do
-      nz := nz + ziemia.wz;
-    while nx >= ziemia.wx do
-      nx := nx - ziemia.wx;
-    while nz >= ziemia.wz do
-      nz := nz - ziemia.wz;
-
-    if (nz + 1 <= ziemia.wz - 1) then
-      nz_p1 := nz + 1
-    else
-      nz_p1 := 0;
-    if (nx + 1 <= ziemia.wx - 1) then
-      nx_p1 := nx + 1
-    else
-      nx_p1 := 0;
-
-    ny1 := ziemia.pk[nx, nz].p;
-    ny11 := ziemia.pk[nx, nz_p1].p;
-
-    ny2 := ziemia.pk[nx_p1, nz].p;
-    ny22 := ziemia.pk[nx_p1, nz_p1].p;
-
-    { nyy:= (ny1 *rx+    ny2 *(2-rx)+
-      ny11*rz+    ny22*(2-rz))/4.0; }
-
-    dy1 := ny11 - ny1;
-    nyz1 := ny1 + dy1 * rz;
-
-    dy2 := ny22 - ny2;
-    nyz2 := ny2 + dy2 * rz;
-
-    dy3 := nyz2 - nyz1;
-    nyy := nyz1 + dy3 * rx;
-
-    result := nyy;
-    { end else
-      result:=0; }
+	  resizedX := (x - ziemia.px) / ziemia.wlk;
+	  resizedZ := (z - ziemia.pz) / ziemia.wlk;
+	
+	  intX := trunc(resizedX);
+	  intZ := trunc(resizedZ);
+	
+	  fracX := frac(resizedX);
+	  fracZ := frac(resizedZ);
+	
+	  intX := intX mod ziemia.wx;
+	  if intX < 0 then
+	  begin
+	    intX := ziemia.wx - 1 + intX;
+	    fracX := 1 + fracX;
+	  end;
+	
+	  intZ := intZ mod ziemia.wz;
+	  if intZ < 0 then
+	  begin
+	    intZ := ziemia.wz - 1 + intZ;
+	    fracZ := 1 + fracZ;
+	  end;
+	
+	  if (intX + 1 <= ziemia.wx - 1) then
+	    intXplus1 := intX + 1
+	  else
+	    intXplus1 := 0;
+	
+	  if (intZ + 1 <= ziemia.wz - 1) then
+	    intZplus1 := intZ + 1
+	  else
+	    intZplus1 := 0;
+	
+	  ny1 := ziemia.pk[intX, intZ].p;
+	  ny11 := ziemia.pk[intX, intZplus1].p;
+	
+	  ny2 := ziemia.pk[intXplus1, intZ].p;
+	  ny22 := ziemia.pk[intXplus1, intZplus1].p;
+	
+	  distY1 := ny11 - ny1;
+	  nyz1 := ny1 + distY1 * fracZ;
+	
+	  distY2 := ny22 - ny2;
+	  nyz2 := ny2 + distY2 * fracZ;
+	
+	  distY3 := nyz2 - nyz1;
+	  result := nyz1 + distY3 * fracX;
   end;
 
 end;
@@ -5204,9 +5205,9 @@ var
 begin
   case gdzie of
     0:
-      nazwa := 'misje/' + nazwa + '.map';
+      nazwa := EXTRA_MISSIONS_FOLDER + nazwa + '.map';
     1:
-      nazwa := 'dane/' + nazwa + '.dmp';
+      nazwa := DATA_FOLDER + nazwa + '.dmp';
   end;
   f := nil;
   try
@@ -6290,7 +6291,7 @@ begin
   f := nil;
   try
     try
-      f := TFileStream.Create('misje\' + nazwa, fmOpenRead);
+      f := TFileStream.Create(EXTRA_MISSIONS_FOLDER + nazwa, fmOpenRead);
 
       epizody[nr].tytul := wczytajstring(f);
 
@@ -6382,7 +6383,7 @@ begin
   setlength(obiekt, 25);
 
   obiekt[ob_gracz].o := TOBJModel.Create;
-  obiekt[ob_gracz].o.LoadFromFile('dane\l3.obj', 5);
+  obiekt[ob_gracz].o.LoadFromFile(DATA_FOLDER + 'l3.obj', 5);
   obiekt[ob_gracz].tex := 3;
   obiekt[ob_gracz].mat_a[0] := 0.2;
   obiekt[ob_gracz].mat_a[1] := 0.2;
@@ -6401,7 +6402,7 @@ begin
   setlength(gracz.elementy, length(obiekt[ob_gracz].o.Groups));
 
   obiekt[ob_pilot].o := TOBJModel.Create;
-  obiekt[ob_pilot].o.LoadFromFile('dane\pilot.obj', 0.4);
+  obiekt[ob_pilot].o.LoadFromFile(DATA_FOLDER + 'pilot.obj', 0.4);
   obiekt[ob_pilot].tex := 5;
   obiekt[ob_pilot].mat_a[0] := 0.3;
   obiekt[ob_pilot].mat_a[1] := 0.3;
@@ -6419,7 +6420,7 @@ begin
   FormStart.progres.StepIt;
 
   obiekt[ob_matka].o := TOBJModel.Create;
-  obiekt[ob_matka].o.LoadFromFile('dane\moth2.obj');
+  obiekt[ob_matka].o.LoadFromFile(DATA_FOLDER + 'moth2.obj');
   obiekt[ob_matka].tex := 6;
   obiekt[ob_matka].mat_a[0] := 0.3;
   obiekt[ob_matka].mat_a[1] := 0.3;
@@ -6437,7 +6438,7 @@ begin
   FormStart.progres.StepIt;
 
   obiekt[ob_dzialko].o := TOBJModel.Create;
-  obiekt[ob_dzialko].o.LoadFromFile('dane\dzn0.obj', 2);
+  obiekt[ob_dzialko].o.LoadFromFile(DATA_FOLDER + 'dzn0.obj', 2);
   obiekt[ob_dzialko].tex := 8;
   obiekt[ob_dzialko].mat_a[0] := 0.3;
   obiekt[ob_dzialko].mat_a[1] := 0.3;
@@ -6455,7 +6456,7 @@ begin
   FormStart.progres.StepIt;
 
   obiekt[ob_dzialkokawalki].o := TOBJModel.Create;
-  obiekt[ob_dzialkokawalki].o.LoadFromFile('dane\dzkaw.obj', 2);
+  obiekt[ob_dzialkokawalki].o.LoadFromFile(DATA_FOLDER + 'dzkaw.obj', 2);
   obiekt[ob_dzialkokawalki].tex := 8;
   obiekt[ob_dzialkokawalki].mat_a[0] := 0.3;
   obiekt[ob_dzialkokawalki].mat_a[1] := 0.3;
@@ -6473,7 +6474,7 @@ begin
   FormStart.progres.StepIt;
 
   obiekt[ob_dzialkowieza].o := TOBJModel.Create;
-  obiekt[ob_dzialkowieza].o.LoadFromFile('dane\dzn1.obj', 2);
+  obiekt[ob_dzialkowieza].o.LoadFromFile(DATA_FOLDER + 'dzn1.obj', 2);
   obiekt[ob_dzialkowieza].tex := 8;
   obiekt[ob_dzialkowieza].mat_a[0] := 0.3;
   obiekt[ob_dzialkowieza].mat_a[1] := 0.4;
@@ -6491,7 +6492,7 @@ begin
   FormStart.progres.StepIt;
 
   obiekt[ob_dzialkowieza2].o := TOBJModel.Create;
-  obiekt[ob_dzialkowieza2].o.LoadFromFile('dane\dzn12.obj', 2);
+  obiekt[ob_dzialkowieza2].o.LoadFromFile(DATA_FOLDER + 'dzn12.obj', 2);
   obiekt[ob_dzialkowieza2].tex := 8;
   obiekt[ob_dzialkowieza2].mat_a[0] := 0.3;
   obiekt[ob_dzialkowieza2].mat_a[1] := 0.4;
@@ -6509,7 +6510,7 @@ begin
   FormStart.progres.StepIt;
 
   obiekt[ob_dzialkolufa].o := TOBJModel.Create;
-  obiekt[ob_dzialkolufa].o.LoadFromFile('dane\dzn2.obj', 2);
+  obiekt[ob_dzialkolufa].o.LoadFromFile(DATA_FOLDER + 'dzn2.obj', 2);
   obiekt[ob_dzialkolufa].tex := 8;
   obiekt[ob_dzialkolufa].mat_a[0] := 0.3;
   obiekt[ob_dzialkolufa].mat_a[1] := 0.3;
@@ -6527,7 +6528,7 @@ begin
   FormStart.progres.StepIt;
 
   obiekt[ob_dzialkolufa2].o := TOBJModel.Create;
-  obiekt[ob_dzialkolufa2].o.LoadFromFile('dane\dzn22.obj', 2);
+  obiekt[ob_dzialkolufa2].o.LoadFromFile(DATA_FOLDER + 'dzn22.obj', 2);
   obiekt[ob_dzialkolufa2].tex := 8;
   obiekt[ob_dzialkolufa2].mat_a[0] := 0.3;
   obiekt[ob_dzialkolufa2].mat_a[1] := 0.3;
@@ -6545,7 +6546,7 @@ begin
   FormStart.progres.StepIt;
 
   obiekt[ob_rakieta].o := TOBJModel.Create;
-  obiekt[ob_rakieta].o.LoadFromFile('dane\rakieta.obj', 0.3);
+  obiekt[ob_rakieta].o.LoadFromFile(DATA_FOLDER + 'rakieta.obj', 0.3);
   obiekt[ob_rakieta].tex := 5;
   obiekt[ob_rakieta].mat_a[0] := 0.3;
   obiekt[ob_rakieta].mat_a[1] := 0.3;
@@ -6563,7 +6564,7 @@ begin
   FormStart.progres.StepIt;
 
   obiekt[ob_mysliwiec].o := TOBJModel.Create;
-  obiekt[ob_mysliwiec].o.LoadFromFile('dane\lat.obj', 1.3);
+  obiekt[ob_mysliwiec].o.LoadFromFile(DATA_FOLDER + 'lat.obj', 1.3);
   obiekt[ob_mysliwiec].tex := 8;
   obiekt[ob_mysliwiec].mat_a[0] := 0.3;
   obiekt[ob_mysliwiec].mat_a[1] := 0.3;
@@ -6581,7 +6582,7 @@ begin
   FormStart.progres.StepIt;
 
   obiekt[ob_kokpit].o := TOBJModel.Create;
-  obiekt[ob_kokpit].o.LoadFromFile('dane\kokpit.obj');
+  obiekt[ob_kokpit].o.LoadFromFile(DATA_FOLDER + 'kokpit.obj');
   obiekt[ob_kokpit].tex := 14;
   obiekt[ob_kokpit].mat_a[0] := 0.3;
   obiekt[ob_kokpit].mat_a[1] := 0.3;
@@ -6599,7 +6600,7 @@ begin
   FormStart.progres.StepIt;
 
   obiekt[ob_kamien].o := TOBJModel.Create;
-  obiekt[ob_kamien].o.LoadFromFile('dane\kamo.obj', 2.4);
+  obiekt[ob_kamien].o.LoadFromFile(DATA_FOLDER + 'kamo.obj', 2.4);
   obiekt[ob_kamien].tex := 1;
   obiekt[ob_kamien].mat_a[0] := 0.3;
   obiekt[ob_kamien].mat_a[1] := 0.3;
@@ -6619,7 +6620,7 @@ begin
   for a := 0 to ile_obiektow_scenerii - 1 do
   begin
     obiekt[ob_sceneria1 + a].o := TOBJModel.Create;
-    obiekt[ob_sceneria1 + a].o.LoadFromFile('dane\sc' + inttostr(a + 1) + '.obj');
+    obiekt[ob_sceneria1 + a].o.LoadFromFile(DATA_FOLDER + 'sc' + inttostr(a + 1) + '.obj');
     obiekt[ob_sceneria1 + a].tex := 1;
     FormStart.progres.StepIt;
   end;
@@ -6676,7 +6677,7 @@ begin
   FormStart.progres.StepIt;
 
   FileAttrs := faReadOnly or faArchive or faAnyFile;
-  if FindFirst('misje\*.RFepz', FileAttrs, sr) = 0 then
+  if FindFirst(EXTRA_MISSIONS_FOLDER + '*.RFepz', FileAttrs, sr) = 0 then
   begin
     repeat
       if (sr.Attr and FileAttrs) = sr.Attr then

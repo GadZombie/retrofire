@@ -25,10 +25,10 @@ uses
   GlobalConsts in 'GlobalConsts.pas',
   GlobalTypes in 'GlobalTypes.pas',
   uSpecialFolders in '..\..\KomponentyBiblioteki\SpecialFolders\uSpecialFolders.pas',
-  uGraphicModes in 'SetupNew\uGraphicModes.pas',
   uConfig in 'uConfig.pas',
   uSfx in 'uSfx.pas',
-  uSaveGame in 'uSaveGame.pas';
+  uSaveGame in 'uSaveGame.pas',
+  uGraphicModes in 'Setup\uGraphicModes.pas';
 
 {$R *.RES}
 
