@@ -2396,6 +2396,9 @@ begin
     glRotatef(-gracz.dx*3, 0,0,gracz.wykrecsila); }
   // glRotatef(90,0,1,0);
 
+  glRotatef(gracz.dz * 0.5 * gracz.wykrecsila, 1, 0, 0);
+  glRotatef(-gracz.dx * 0.5 * gracz.wykrecsila, 0, 0, 1);
+
   glRotatef(gracz.kier, 0, -1, 0);
   glRotatef(10, 1, 0, 0);
   glTranslatef(0, -0.8, -1);
@@ -3682,6 +3685,7 @@ begin
         glLoadIdentity();
 
         gluPerspective(katwidzenia, currentScreenParams.Aspect, 0.2, 9000.0);
+
         glMatrixMode(GL_MODELVIEW);
         glLoadIdentity();
 

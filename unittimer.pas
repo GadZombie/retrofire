@@ -1812,8 +1812,10 @@ begin
       end
       else // strzel prosto
         strzel(gracz.x + sin((90 + gracz.kier) * pi180) * (3 * gracz.stronastrzalu), gracz.y - 2,
-          gracz.z - cos((90 + gracz.kier) * pi180) * (3 * gracz.stronastrzalu), sin(gracz.kier * pi180) * szybstrz +
-          gracz.dx, -0.55 * szybstrz + gracz.dy, -cos(gracz.kier * pi180) * szybstrz + gracz.dz, 0, rodzpoc);
+          gracz.z - cos((90 + gracz.kier) * pi180) * (3 * gracz.stronastrzalu),
+          sin(gracz.kier * pi180) * szybstrz + gracz.dx,
+          -0.55 * szybstrz + gracz.dy - Distance2D(0, 0, gracz.dx, gracz.dz) * 0.5,
+          -cos(gracz.kier * pi180) * szybstrz + gracz.dz, 0, rodzpoc);
 
       if rodzpoc = 0 then
       begin
@@ -4217,18 +4219,8 @@ begin
         gra.jestkamera[0, 1] := gracz.dy * 1 + gracz.y + 3;
         gra.jestkamera[0, 2] := gracz.dz * 1 + gracz.z - cos((gracz.kier) * pi180);
         gra.jestkamera[1, 0] := gracz.dx * 1 + gracz.x + sin((gracz.kier) * pi180) * 10;
-        gra.jestkamera[1, 1] := gracz.dy * 1 + gracz.y - 1{ + gracz.dy * 1};
+        gra.jestkamera[1, 1] := gracz.dy * 1 + gracz.y - 1 - Distance2D(0, 0, gracz.dx, gracz.dz) * 0.5;
         gra.jestkamera[1, 2] := gracz.dz * 1 + gracz.z - cos((gracz.kier) * pi180) * 10;
-
-//        gra.jestkamera[0, 0] := gracz.dx * 0.8 + gracz.x + sin((gracz.kier) * pi180);
-//        gra.jestkamera[0, 1] := {gracz.dy * 0.8 + }gracz.y + 3;
-//        gra.jestkamera[0, 2] := gracz.dz * 0.8 + gracz.z - cos((gracz.kier) * pi180);
-//        gra.jestkamera[1, 0] := gracz.dx * 0.8 + gracz.x + sin((gracz.kier) * pi180) * 10;
-//        gra.jestkamera[1, 1] := {gracz.dy * 0.8 + }gracz.y{ + gracz.dy * 1};
-//        gra.jestkamera[1, 2] := gracz.dz * 0.8 + gracz.z - cos((gracz.kier) * pi180) * 10;
-        {gra.jestkamera[2, 0] := gracz.dx / 6;
-        gra.jestkamera[2, 1] := 1;
-        gra.jestkamera[2, 2] := gracz.dz / 6;}
 
         kx := gracz.dx / 6;
         ky := 1;
@@ -4238,11 +4230,6 @@ begin
         gra.kamera[2, 0] := kx;
         gra.kamera[2, 1] := ky;
         gra.kamera[2, 2] := kz;
-
-        { glRotatef(gracz.dz*6, gracz.wykrecsila,0,0);
-          glRotatef(-gracz.dx*6, 0,0,gracz.wykrecsila);
-          glRotatef(gracz.kier,0,-1,0);
-          glRotatef(180,0,1,0); }
 
       end;
   end;
