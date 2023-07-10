@@ -28,7 +28,8 @@ uses
   uConfig in 'uConfig.pas',
   uSfx in 'uSfx.pas',
   uSaveGame in 'uSaveGame.pas',
-  uGraphicModes in 'Setup\uGraphicModes.pas';
+  uGraphicModes in 'Setup\uGraphicModes.pas',
+  uSimpleLetters in 'uSimpleLetters.pas';
 
 {$R *.RES}
 

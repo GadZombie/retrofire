@@ -6723,6 +6723,8 @@ begin
     end;
   end;
 
+  RenderInit;
+
   glClearColor(0, 0, 0, 0);
 
   frmMain.PowerTimer1.MayProcess := true;

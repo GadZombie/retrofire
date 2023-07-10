@@ -3,7 +3,7 @@ unit render;
 interface
 
 uses Windows, OpenGl, Gl, Glu, GLext, Api_Func, unitTimer, sysutils, obj,
-  Language, GlobalConsts;
+  Language, GlobalConsts, ZGLMathProcs, uSimpleLetters;
 
 procedure RenderScene;
 procedure RenderFrame;
@@ -20,7 +20,10 @@ var
   widocznosckrzak: integer = 10; // krzaki
   odlwidzenia: integer = 2000;
 
+  SimpleLetters: TSimpleLetters;
+
 procedure tworz_obiekty;
+procedure RenderInit;
 
 implementation
 
@@ -114,6 +117,12 @@ var
   l_dzialko, l_dzialkowieza, l_dzialkowieza2, l_dzialkolufa, l_dzialkolufa2, l_rakieta, l_mysliwiec, l_cien: GLUint;
   l_sceneria: array [0 .. ile_obiektow_scenerii - 1] of GLUint;
   l_krzaki: array [0 .. 3] of GLUint;
+
+
+procedure RenderInit;
+begin
+  SimpleLetters := TSimpleLetters.Create;
+end;
 
 procedure SetGluOrtho2DForMenu(out width: integer; out height: integer);
 begin
@@ -2216,6 +2225,7 @@ begin
   end;
 end;
 
+
 // ---------------------------------------------------------------------------
 procedure rysuj_kokpit;
 
@@ -2228,6 +2238,32 @@ var
   right, up: array [0 .. 2] of GLFloat;
   // ={viewMatrix[0], viewMatrix[4], viewMatrix[8]};
   viewMatrix: array [0 .. 15] of GLFloat;
+
+  procedure BeginDrawGlassLabels;
+  begin
+    glPushMatrix;
+    wylacz_teksture;
+    glEnable(GL_COLOR_MATERIAL);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glEnable(GL_LINE_SMOOTH);
+    glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);
+    glDisable(GL_LIGHTING);
+    glDisable(GL_FOG);
+    glEnable(GL_SMOOTH);
+    glDepthMask(GL_FALSE);
+  end;
+
+  procedure EndDrawGlassLabels;
+  begin
+    glDepthMask(GL_TRUE);
+    glDisable(GL_BLEND);
+    glDisable(GL_COLOR_MATERIAL);
+    glEnable(GL_LIGHTING);
+    glEnable(GL_FOG);
+
+    glPopMatrix;
+  end;
 
   procedure DrawViewfinder;
   const
@@ -2255,13 +2291,7 @@ var
   var
     n, m: integer;
   begin
-    glPushMatrix;
     glRotatef(33, -1, 0, 0);
-    wylacz_teksture;
-    glEnable(GL_COLOR_MATERIAL);
-    glEnable(GL_BLEND);
-    glDisable(GL_LIGHTING);
-    glDisable(GL_FOG);
 
     glBegin(GL_LINES);
 
@@ -2309,12 +2339,49 @@ var
     end;
 
     glEnd();
-    glDisable(GL_BLEND);
-    glDisable(GL_COLOR_MATERIAL);
-    glEnable(GL_LIGHTING);
-    glEnable(GL_FOG);
+  end;
 
-    glPopMatrix;
+  procedure DrawCompass;
+  const
+    W_Z = -10;
+    COMPAS_Y_FROM = 2.5;
+    COMPAS_Y_TO = 2;
+    COMPAS_Y_LETTER= 2.25;
+    COMPAS_WIDTH_DEG = 30;
+    COMPAS_WIDTH_SPACING = 5;
+
+    DIRECTIONS: array[0..3] of Char = ('N', 'E', 'S', 'W');
+  var
+    n: integer;
+    s: string;
+  begin
+    if gracz.y >= matka.y - 100 then
+      exit;
+    glColor4f(1, 1, 1, 0.7);
+    glRotatef(33, 1, 0, 0);
+
+    glRotatef(gracz.kier, 0, 1, 0);
+    n := (round(-COMPAS_WIDTH_DEG + gracz.kier + COMPAS_WIDTH_SPACING) div COMPAS_WIDTH_SPACING) * COMPAS_WIDTH_SPACING;
+    while (n < round(COMPAS_WIDTH_DEG + gracz.kier)) do
+    begin
+      glPushMatrix;
+      glRotatef(n, 0, -1, 0);
+
+      if (n mod 90) = 0 then
+      begin
+        SimpleLetters.Draw(DIRECTIONS[trunc(keepValueInBounds(2 + (n div 90) mod 4, 4))], 0, COMPAS_Y_LETTER, W_Z, 0.5);
+      end
+      else
+      begin
+        glBegin(GL_LINES);
+          glVertex3f(0, COMPAS_Y_FROM, W_Z);
+          glVertex3f(0, COMPAS_Y_TO, W_Z);
+        glEnd();
+      end;
+
+      inc(n, COMPAS_WIDTH_SPACING);
+      glPopMatrix;
+    end;
   end;
 
 begin
@@ -2338,7 +2405,10 @@ begin
   // glScalef(5,5,5);
   pokaz_obiekt(obiekt[ob_kokpit]);
 
+  BeginDrawGlassLabels;
   DrawViewfinder;
+  DrawCompass;
+  EndDrawGlassLabels;
 
   glPopMatrix;
 
