@@ -4649,7 +4649,7 @@ begin
 
   inc(intro.czas2);
 
-  if (intro.czas = 400) or (intro.czas = 600) or (intro.czas = 1300) then
+  if (intro.czas = 400) or (intro.czas = 600) or (intro.czas = 1730) then
   begin
     inc(intro.scena);
     intro.czas2 := 0;
@@ -4717,6 +4717,9 @@ begin
     { if gra.misjawypelniona then Sfx.stop_dzwiek(11)
       else Sfx.stop_dzwiek(12); }
     Sfx.muzyke_wylacz;
+    matka.x := 0;
+    matka.y := 0;
+    matka.z := 0;
     if gra.misjawypelniona and (gra.zycia >= 1) then
     begin
       // wejdz do zapisu po wygranej

@@ -4302,7 +4302,7 @@ begin
     end;
 
     glColor4f(0.5, 1, 0.5, r * 0.8);
-    pisz2d(mainIntroLines[glowneintro.scena - 1].s, currentScreenParams.MenuCenter, 240, 10, 1);
+    pisz2d(mainIntroLines[glowneintro.scena - 1].s, currentScreenParams.MenuCenter, 240, 10 + (glowneintro.czas2 / 220), 1);
 
   end;
 
