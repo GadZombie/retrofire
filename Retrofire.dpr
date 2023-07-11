@@ -29,7 +29,11 @@ uses
   uSfx in 'uSfx.pas',
   uSaveGame in 'uSaveGame.pas',
   uGraphicModes in 'Setup\uGraphicModes.pas',
-  uSimpleLetters in 'uSimpleLetters.pas';
+  uSimpleLetters in 'uSimpleLetters.pas',
+  uSmokesLogic in 'uSmokesLogic.pas',
+  uSmokesRender in 'uSmokesRender.pas',
+  uSprites in 'uSprites.pas',
+  uRenderConst in 'uRenderConst.pas';
 
 {$R *.RES}
 

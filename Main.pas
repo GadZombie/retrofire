@@ -94,6 +94,7 @@ implementation
 
 uses
   unittimer, UnitStart,
+  uRenderConst,
   //uFBOUtils,
   //uRenderGlobal,
 //  uSoundFX,

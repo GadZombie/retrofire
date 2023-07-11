@@ -12,14 +12,6 @@ var
   j, t, x, y, z: real;
   i: integer;
 
-  widocznosc: integer = 80; { dla 1300 bylo 60 }
-  widocznoscpil: integer = 20; // pilotow
-  widocznoscdzial: integer = 80; // dzialka
-  widocznoscscen: integer = 53; // sceneria
-  widocznoscscencien: integer = 25; // cien scenerii
-  widocznosckrzak: integer = 10; // krzaki
-  odlwidzenia: integer = 2000;
-
   SimpleLetters: TSimpleLetters;
 
 procedure tworz_obiekty;
@@ -27,92 +19,11 @@ procedure RenderInit;
 
 implementation
 
-uses Main, unittex, Forms, GlobalTypes, uConfig, uSaveGame;
-
-const
-  katwidzenia = 70;
+uses
+  uRenderConst, uSprites, Main, unittex, Forms, GlobalTypes, uConfig, uSaveGame,
+  uSmokesRender;
 
 var
-  mat_spec: array [0 .. 3] of GLFloat = (
-    1.00,
-    1.00,
-    1.00,
-    1.0
-  );
-  mat_1a: array [0 .. 3] of GLFloat = (
-    0.70,
-    0.70,
-    0.70,
-    1.0
-  );
-  mat_1d: array [0 .. 3] of GLFloat = (
-    0.70,
-    0.70,
-    0.70,
-    1.0
-  );
-  mat_1s: array [0 .. 3] of GLFloat = (
-    1.00,
-    1.00,
-    1.00,
-    1.0
-  );
-
-  pos1: array [0 .. 3] of GLFloat = (
-    200.0,
-    200.0,
-    100.0,
-    1.0
-  );
-  pos1win: array [0 .. 3] of GLFloat = (
-    -4200,
-    2700,
-    -3000,
-    1.0
-  );
-  light_ka0: array [0 .. 3] of GLFloat = (
-    0.30,
-    0.30,
-    0.25,
-    1.0
-  );
-  light_kd0: array [0 .. 3] of GLFloat = (
-    0.30,
-    0.30,
-    0.25,
-    1.0
-  );
-  light_ks0: array [0 .. 3] of GLFloat = (
-    0.30,
-    0.30,
-    0.25,
-    1.0
-  );
-
-  light_ka1: array [0 .. 3] of GLFloat = (
-    0.80,
-    0.80,
-    0.75,
-    1.0
-  );
-  light_kd1: array [0 .. 3] of GLFloat = (
-    0.80,
-    0.80,
-    0.75,
-    1.0
-  );
-  light_ks1: array [0 .. 3] of GLFloat = (
-    1.00,
-    1.00,
-    0.95,
-    1.0
-  );
-
-  right: array [0 .. 2] of GLFloat;
-  // ={viewMatrix[0], viewMatrix[4], viewMatrix[8]};
-  up: array [0 .. 2] of GLFloat;
-  // ={viewMatrix[1], viewMatrix[5], viewMatrix[9]};
-
   // listy:
   l_dzialko, l_dzialkowieza, l_dzialkowieza2, l_dzialkolufa, l_dzialkolufa2, l_rakieta, l_mysliwiec, l_cien: GLUint;
   l_sceneria: array [0 .. ile_obiektow_scenerii - 1] of GLUint;
@@ -141,40 +52,6 @@ begin
   glLoadIdentity();
   RenderFrame;
   SwapBuffers(h_DC);
-end;
-
-// ---------------------------------------------------------------------------
-procedure rysuj_sprajt(sx, sy, sz, sr: real; right, up: array of GLFloat; obrot: real = 0);
-begin
-  glMatrixMode(GL_TEXTURE);
-  glLoadIdentity();
-  glTranslatef(0.5, 0.5, 0);
-  glRotatef(obrot, 0, 0, 1);
-  glTranslatef(-0.5, -0.5, 0);
-  glMatrixMode(GL_MODELVIEW);
-
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
-
-  glBegin(GL_QUADS);
-  glTexCoord2f(0.0, 0.0);
-  glVertex3f((sx + (right[0] + up[0]) * -sr), (sy + (right[1] + up[1]) * -sr), (sz + (right[2] + up[2]) * -sr));
-  glTexCoord2f(1.0, 0.0);
-  glVertex3f((sx + (right[0] - up[0]) * sr), (sy + (right[1] - up[1]) * sr), (sz + (right[2] - up[2]) * sr));
-  glTexCoord2f(1.0, 1.0);
-  glVertex3f((sx + (right[0] + up[0]) * sr), (sy + (right[1] + up[1]) * sr), (sz + (right[2] + up[2]) * sr));
-  glTexCoord2f(0.0, 1.0);
-  glVertex3f((sx + (up[0] - right[0]) * sr), (sy + (up[1] - right[1]) * sr), (sz + (up[2] - right[2]) * sr));
-  glEnd();
-
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-
-  glMatrixMode(GL_TEXTURE);
-  glLoadIdentity();
-
-  glMatrixMode(GL_MODELVIEW);
-
 end;
 
 // ---------------------------------------------------------------------------
@@ -2514,87 +2391,6 @@ begin
 end;
 
 // ---------------------------------------------------------------------------
-procedure rysuj_dymy;
-
-var
-  a: integer;
-  xod, xdo, zod, zdo, x1, z1: real;
-begin
-  // dym
-  glPushAttrib(GL_ALL_ATTRIB_BITS);
-  glEnable(GL_COLOR_MATERIAL);
-  glDisable(GL_LIGHTING);
-  // glDisable(GL_FOG);
-  glPolygonMode(GL_FRONT, GL_FILL);
-  glEnable(GL_BLEND);
-  glDepthMask(GL_FALSE);
-  glEnable(GL_CULL_FACE);
-  glCullFace(GL_BACK);
-
-  xod := gracz.x - widocznosc * ziemia.wlk;
-  xdo := gracz.x + widocznosc * ziemia.wlk;
-  zod := gracz.z - widocznosc * ziemia.wlk;
-  zdo := gracz.z + widocznosc * ziemia.wlk;
-
-  glMaterialf(GL_FRONT, GL_SHININESS, 1);
-  for a := 0 to high(dym) do
-    if dym[a].jest and (dym[a].rodz <> 2) then
-      with dym[a] do
-      begin
-
-        if gra.etap = 1 then
-        begin
-          if x < xod then
-            x1 := x - ziemia.px * 2
-          else if x > xdo then
-            x1 := x + ziemia.px * 2
-          else
-            x1 := x;
-          if z < zod then
-            z1 := z - ziemia.pz * 2
-          else if z > zdo then
-            z1 := z + ziemia.pz * 2
-          else
-            z1 := z;
-        end
-        else
-        begin
-          x1 := x;
-          z1 := z;
-        end;
-
-        if ((x1 >= xod) and (x1 <= xdo) and (z1 >= zod) and (z1 <= zdo)) or (gra.etap <> 1) then
-        begin
-          if rodz = 0 then
-            glBlendFunc(GL_SRC_ALPHA, GL_ONE)
-          else
-            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-          glColor4f(kolr, kolg, kolb, przezr);
-          wlacz_teksture(tekstura);
-          glPushMatrix;
-          (* glTranslatef(x1,y,z1);
-            glRotatef(licz*10,right[2] + up[2],right[1] + up[1],right[0] + up[0]{right[0] + up[0],right[1] + up[1],right[2] + up[2]});
-            glTranslatef(-x1,-y,-z1); *)
-          {
-            glVertex3f (
-            (sx + (right[0] + up[0]) * -sr),
-            (sy + (right[1] + up[1]) * -sr),
-            (sz + (right[2] + up[2]) * -sr)
-            );
-          }
-          rysuj_sprajt(x1, y, z1, rozmiar, right, up, obrot);
-          glPopMatrix;
-          wylacz_teksture;
-        end;
-
-      end;
-  wylacz_teksture;
-
-  glPopAttrib;
-end;
-
-// ---------------------------------------------------------------------------
 procedure rysuj_iskry;
 
 var
@@ -4771,9 +4567,10 @@ begin
         (((gra.etap=0) and (intro.scena=1)) or
         ((gra.etap=1) and (gracz.zyje))) then rysuj_gracza }
       if ((gra.etap = 0) and (intro.scena = 1)) or ((gra.etap = 1) and ((kamera <> 7) or gra.pauza) and gracz.zyje) then
-        rysuj_gracza
-      else if (gra.etap = 1) and (kamera = 7) and (gracz.zyje) then
-        rysuj_kokpit;
+        rysuj_gracza;
+
+//      else if (gra.etap = 1) and (kamera = 7) and (gracz.zyje) then
+//        rysuj_kokpit;
 
       if gra.etap = 1 then
       begin
@@ -4784,10 +4581,8 @@ begin
         rysuj_mysliwce;
       end;
 
-      if gra.etap = 1 then
-      begin
-        // rysuj_krzaki;
-      end;
+      if (gra.etap = 1) and (kamera = 7) and (gracz.zyje) then
+        rysuj_kokpit;
 
       rysuj_dymy;
       rysuj_iskry;
