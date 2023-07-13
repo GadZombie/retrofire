@@ -7,360 +7,8 @@ uses
   directinput8, OpenGl, gl, Glu, glext, unittex, obj, sysutils, classes,
   windows,
   fmod, fmodtypes, fmoderrors, fmodpresets, powerinputs, forms,
-  ZGLMathProcs, ZGLGraphMath;
-
-type
-  TUpgradeItem = record
-    ile: real;
-    cena: integer;
-  end;
-
-const
-  pi180 = pi / 180;
-
-  ob_gracz = 0;
-  ob_pilot = 1;
-  ob_matka = 2;
-  ob_dzialko = 3;
-  ob_dzialkolufa = 4;
-  ob_rakieta = 5;
-  ob_dzialkokawalki = 6;
-  ob_dzialkowieza = 7;
-  ob_mysliwiec = 8;
-  ob_dzialkowieza2 = 9;
-  ob_dzialkolufa2 = 10;
-  ob_kokpit = 11;
-  ob_kamien = 12;
-
-  ob_sceneria1 = 13;
-  ile_obiektow_scenerii = 6;
-
-  upgrade: array [0 .. 5, 0 .. 9] of TUpgradeItem = (
-    { paliwo } ((ile: 150; cena: 0), (ile: 180; cena: 450), (ile: 200; cena: 900), (ile: 240; cena: 1395), (ile: 290;
-    cena: 2070), (ile: 320; cena: 2430), (ile: 340; cena: 3150), (ile: 360; cena: 3630), (ile: 400;
-    cena: 4380), (ile: 450; cena: 5100)),
-    { rakiety } ((ile: 8; cena: 0), (ile: 12; cena: 270), (ile: 16; cena: 450), (ile: 20; cena: 630), (ile: 26;
-    cena: 810), (ile: 32; cena: 960), (ile: 36; cena: 1140), (ile: 40; cena: 1500), (ile: 46; cena: 2250), (ile: 54;
-    cena: 4140)),
-    { dzialko } ((ile: 50; cena: 0), (ile: 80; cena: 240), (ile: 130; cena: 440), (ile: 160; cena: 600), (ile: 200;
-    cena: 720), (ile: 250; cena: 890), (ile: 300; cena: 1100), (ile: 340; cena: 1400), (ile: 380;
-    cena: 2100), (ile: 500; cena: 3950)),
-    { sila } ((ile: 0.8; cena: 0), (ile: 0.9; cena: 360), (ile: 1; cena: 510), (ile: 1.2; cena: 750), (ile: 1.5;
-    cena: 1140), (ile: 2; cena: 1560), (ile: 2.5; cena: 2340), (ile: 3; cena: 2700), (ile: 3.5; cena: 3450), (ile: 4;
-    cena: 4820)),
-    { chlodzenie } ((ile: 0.3; cena: 0), (ile: 0.5; cena: 270), (ile: 0.6; cena: 510), (ile: 0.7; cena: 690), (ile: 0.8;
-    cena: 972), (ile: 1; cena: 1110), (ile: 1.5; cena: 1537), (ile: 2; cena: 1975), (ile: 2.5; cena: 2360), (ile: 3;
-    cena: 2998)),
-    { ladownosc } ((ile: 8; cena: 0), (ile: 9; cena: 600), (ile: 10; cena: 930), (ile: 11; cena: 1240), (ile: 12;
-    cena: 1620), (ile: 14; cena: 1980), (ile: 16; cena: 2375), (ile: 18; cena: 2827), (ile: 20; cena: 4080), (ile: 24;
-    cena: 6250)));
-
-  cenazycia = 3000;
-  maxoslonablysk = 1.2;
-  maxcheats = 6;
-  cheatcodes: array [0 .. maxcheats] of string = ('FULL', 'GOD', 'FUEL', 'WEAPON', 'LIVES', 'LOAD', 'TIME');
-
-type
-  TWektor = array [0 .. 3] of GLFloat;
-
-  Tobiekt = record
-    o: TOBJModel;
-    tex: byte;
-    mat_a: array [0 .. 3] of GLFloat;
-    mat_d: array [0 .. 3] of GLFloat;
-    mat_s: array [0 .. 3] of GLFloat;
-    mat_shin: integer;
-  end;
-
-  TGraczElement = record
-    obrx, obry, obrz: real;
-  end;
-
-  TPlayer = record
-    x, y, z, cieny: real;
-    dx, dy, dz, nacisk: real;
-
-    kier: real; // kierunek ruchu
-    szybkier: real; // szybkosc obracania sie
-    szyb: real;
-
-    wykrecsila: real;
-    swiatlodol, swiatlotyl, swiatlogora, swiatlolewo, swiatloprawo: real;
-
-    sila, maxsila: real;
-    temp, chlodz: real;
-
-    paliwo, maxpaliwa: real;
-    zyje: boolean;
-
-    stoi, namatce: boolean;
-
-    pilotow, ladownosc, zlychpilotow: integer;
-
-    grlot: integer; // na jakim lotnisku stoi gracz; -1=zaden
-
-    maxrakiet, ilerakiet: integer;
-    maxdzialko, iledzialko: integer;
-    stronastrzalu: shortint;
-
-    oslonablysk: real;
-
-    namierzone, conamierzone: integer; // 0=dzialko, 1=mysliwiec
-
-    _namierzone, _conamierzone: integer; // 0=dzialko, 1=mysliwiec
-
-    odlegloscnamierzonegodzialka: real;
-
-    zlywsrodku: boolean;
-    elementy: array of TGraczElement;
-
-    uszkodzenia: array [0 .. 0] of boolean; // 0=latarka
-    randuszkodzenia: integer;
-    silaskrzywien: real;
-  end;
-
-  TMotherShip = record
-    x, y, z: real;
-    cx, cz: real;
-
-    widac: real;
-    otwarcie_drzwi: real; // podawane w % od 0 do 1
-  end;
-
-  TKrzak = record
-    jest: boolean;
-    x, y, z: real;
-    obrx, obry, obrz: integer;
-    rozm: single;
-    kr, kg, kb: single;
-    rodzaj: byte;
-  end;
-
-  TZiemiaPunkt = record
-    p: real;
-    norm: TWektor;
-    kr, kg, kb: real;
-    tex: real;
-    rodzaj: byte; { 0-nic, 1-ladowisko }
-
-    scen: boolean;
-    scen_rodz: byte;
-    sckr, sckg, sckb: single;
-    scen_obrx, scen_obry, scen_obrz: integer;
-    scen_rozm: single;
-
-    krzaki: array of TKrzak;
-  end;
-
-  TGround = record
-    px, pz: real;
-    wx, wz: integer;
-    pk: array of array of TZiemiaPunkt;
-
-    wlk: integer;
-
-    grawitacja: real;
-    gestoscpowietrza: real;
-
-    koltla, jestkoltla: array [0 .. 3] of GLFloat;
-    widac: real;
-
-    chmuryx, chmuryz: real;
-  end;
-
-  TLightsource = record
-    jest: boolean;
-    x, y, z: real;
-    jasnosc: real;
-    szybkosc: real;
-  end;
-
-  TSpark = record
-    jest: boolean;
-    x, y, z: real;
-    dx, dy, dz: real;
-
-    rozmiar: real;
-    kolr, kolg, kolb: real;
-    przezr: real;
-  end;
-
-  TWind = record
-    sila: real;
-    kier: real;
-  end;
-
-  TTrash = record
-    jest: boolean;
-    x, y, z: real;
-    dx, dy, dz: real;
-
-    nobiekt: byte;
-    element: byte;
-    obrx, obry, obrz: real;
-    palisie, dymisie: boolean;
-    typ: byte;
-
-    randuszkodzenia: integer;
-    silaskrzywien: real;
-    czas: integer;
-  end;
-
-  TPilot = record
-    jest, zawszewidac: boolean;
-    x, y, z, dy, dx, dz: real;
-    kier: real;
-    nalotnisku: integer;
-    palisie: boolean;
-    sila: real;
-
-    zly: boolean;
-
-    stoi: boolean;
-    ani: integer;
-    rodzani: byte;
-    rescued: boolean;
-
-    uciekaodgracza: integer; // ile czasu jeszcze ucieka od gracza, zamiast wsiadac; potrzebne do wysadzania ich
-
-    miejscenamatce: real;
-    // pozycja w drzwiach statku-matki, do ktorej sie celuje, kiedy do niej biegnie; jesli =0 to wylosuj nowa pozycje
-
-    przewroc: real; { kat, pod jakim stoi/lezy ;) 0-90 }
-  end;
-
-  TLandfield = record
-    x, z: integer; // pozycja w kratkach
-    rx, rz: integer; // rozmiar
-
-    dobre: boolean;
-    pilotow: byte; // tylko do generowania terenu!
-  end;
-
-  TTurretGun = record
-    jest, namierza: boolean;
-    x, y, z: real;
-    kier, kat, kier_, kat_: real;
-    sila: real;
-
-    rodzaj: byte; // 0=rakietowe, 1=pociskowe
-
-    rozwalone: boolean;
-    swiatlo: byte;
-  end;
-
-  TRocket = record
-    jest: boolean;
-    x, y, z, _x, _y, _z: real;
-    dx, dy, dz: real;
-
-    kier, kierdol: real;
-
-    czyja: byte; { 0:gracz, 1:wrog }
-
-    obrot: integer;
-    paliwo: integer;
-
-    rodzaj: byte; { 0-rakieta, 1-pocisk zwykly, niewidoczny }
-
-    dzw_kanal: longint;
-    dzw_slychac: boolean; // zaleznie od odleglosci od gracza
-  end;
-
-  TFighter = record
-    jest: boolean;
-    x, y, z, _x, _y, _z: real;
-
-    kier, // kier: obrot o 360, czyli gdzie leci
-    kierdol, // kierdol: skierowanie w pionie, czy w gore czy w dol
-    obrot: real; // obrot: obrot wokol wlasnej osi - przy skrecaniu
-
-    szybkosc: real;
-
-    sila: real;
-    zniszczony: boolean;
-    atakuje: boolean; // czyli leci za graczem, albo w przeciwna strone
-
-    dzw_kanal: longint;
-    dzw_slychac: boolean; // zaleznie od odleglosci od gracza
-  end;
-
-  TGame = record
-    jakiemisje: byte; { 0:norma, 1:losowe, 2:dodatkowe(wyczytwane) }
-    rodzajmisji: byte; { 0:zbieraj pilotow, 1:zniszcz dzialka }
-    ilepilotow, zginelo, zabranych, minimum, pilotowbiegniedomatki: integer;
-
-    iledzialek, dzialekzniszczonych, dzialekminimum: integer;
-
-    poziomupgrade: array [0 .. 5] of byte;
-
-    czas: integer;
-
-    etap: integer; { 0:intro, 1:gra, 2:zakonczenie }
-
-    kamera, jestkamera: array [0 .. 2, 0 .. 2] of real;
-    katkamera: real;
-
-    planeta: integer;
-    zycia: integer;
-    kasa, pkt: int64;
-
-    (* planeta_faktyczna:integer; //to samo, co planeta, ale w normalnej grze wykorzystywane do zapamietania
-      //ostatniego etapu, bo po wczytaniu etapu z pliku (niektore misje) zmienia sie
-      //wartosc 'planeta' ze wzgledu na wczytany z tego poziom trudnosci
-    *)
-    czasdorozpoczecia: integer; { jesli>0, to sie czeka. dziala po rozwaleniu sie, zeby chwile odczekalo }
-    koniecgry: boolean;
-    misjawypelniona, moznakonczyc: boolean;
-    pauza: boolean;
-
-    //
-    nazwaplanety, tekstintro, tekstoutrowin, tekstoutrolost: string;
-    pozycjaYtekstuintro: integer;
-
-    nazwamp3: string;
-  end;
-
-  TIntro = record
-    czas, czas2, scena: integer;
-  end;
-
-  TMainIntro = record
-    czas, czas2, scena: integer;
-    jest: boolean;
-  end;
-
-  TTitleScreen = record
-    jest: boolean;
-    kursor: integer;
-
-    planetapocz: integer;
-
-    poziomtrudnosci: integer;
-    epizod, epizodmisja: integer;
-
-    corobi: byte; { 0:winieta, 1:sklep, 2:zapis gry, 3:wczytanie gry }
-
-    skrol: integer;
-  end;
-
-  TEpisode = record
-    tytul: string;
-    misje: array of string;
-  end;
-
-  TCheatCodes = record
-    full: boolean; // full wszystkich upgradow
-    god: boolean; // niezniszczalnosc
-    fuel: boolean; // paliwo sie nie zmniejsza
-    weapon: boolean; // caly czas max wszystkich broni
-    lives: boolean; // max dodatkowych ladownikow
-    load: boolean; // max ladownosci
-    time: boolean; // max czasu
-
-    czas_od_ostatniej_litery: integer; // zmniejsza sie do 0 i jesli dojdzie, to staje, a wpisywana_litera sie zeruje
-    wpisany_tekst: array of byte;
-  end;
+  ZGLMathProcs, ZGLGraphMath,
+  GlobalConsts, GlobalTypes;
 
 var
   matka: TMotherShip;
@@ -419,7 +67,7 @@ function FighterObjectTransformProc(FighterId: integer): TTransformProc;
 implementation
 
 uses
-  Render, Main, UnitStart, Language, uSfx, uConfig, uSaveGame, GlobalConsts,
+  Render, Main, UnitStart, Language, uSfx, uConfig, uSaveGame,
   uSmokesLogic;
 
 // ---------------------------------------------------------------------------
@@ -2577,7 +2225,7 @@ begin
           if atakuje then
           begin // lec za graczem
             // przyspiesz
-            if szybkosc < 0.9 + gra.planeta / 100 then
+            if szybkosc < 0.9 + gra.difficultyLevel / 100 then
               szybkosc := szybkosc + 0.1;
 
             okstrzal := false;
@@ -2655,13 +2303,13 @@ begin
 
             end;
 
-            if okstrzal and (s < 500 + gra.planeta) and (random(round(22 - gra.planeta / 7)) = 0) then
+            if okstrzal and (s < 500 + gra.difficultyLevel) and (random(round(22 - gra.difficultyLevel / 7)) = 0) then
             begin
 
               strzel(x + (sin(kier * pi180) * cos(kierdol * pi180)) * 9, y - sin(kierdol * pi180) * 9,
                 z + (-cos(kier * pi180) * cos(kierdol * pi180)) * 9, (sin(kier * pi180) * cos(kierdol * pi180)) *
-                (15 + gra.planeta / 15) + (random - 0.5), -sin(kierdol * pi180) * (15 + gra.planeta / 15) +
-                (random - 0.5), (-cos(kier * pi180) * cos(kierdol * pi180)) * (15 + gra.planeta / 15) +
+                (15 + gra.difficultyLevel / 15) + (random - 0.5), -sin(kierdol * pi180) * (15 + gra.difficultyLevel / 15) +
+                (random - 0.5), (-cos(kier * pi180) * cos(kierdol * pi180)) * (15 + gra.difficultyLevel / 15) +
                 (random - 0.5), 1, 1);
 
               Sfx.graj_dzwiek(20, x, y, z);
@@ -2698,7 +2346,7 @@ begin
         if not atakuje and not zniszczony then
         begin // lec w druga strone niz gracz
           // przyspiesz
-          if szybkosc < 1 + gra.planeta / 100 then
+          if szybkosc < 1 + gra.difficultyLevel / 100 then
             szybkosc := szybkosc + 0.1;
 
           // skrec w przeciwna strone niz gracz
@@ -3226,7 +2874,7 @@ begin
   gra.iledzialek := 0;
   gracz.namierzone := -1;
   gracz.odlegloscnamierzonegodzialka := 999999;
-  szybruch := 0.8 + gra.planeta / 100;
+  szybruch := 0.8 + gra.difficultyLevel / 100;
   // szybkosc ruchu dzialka zalezna od planety
   for a := 0 to high(dzialko) do
     with dzialko[a] do
@@ -3268,7 +2916,7 @@ begin
                 gz1 := gracz.z;
 
               s := sqrt2(sqr(gx1 - x) + sqr(gracz.y - y) + sqr(gz1 - z));
-              if s <= 500 + gra.planeta * 2 then
+              if s <= 500 + gra.difficultyLevel * 2 then
               begin
 
                 // gracz namierza dzialko:
@@ -3286,20 +2934,20 @@ begin
                 end;
 
                 // namierzanie w gracza
-                if not namierza and (random(80 - round(gra.planeta * 0.7)) = 0) then
+                if not namierza and (random(80 - round(gra.difficultyLevel * 0.7)) = 0) then
                   namierza := true;
                 if namierza then
                 begin
                   ok := true;
                   if rodzaj = 0 then
                   begin
-                    s1 := 3 + gra.planeta / 30; // sila z jaka strzeli
+                    s1 := 3 + gra.difficultyLevel / 30; // sila z jaka strzeli
                     s := sqrt2(sqr(x - gx1) + sqr(y - gracz.y) + sqr(z - gz1)) / (1.15 * s1); // odleglosc
                   end
                   else
                   begin
                     s := 0.1;
-                    s1 := 15 + gra.planeta / 30; // sila z jaka strzeli
+                    s1 := 15 + gra.difficultyLevel / 30; // sila z jaka strzeli
                   end;
 
                   k := (jaki_to_kat((gx1 + gracz.dx * s) - x, (gz1 + gracz.dz * s) - z));
@@ -3362,8 +3010,8 @@ begin
                   if abs(k - kat) > 6 then
                     ok := false;
 
-                  if ok and (((rodzaj = 0) and (random(round(300 - gra.planeta * 2.5)) = 0)) or
-                    ((rodzaj = 1) and (random(round(70 - gra.planeta * 0.6)) = 0))) then
+                  if ok and (((rodzaj = 0) and (random(round(300 - gra.difficultyLevel * 2.5)) = 0)) or
+                    ((rodzaj = 1) and (random(round(70 - gra.difficultyLevel * 0.6)) = 0))) then
                   begin
                     if rodzaj = 0 then
                     begin
@@ -3742,6 +3390,20 @@ begin
               cheaty.load := not cheaty.load;
             6:
               cheaty.time := not cheaty.time;
+            7:
+              begin
+                gra.misjawypelniona := true;
+                gra.moznakonczyc := true;
+              end;
+            8:
+              begin
+                gracz.x := matka.x;
+                gracz.z := matka.z;
+                gracz.y := matka.y + 5;
+                gracz.dx := 0;
+                gracz.dy := 0;
+                gracz.dz := 0;
+              end;
           end;
 
           setlength(cheaty.wpisany_tekst, 0);
@@ -4094,7 +3756,7 @@ begin
     b := 1;
     if (high(mysliwiec) >= 1) then
     begin
-      b := 1 + random(gra.planeta div 21);
+      b := 1 + random(gra.difficultyLevel div 21);
     end;
     for a := 1 to b do
       nowy_mysliwiec(gracz.x + sin((c + a * 3) * pi180) * (c1 + a * 30),
@@ -4179,8 +3841,8 @@ begin
     end;
 
   /// /////*****
-  { gra.misjawypelniona:=true;
-    gra.moznakonczyc:=true; }
+{   gra.misjawypelniona:=true;
+    gra.moznakonczyc:=true;}
   /// /////*****
 
   // misja wypelniona
@@ -4538,7 +4200,7 @@ begin
               if frmMain.PwrInp.KeyPressed[DIK_RIGHT] then
               begin
                 inc(winieta.planetapocz);
-                if winieta.planetapocz > 99 then
+                if winieta.planetapocz > MAIN_SCENARIO_MAX_LEVELS then
                   winieta.planetapocz := 1;
                 Sfx.graj_dzwiek(16, 0, 0, 0, false);
               end;
@@ -4546,21 +4208,21 @@ begin
               begin
                 dec(winieta.planetapocz);
                 if winieta.planetapocz < 1 then
-                  winieta.planetapocz := 99;
+                  winieta.planetapocz := MAIN_SCENARIO_MAX_LEVELS;
                 Sfx.graj_dzwiek(16, 0, 0, 0, false);
               end;
               if frmMain.PwrInp.KeyPressed[DIK_PGDN] then
               begin
                 inc(winieta.planetapocz, 10);
-                if winieta.planetapocz > 99 then
-                  dec(winieta.planetapocz, 99);
+                if winieta.planetapocz > MAIN_SCENARIO_MAX_LEVELS then
+                  dec(winieta.planetapocz, MAIN_SCENARIO_MAX_LEVELS);
                 Sfx.graj_dzwiek(16, 0, 0, 0, false);
               end;
               if frmMain.PwrInp.KeyPressed[DIK_PGUP] then
               begin
                 dec(winieta.planetapocz, 10);
                 if winieta.planetapocz < 1 then
-                  inc(winieta.planetapocz, 99);
+                  inc(winieta.planetapocz, MAIN_SCENARIO_MAX_LEVELS);
                 Sfx.graj_dzwiek(16, 0, 0, 0, false);
               end;
             end;
@@ -4575,7 +4237,7 @@ begin
               if frmMain.PwrInp.KeyPressed[DIK_RIGHT] then
               begin
                 inc(winieta.poziomtrudnosci);
-                if winieta.poziomtrudnosci > 99 then
+                if winieta.poziomtrudnosci > RANDOM_GAME_MAX_LEVELS then
                   winieta.poziomtrudnosci := 1;
                 Sfx.graj_dzwiek(16, 0, 0, 0, false);
               end;
@@ -4583,21 +4245,21 @@ begin
               begin
                 dec(winieta.poziomtrudnosci);
                 if winieta.poziomtrudnosci < 1 then
-                  winieta.poziomtrudnosci := 99;
+                  winieta.poziomtrudnosci := RANDOM_GAME_MAX_LEVELS;
                 Sfx.graj_dzwiek(16, 0, 0, 0, false);
               end;
               if frmMain.PwrInp.KeyPressed[DIK_PGDN] then
               begin
                 inc(winieta.poziomtrudnosci, 10);
-                if winieta.poziomtrudnosci > 99 then
-                  dec(winieta.poziomtrudnosci, 99);
+                if winieta.poziomtrudnosci > RANDOM_GAME_MAX_LEVELS then
+                  dec(winieta.poziomtrudnosci, RANDOM_GAME_MAX_LEVELS);
                 Sfx.graj_dzwiek(16, 0, 0, 0, false);
               end;
               if frmMain.PwrInp.KeyPressed[DIK_PGUP] then
               begin
                 dec(winieta.poziomtrudnosci, 10);
                 if winieta.poziomtrudnosci < 1 then
-                  inc(winieta.poziomtrudnosci, 99);
+                  inc(winieta.poziomtrudnosci, RANDOM_GAME_MAX_LEVELS);
                 Sfx.graj_dzwiek(16, 0, 0, 0, false);
               end;
             end;
@@ -5438,7 +5100,7 @@ begin
   end;
 
   // dzialka
-  setlength(dzialko, random(10) + (ord(gra.rodzajmisji = 1) * 3) + gra.planeta div 2);
+  setlength(dzialko, random(10) + (ord(gra.rodzajmisji = 1) * 3) + gra.difficultyLevel div 2);
   for a := 0 to high(dzialko) do
     with dzialko[a] do
     begin
@@ -5453,8 +5115,7 @@ begin
     begin
       rodzaj := random(2);
       repeat
-        // if (a=0) or (random(3-gra.planeta div 50)<>0) then begin
-        if (a = 0) or (random(100) >= 30 + gra.planeta * 0.67) then
+        if (a = 0) or (random(100) >= 30 + gra.difficultyLevel * 0.67) then
         begin
           ax := (2 + random(ziemia.wx - 4));
           az := (2 + random(ziemia.wz - 4));
@@ -5497,7 +5158,7 @@ begin
     end;
   end;
 
-  a := 4 + random(20) + gra.planeta div 2;
+  a := 4 + random(20) + gra.difficultyLevel div 2;
   if a > 50 then
     a := 50;
   setlength(pilot, a);
@@ -5509,7 +5170,7 @@ begin
   ziemia.koltla[1] := random / 3;
   ziemia.koltla[2] := random / 3;
 
-  gra.czas := (60 * 7) + (gra.planeta div 5) * 30;
+  gra.czas := (60 * 7) + (gra.difficultyLevel div 5) * 30;
 end;
 
 // ---------------------------------------------------------------------------
@@ -5524,7 +5185,7 @@ begin
   s := '';
   r := random(2); // rodzaj: 0-dowolna nazwa, 1-symbol XXX-numer
 
-  d := 3 + random(10 - ord(r = 1) * 8); // dlugosc nazwy
+  d := 3 + random(7 - ord(r = 1) * 5); // dlugosc nazwy
   for a := 1 to d do
   begin
     if a mod 2 = 0 then
@@ -5542,8 +5203,8 @@ end;
 procedure nowy_teren(wczytaj_nazwa: string = '');
 const
   // lista numerow etapow, ktore sa wczytywane a nie generowane w normalnej grze
-  wczytywane: array [0 .. 23] of integer = (1, 2, 3, 8, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80, 85,
-    90, 95, 98, 99);
+{  wczytywane: array [0 .. 23] of integer = (1, 2, 3, 8, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80, 85,
+    90, 95, 98, 99);}
 
   texladowiska = 0.35;
   texkrzakow = 0;
@@ -5569,21 +5230,23 @@ begin
   matka.x := 0;
   matka.z := 0;
 
-  setlength(mysliwiec, (gra.planeta + 5) div 14);
+  //najpierw ustaw difficultyLevel, bo jest potrzebny do losowych etapów
+  gra.difficultyLevel := gra.planeta * DIFFICULTY_MULTIPLIER;
+//  setlength(mysliwiec, (gra.difficultyLevel + 5) div 14);
 
   // rzeczy losowane (generowanie terenu)------------------------------------------
   if gra.jakiemisje = 0 then
   begin // normalna gra
     a := 0;
 
-    while (a <= high(wczytywane)) and (wczytywane[a] <> gra.planeta + 1) do
+{    while (a <= high(wczytywane)) and (wczytywane[a] <> gra.planeta + 1) do
       inc(a);
 
-    losowy := a > high(wczytywane);
+    losowy := a > high(wczytywane);}
 
-    if losowy then
+{    if losowy then
       generuj_losowy
-    else
+    else}
       wczytaj_teren(inttostr(gra.planeta + 1), 1);
 
     gra.planeta := planetatmp;
@@ -5597,6 +5260,13 @@ begin
   end;
 
   // rzeczy koncowe przymusowe-----------------------------------------------------
+  if not losowy then
+  begin
+    //ustaw difficultyLevel ponownie po wczytaniu terenu
+    gra.difficultyLevel := gra.planeta * DIFFICULTY_MULTIPLIER;
+    setlength(mysliwiec, (gra.difficultyLevel + 5) div 14);
+  end;
+
   if gra.jakiemisje = 0 then
     RandSeed := gra.planeta + 12357
   else
@@ -5680,7 +5350,7 @@ begin
     case gra.rodzajmisji of
       0:
         begin
-          gra.minimum := round(gra.ilepilotow * (0.5 + (gra.planeta / 200))
+          gra.minimum := round(gra.ilepilotow * (0.5 + (gra.difficultyLevel / 200))
             { 0.7 } ); // = 70%
           if gra.minimum > length(pilot) then
             gra.minimum := length(pilot);
@@ -5689,7 +5359,7 @@ begin
       1:
         begin
           gra.minimum := 0;
-          gra.dzialekminimum := round(length(dzialko) * (0.5 + (gra.planeta / 200)));
+          gra.dzialekminimum := round(length(dzialko) * (0.5 + (gra.difficultyLevel / 200)));
           if gra.dzialekminimum > length(dzialko) then
             gra.dzialekminimum := length(dzialko);
         end;
@@ -5972,12 +5642,22 @@ begin
   intro.czas2 := 0;
   intro.scena := 0;
   inc(gra.planeta);
-  if gra.planeta >= 100 then
+
+  if (gra.jakiemisje = 0) then
   begin
-    gra.planeta := 1;
-    if gra.jakiemisje = 0 then
+    if gra.planeta > MAIN_SCENARIO_MAX_LEVELS then
+    begin
+      gra.planeta := 1;
       gra.jakiemisje := 1;
-  end;
+    end;
+  end
+  else
+  if (gra.jakiemisje = 1) then
+  begin
+    if gra.planeta > RANDOM_GAME_MAX_LEVELS then
+      gra.planeta := 1;
+  end
+  else
   if gra.jakiemisje = 2 then
     inc(winieta.epizodmisja);
 
