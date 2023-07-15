@@ -1,23 +1,18 @@
 -------------------------------------------------------------------------------
 
 Retrofire
-version 1.1.0 alfa
-
--------------------------------------------------------------------------------
+version 1.2
 
 a game by Grzegorz Drozd
 2007-2023 gadz.pl
 
-This is not the final version of this game. There are some changes currently
-made. I released this version just to show new changes but I'm sure there 
-will be more changes soon. Stay in touch!
-
-.... TODO
-
 -------------------------------------------------------------------------------
 
-Visit my website and check if there is a newer version of this game:
-https://gadz.pl/retrofire
+For more information about this game, please go to my website or my itch.io
+profile:
+
+- https://gadz.pl/retrofire
+- https://gadzombie.itch.io/retrofire
 
 -------------------------------------------------------------------------------
 
@@ -31,10 +26,11 @@ c:\Users\$USER\AppData\Roaming\GadzPl\Retrofire\
 You can freely delete it to reset the configuration or clear the saved game 
 states.
 
-
 -------------------------------------------------------------------------------
-https://gadz.pl/
 
-2023
+Visit my website and check if there is a newer version of this game:
+https://gadz.pl/retrofire
+
+
 -------------------------------------------------------------------------------
 -------------------------------------------------------------------------------

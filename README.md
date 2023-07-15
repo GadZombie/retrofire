@@ -1,4 +1,4 @@
-﻿# Retrofire 1.1
+﻿# Retrofire 1.2
 
 Copyright 2007-2023 gadz.pl
 

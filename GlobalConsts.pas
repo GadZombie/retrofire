@@ -5,7 +5,7 @@ uses
   GlobalTypes;
 
 const
-  PROGRAM_VERSION = '1.1';
+  PROGRAM_VERSION = '1.2';
   PROGRAM_COPYRIGHT = '2007 - 2023 gadz.pl';
 
   DATA_FOLDER = 'Data\';
