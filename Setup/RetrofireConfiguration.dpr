@@ -14,9 +14,14 @@ uses
   uControllerPanel.Analog1DIndicator in 'uControllerPanel.Analog1DIndicator.pas',
   uControllerPanel.ButtonIndicator in 'uControllerPanel.ButtonIndicator.pas',
   uControllerPanel.POVIndicator in 'uControllerPanel.POVIndicator.pas',
-//  uGlobalConsts in '..\uGlobalConsts.pas',
   uConfigVars in '..\uConfigVars.pas',
-  uSpecialFolders in '..\..\..\KomponentyBiblioteki\SpecialFolders\uSpecialFolders.pas';
+  PowerInputs in '..\Components\PowerDraw\Source\PowerInputs.pas',
+  DirectInput8 in '..\Components\PowerDraw\Source\DirectInput8.pas',
+  d3d9 in '..\Components\PowerDraw\Source\d3d9.pas',
+  PowerTypes in '..\Components\PowerDraw\Source\PowerTypes.pas',
+  DXGCommon in '..\Components\PowerDraw\Source\DXGCommon.pas',
+  uSpecialFolders in '..\Components\SpecialFolders\uSpecialFolders.pas',
+  PowerTimers in '..\Components\PowerDraw\Source\PowerTimers.pas';
 
 {$R *.res}
 

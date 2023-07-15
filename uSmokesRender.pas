@@ -12,8 +12,8 @@ implementation
 
 uses
   uSmokesLogic,
-  UnitTex,
-  uSprites,
+  ZGLTextures,
+  ZGLGraphProcs,
   uRenderConst,
   unitTimer;
 

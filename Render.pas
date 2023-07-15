@@ -20,7 +20,7 @@ procedure RenderInit;
 implementation
 
 uses
-  uRenderConst, uSprites, Main, unittex, Forms, GlobalTypes, uConfig, uSaveGame,
+  uRenderConst, ZGLGraphProcs, Main, ZGLTextures, Forms, GlobalTypes, uConfig, uSaveGame,
   uSmokesRender;
 
 var

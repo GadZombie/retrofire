@@ -4,7 +4,7 @@ interface
 
 uses
   System.Generics.Collections,
-  directinput8, OpenGl, gl, Glu, glext, unittex, obj, sysutils, classes,
+  directinput8, OpenGl, gl, Glu, glext, ZGLTextures, obj, sysutils, classes,
   windows,
   fmod, fmodtypes, fmoderrors, fmodpresets, powerinputs, forms,
   ZGLMathProcs, ZGLGraphMath,
@@ -68,7 +68,7 @@ implementation
 
 uses
   Render, Main, UnitStart, Language, uSfx, uConfig, uSaveGame,
-  uSmokesLogic;
+  uSmokesLogic, uRenderConst;
 
 // ---------------------------------------------------------------------------
 FUNCTION l2t(liczba: int64; ilosc_lit: byte): string;
@@ -5783,43 +5783,43 @@ begin
 
   // wczytaj tekstury
   glGenTextures(ile_tekstur, @texName);
-  wczytaj_teksture(0, 'font.tga', 1);
+  wczytaj_teksture(0, DATA_FOLDER + 'font.tga', 1);
   FormStart.progres.StepIt;
-  wczytaj_teksture(1, 'ziemia1.tga', 0);
+  wczytaj_teksture(1, DATA_FOLDER + 'ziemia1.tga', 0);
   FormStart.progres.StepIt;
-  wczytaj_teksture(2, 'dym1.tga', 0);
+  wczytaj_teksture(2, DATA_FOLDER + 'dym1.tga', 0);
   FormStart.progres.StepIt;
-  wczytaj_teksture(3, 'lander.tga', 0);
+  wczytaj_teksture(3, DATA_FOLDER + 'lander.tga', 0);
   FormStart.progres.StepIt;
-  wczytaj_teksture(4, 'cien.tga', 0);
+  wczytaj_teksture(4, DATA_FOLDER + 'cien.tga', 0);
   FormStart.progres.StepIt;
-  wczytaj_teksture(5, 'pilot.tga', 0);
+  wczytaj_teksture(5, DATA_FOLDER + 'pilot.tga', 0);
   FormStart.progres.StepIt;
-  wczytaj_teksture(6, 'mothership.tga', 0);
+  wczytaj_teksture(6, DATA_FOLDER + 'mothership.tga', 0);
   FormStart.progres.StepIt;
-  wczytaj_teksture(7, 'gwiazdy.tga', 1);
+  wczytaj_teksture(7, DATA_FOLDER + 'gwiazdy.tga', 1);
   FormStart.progres.StepIt;
-  wczytaj_teksture(8, 'pilotzly.tga', 0);
+  wczytaj_teksture(8, DATA_FOLDER + 'pilotzly.tga', 0);
   FormStart.progres.StepIt;
-  wczytaj_teksture(9, 'celownik.tga', 0);
+  wczytaj_teksture(9, DATA_FOLDER + 'celownik.tga', 0);
   FormStart.progres.StepIt;
-  wczytaj_teksture(10, 'chmury.tga', 0);
+  wczytaj_teksture(10, DATA_FOLDER + 'chmury.tga', 0);
   FormStart.progres.StepIt;
-  wczytaj_teksture(11, 'swiatlo.tga', 0);
+  wczytaj_teksture(11, DATA_FOLDER + 'swiatlo.tga', 0);
   FormStart.progres.StepIt;
-  wczytaj_teksture(12, 'snop.tga', 0);
+  wczytaj_teksture(12, DATA_FOLDER + 'snop.tga', 0);
   FormStart.progres.StepIt;
-  wczytaj_teksture(13, 'ikony.tga', 0);
+  wczytaj_teksture(13, DATA_FOLDER + 'ikony.tga', 0);
   FormStart.progres.StepIt;
-  wczytaj_teksture(14, 'kokpit.tga', 0);
+  wczytaj_teksture(14, DATA_FOLDER + 'kokpit.tga', 0);
   FormStart.progres.StepIt;
-  wczytaj_teksture(15, 'oslona.tga', 0);
+  wczytaj_teksture(15, DATA_FOLDER + 'oslona.tga', 0);
   FormStart.progres.StepIt;
-  wczytaj_teksture(16, 'krew.tga', 0);
+  wczytaj_teksture(16, DATA_FOLDER + 'krew.tga', 0);
   FormStart.progres.StepIt;
-  wczytaj_teksture3d(17, ['ziemia0.tga', 'ziemia1.tga', 'ziemia2.tga', 'ziemia3.tga']);
+  wczytaj_teksture3d(17, [DATA_FOLDER + 'ziemia0.tga', DATA_FOLDER + 'ziemia1.tga', DATA_FOLDER + 'ziemia2.tga', DATA_FOLDER + 'ziemia3.tga']);
   FormStart.progres.StepIt;
-  wczytaj_teksture(18, 'krzaki.tga', 0);
+  wczytaj_teksture(18, DATA_FOLDER + 'krzaki.tga', 0);
   FormStart.progres.StepIt;
 
   // wczytaj obiekty

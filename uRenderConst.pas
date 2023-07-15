@@ -14,6 +14,7 @@ var
   odlwidzenia: integer = 2000;
 
 const
+  ile_tekstur = 19;
   katwidzenia = 70;
 
 var
