@@ -53,8 +53,8 @@ const
 
   cenazycia = 3000;
   maxoslonablysk = 1.2;
-  maxcheats = 8;
-  cheatcodes: array [0 .. maxcheats] of string = ('FULL', 'GOD', 'FUEL', 'WEAPON', 'LIVES', 'LOAD', 'TIME', 'FINISH', 'MOTHER');
+  maxcheats = 9;
+  cheatcodes: array [0 .. maxcheats] of string = ('FULL', 'GOD', 'FUEL', 'WEAPON', 'LIVES', 'LOAD', 'TIME', 'FINISH', 'MOTHER', 'DOWN');
 
   MAIN_SCENARIO_MAX_LEVELS = 25;
   RANDOM_GAME_MAX_LEVELS = 25;

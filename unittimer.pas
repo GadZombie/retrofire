@@ -3404,6 +3404,18 @@ begin
                 gracz.dy := 0;
                 gracz.dz := 0;
               end;
+            9:
+              begin
+                gracz.x := matka.x;
+                gracz.z := matka.z;
+                gracz.y := matka.y - 200;
+                gracz.dx := 0;
+                gracz.dy := 0;
+                gracz.dz := 0;
+
+                if gracz.y < gdzie_y(gracz.x, gracz.z, gracz.y) + 30 then
+                  gracz.y := gdzie_y(gracz.x, gracz.z, gracz.y) + 30;
+              end;
           end;
 
           setlength(cheaty.wpisany_tekst, 0);
@@ -4809,6 +4821,44 @@ begin
 end;
 
 // ---------------------------------------------------------------------------
+procedure softenTerrain;
+var
+  a, az, ax: integer;
+  ax1, axm1, az1, azm1: integer;
+  fromX, toX, fromZ, toZ: integer;
+begin
+  for a := 1 to random(30) do
+  begin
+    fromZ := random(ziemia.wz - 1);
+    toZ := fromZ + random(ziemia.wz - fromZ);
+    fromX := random(ziemia.wx - 1);
+    toX := fromX + random(ziemia.wx - fromX);
+    for az := fromZ to toZ do
+    begin
+      for ax := fromX to toX do
+      begin
+        ax1 := ax + 1;
+        axm1 := ax - 1;
+        az1 := az + 1;
+        azm1 := az - 1;
+        if ax1 >= ziemia.wx then
+          dec(ax1, ziemia.wx);
+        if az1 >= ziemia.wz then
+          dec(az1, ziemia.wz);
+        if axm1 < 0 then
+          inc(axm1, ziemia.wx);
+        if azm1 < 0 then
+          inc(azm1, ziemia.wz);
+
+        ziemia.pk[ax, az].p := (ziemia.pk[ax, az].p + ziemia.pk[ax1, az].p + ziemia.pk[ax, az1].p + ziemia.pk[axm1,
+          az].p + ziemia.pk[ax, azm1].p) / 5
+      end;
+    end;
+  end;
+
+end;
+
+// ---------------------------------------------------------------------------
 procedure generuj_losowy;
 var
   a, b, n, az, ax, bx, bz: integer;
@@ -4820,17 +4870,28 @@ var
   ax1, axm1, az1, azm1: integer;
   ok: boolean;
 
-  dsz, sz, dtz, tz, sw: real;
+  dsz, sz, dtz, tz, sw,
+  k1: real;
   c, _s, _t: integer;
   najwyzszy, najnizszy, koldziel: real;
   rodzaj_gor: integer;
+  minHeight, maxHeight: integer;
 
 begin
   gra.rodzajmisji := gra.planeta mod 2;
 
-  ziemia.wx := 154;
-  ziemia.wz := 154;
-  ziemia.wlk := 30;
+  if gra.planeta <= 9 then
+  begin
+    ziemia.wx := 120 + random(3);
+    ziemia.wz := ziemia.wx;
+    ziemia.wlk := 30 + random(5);
+  end
+  else
+  begin
+    ziemia.wx := 150 + random(50);
+    ziemia.wz := ziemia.wx;
+    ziemia.wlk := 30 + random(25);
+  end;
 
   ziemia.px := -(ziemia.wx / 2) * ziemia.wlk; // *
   ziemia.pz := -(ziemia.wz / 2) * ziemia.wlk;
@@ -4840,11 +4901,7 @@ begin
   else
     randomize;
 
-  if random(100) * random(100) < 500 then
-    rodzaj_gor := 0
-    // random(100)<50 zamiast random(2), bo za czesto mi losowalo 1 i byly ciagle jednego rodzaju tereny
-  else
-    rodzaj_gor := 1;
+  rodzaj_gor := 1;//random(2);
 
   a := round(20 + (random * 2 - 0.6) * ((10 + gra.planeta) / 4.5)); // 25
   ziemia.grawitacja := a / 10000;
@@ -4864,27 +4921,30 @@ begin
     setlength(ziemia.pk[a], ziemia.wz);
 
   // decyzja jakie beda kolory
-  for b := 0 to 2 do
-    kolory[0, b] := random;
+  kolory[0, 0] := random;
+  for b := 1 to 2 do
+  begin
+    kolory[0, b] := KeepValBetween(kolory[0, b - 1] + (random - 0.5) * 0.1, 0, 1);
+  end;
+
   for a := 1 to 5 do
   begin
     for b := 0 to 2 do
     begin
-      kolory[a, b] := kolory[a - 1, b] - 0.3 + random * 0.6;
-      if kolory[a, b] < 0 then
-        kolory[a, b] := 0;
-      if kolory[a, b] > 1 then
-        kolory[a, b] := 1;
+      kolory[a, b] := KeepValBetween(kolory[a - 1, b] + (random - 0.5) * 0.3, 0, 1);
     end;
   end;
 
   // generowanie terenu
-  rozwys := 10 + random * 100;
-  rozwys2 := rozwys / 2;
-
+  minHeight := 1;
+  maxHeight := round(matka.y - 200);
   case rodzaj_gor of
     0:
       begin // gory po staremu (randomowe)
+        rozwys := 10 + random * 50;
+        rozwys2 := rozwys / 2;
+        minHeight := 1;
+        maxHeight := round(matka.y - 200);
 
         for a := 0 to high(ziemia.pk) do
         begin
@@ -4909,18 +4969,17 @@ begin
               end;
             end;
 
-            if ziemia.pk[a, b].p < 1 then
-              ziemia.pk[a, b].p := 1;
-            if ziemia.pk[a, b].p > matka.y - 100 then
-              ziemia.pk[a, b].p := matka.y - 100;
-
+            ziemia.pk[a, b].p := KeepValBetween(ziemia.pk[a, b].p, minHeight, maxHeight);
           end;
         end;
       end;
     1:
       begin // gory skladane z trojkatow
+        rozwys := 100 + random * 500;
+        maxHeight := round(matka.y - 250);
+        minHeight := maxHeight - 700 - random(1500);
 
-        ax := random(100) - 50;
+        ax := round(minHeight + (maxHeight - minHeight) / 2);
         for a := 0 to high(ziemia.pk) do
           for b := 0 to high(ziemia.pk[a]) do
           begin
@@ -4928,7 +4987,7 @@ begin
             ziemia.pk[a, b].p := ax;
           end;
 
-        for a := 0 to 30 + random(35) do
+        for a := 0 to 30 + random(135) do
         begin
           ax := random(high(ziemia.pk) * 2) - high(ziemia.pk); // od x
           bx := random(high(ziemia.pk) * 2 - ax) + ax; // do x
@@ -4938,7 +4997,7 @@ begin
           dsz := random * 10 - 5;
           dtz := random * 10 - 5;
 
-          sw := random * 270 - 130;
+          sw := (random - 0.5) * rozwys;
 
           for b := ax to bx do
           begin
@@ -4956,15 +5015,7 @@ begin
             for c := _s to _t do
             begin
               if (b >= 0) and (b <= high(ziemia.pk)) and (c >= 0) and (c <= high(ziemia.pk[0])) then
-              begin
-                ziemia.pk[b, c].p := ziemia.pk[b, c].p + sw;
-
-                if ziemia.pk[b, c].p < -700 then
-                  ziemia.pk[b, c].p := -700;
-                if ziemia.pk[b, c].p > matka.y - 150 then
-                  ziemia.pk[b, c].p := matka.y - 150;
-
-              end;
+                ziemia.pk[b, c].p := KeepValBetween(ziemia.pk[b, c].p + sw, minHeight, maxHeight);
             end;
 
             sz := sz + dsz;
@@ -4981,8 +5032,8 @@ begin
   end;
 
   // wyszukaj najnizszy i najwyzszy punkt
-  najnizszy := 9999;
-  najwyzszy := -9999;
+  najnizszy := 99999;
+  najwyzszy := -99999;
   for a := 0 to high(ziemia.pk) do
     for b := 0 to high(ziemia.pk[a]) do
     begin
@@ -5022,39 +5073,17 @@ begin
   // znieksztalcenie gor
   for a := 1 to random(3) do
     for az := 0 to ziemia.wz - 1 do
-    begin
       for ax := 0 to ziemia.wx - 1 do
       begin
-        ziemia.pk[ax, az].p := ziemia.pk[ax, az].p + (random - 0.5) * 20;
-        if ziemia.pk[ax, az].p < -700 then
-          ziemia.pk[ax, az].p := -700;
-        if ziemia.pk[ax, az].p > 700 then
-          ziemia.pk[ax, az].p := 700;
+        ziemia.pk[ax, az].p := KeepValBetween(ziemia.pk[ax, az].p + (random - 0.5) * 20, minHeight, maxHeight);
       end;
-    end;
 
-  // "rozmycie" czyli wygladzenie gor
-  for a := 1 to random(5) do
-    for az := 0 to ziemia.wz - 1 do
+  softenTerrain;
+
+  for az := 0 to ziemia.wz - 1 do
+    for ax := 0 to ziemia.wx - 1 do
     begin
-      for ax := 0 to ziemia.wx - 1 do
-      begin
-        ax1 := ax + 1;
-        axm1 := ax - 1;
-        az1 := az + 1;
-        azm1 := az - 1;
-        if ax1 >= ziemia.wx then
-          dec(ax1, ziemia.wx);
-        if az1 >= ziemia.wz then
-          dec(az1, ziemia.wz);
-        if axm1 < 0 then
-          inc(axm1, ziemia.wx);
-        if azm1 < 0 then
-          inc(azm1, ziemia.wz);
-
-        ziemia.pk[ax, az].p := (ziemia.pk[ax, az].p + ziemia.pk[ax1, az].p + ziemia.pk[ax, az1].p + ziemia.pk[axm1,
-          az].p + ziemia.pk[ax, azm1].p) / 5
-      end;
+      ziemia.pk[ax, az].p := KeepValBetween(ziemia.pk[ax, az].p, minHeight, maxHeight);
     end;
 
   // ladowiska
@@ -5166,9 +5195,10 @@ begin
   for a := 0 to high(pilot) do
     pilot[a].nalotnisku := random(length(ladowiska));
 
-  ziemia.koltla[0] := random / 3;
-  ziemia.koltla[1] := random / 3;
-  ziemia.koltla[2] := random / 3;
+  k1 := random;
+  ziemia.koltla[0] := KeepValBetween(k1 + (random - 0.5) * 0.2, 0, 1);
+  ziemia.koltla[1] := KeepValBetween(k1 + (random - 0.5) * 0.2, 0, 1);
+  ziemia.koltla[2] := KeepValBetween(k1 + (random - 0.5) * 0.2, 0, 1);
 
   gra.czas := (60 * 7) + (gra.difficultyLevel div 5) * 30;
 end;
@@ -5232,7 +5262,7 @@ begin
 
   //najpierw ustaw difficultyLevel, bo jest potrzebny do losowych etapów
   gra.difficultyLevel := gra.planeta * DIFFICULTY_MULTIPLIER;
-//  setlength(mysliwiec, (gra.difficultyLevel + 5) div 14);
+  setlength(mysliwiec, (gra.difficultyLevel + 5) div 14);
 
   // rzeczy losowane (generowanie terenu)------------------------------------------
   if gra.jakiemisje = 0 then

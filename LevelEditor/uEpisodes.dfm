@@ -14,10 +14,8 @@ object FormEpizody: TFormEpizody
   Font.Style = []
   FormStyle = fsStayOnTop
   Menu = MainMenu1
-  OldCreateOrder = False
   Position = poScreenCenter
   OnShow = FormShow
-  PixelsPerInch = 96
   TextHeight = 13
   object btndodaj: TSpeedButton
     Left = 254
@@ -130,7 +128,7 @@ object FormEpizody: TFormEpizody
     Width = 465
     Height = 21
     EditLabel.Width = 65
-    EditLabel.Height = 13
+    EditLabel.Height = 21
     EditLabel.Caption = 'Tytu'#322' epizodu'
     Font.Charset = DEFAULT_CHARSET
     Font.Color = clWindowText
@@ -138,10 +136,10 @@ object FormEpizody: TFormEpizody
     Font.Name = 'Tahoma'
     Font.Style = [fsBold]
     LabelPosition = lpLeft
-    LabelSpacing = 3
     MaxLength = 254
     ParentFont = False
     TabOrder = 4
+    Text = ''
   end
   object MainMenu1: TMainMenu
     Left = 296

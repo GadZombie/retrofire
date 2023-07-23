@@ -1,9 +1,9 @@
 object Form1: TForm1
   Left = 344
   Top = 224
-  Width = 936
-  Height = 713
   Caption = 'Retrofire: Edytor map'
+  ClientHeight = 655
+  ClientWidth = 924
   Color = clBtnFace
   Constraints.MinHeight = 400
   Constraints.MinWidth = 500
@@ -13,28 +13,27 @@ object Form1: TForm1
   Font.Name = 'Tahoma'
   Font.Style = []
   Menu = MainMenu1
-  OldCreateOrder = False
   Position = poScreenCenter
   OnCreate = FormCreate
   OnShow = FormShow
-  PixelsPerInch = 96
   TextHeight = 13
   object Splitter1: TSplitter
-    Left = 658
+    Left = 654
     Top = 0
     Width = 5
-    Height = 663
-    Cursor = crHSplit
+    Height = 655
     Align = alRight
     AutoSnap = False
     Beveled = True
     ResizeStyle = rsUpdate
+    ExplicitLeft = 658
+    ExplicitHeight = 663
   end
   object ScrollBox1: TScrollBox
     Left = 0
     Top = 0
-    Width = 658
-    Height = 663
+    Width = 654
+    Height = 655
     HorzScrollBar.ButtonSize = 13
     HorzScrollBar.Color = clBtnShadow
     HorzScrollBar.ParentColor = False
@@ -54,6 +53,8 @@ object Form1: TForm1
     Color = 9336930
     ParentColor = False
     TabOrder = 0
+    ExplicitWidth = 650
+    ExplicitHeight = 654
     object rys: TPaintBox
       Left = 0
       Top = 0
@@ -67,28 +68,30 @@ object Form1: TForm1
     end
   end
   object PageControl1: TPageControl
-    Left = 663
+    Left = 659
     Top = 0
     Width = 265
-    Height = 663
+    Height = 655
     ActivePage = TabTworzenie
     Align = alRight
     Style = tsButtons
-    TabIndex = 0
     TabOrder = 1
+    ExplicitLeft = 655
+    ExplicitHeight = 654
     object TabTworzenie: TTabSheet
       Caption = 'Tworzenie'
       object Panel1: TPanel
         Left = 0
         Top = 0
         Width = 257
-        Height = 632
+        Height = 624
         Align = alClient
         Color = 14008238
         TabOrder = 0
+        ExplicitHeight = 623
         DesignSize = (
           257
-          632)
+          624)
         object Kolor: TShape
           Left = 176
           Top = 40
@@ -99,7 +102,7 @@ object Form1: TForm1
         end
         object LabJasnosc: TLabel
           Left = 32
-          Top = 616
+          Top = 608
           Width = 74
           Height = 16
           Anchors = [akLeft, akBottom]
@@ -112,6 +115,7 @@ object Form1: TForm1
           Font.Style = [fsBold]
           ParentColor = False
           ParentFont = False
+          ExplicitTop = 616
         end
         object Label25: TLabel
           Left = 34
@@ -145,40 +149,31 @@ object Form1: TForm1
           Hint = 'Skala wysoko'#347'ci na mapce'
           Max = 100
           Min = 1
-          Orientation = trHorizontal
           ParentShowHint = False
-          Frequency = 1
           Position = 33
-          SelEnd = 0
-          SelStart = 0
           ShowHint = True
           TabOrder = 0
           ThumbLength = 14
-          TickMarks = tmBottomRight
-          TickStyle = tsAuto
           OnChange = trskalaChange
         end
         object trjasnosc: TTrackBar
           Left = 3
           Top = 28
           Width = 26
-          Height = 607
+          Height = 599
           Hint = 'Wysoko'#347#263' rysowana'
           Anchors = [akLeft, akTop, akBottom]
           Max = 1400
           Orientation = trVertical
           ParentShowHint = False
           PageSize = 50
-          Frequency = 1
           Position = 500
-          SelEnd = 0
-          SelStart = 0
           ShowHint = True
           TabOrder = 1
           ThumbLength = 14
-          TickMarks = tmBottomRight
           TickStyle = tsManual
           OnChange = trjasnoscChange
+          ExplicitHeight = 598
         end
         object trrozmiar: TTrackBar
           Left = 177
@@ -187,17 +182,11 @@ object Form1: TForm1
           Height = 21
           Hint = 'Zoom'
           Min = 1
-          Orientation = trHorizontal
           ParentShowHint = False
-          Frequency = 1
           Position = 5
-          SelEnd = 0
-          SelStart = 0
           ShowHint = True
           TabOrder = 2
           ThumbLength = 14
-          TickMarks = tmBottomRight
-          TickStyle = tsAuto
           OnChange = trrozmiarChange
         end
         object narzedzie: TRadioGroup
@@ -310,7 +299,6 @@ object Form1: TForm1
             Max = 30
             Position = 3
             TabOrder = 1
-            Wrap = False
           end
           object UpDownLadRZ: TUpDown
             Left = 77
@@ -322,7 +310,6 @@ object Form1: TForm1
             Max = 30
             Position = 3
             TabOrder = 2
-            Wrap = False
           end
           object EditLadRZ: TEdit
             Left = 51
@@ -338,11 +325,9 @@ object Form1: TForm1
             Width = 15
             Height = 21
             Associate = EditLadPilotow
-            Min = 0
             Max = 99
             Position = 5
             TabOrder = 4
-            Wrap = False
           end
           object EditLadPilotow: TEdit
             Left = 51
@@ -416,15 +401,9 @@ object Form1: TForm1
           Max = 30
           Orientation = trVertical
           ParentShowHint = False
-          Frequency = 1
-          Position = 0
-          SelEnd = 0
-          SelStart = 0
           ShowHint = True
           TabOrder = 9
           ThumbLength = 14
-          TickMarks = tmBottomRight
-          TickStyle = tsAuto
           OnChange = tr3dChange
         end
         object GroupBoxDzialka: TGroupBox
@@ -483,17 +462,11 @@ object Form1: TForm1
             Hint = 'Rozmiar p'#281'dzla'
             Max = 30
             Min = 1
-            Orientation = trHorizontal
             ParentShowHint = False
-            Frequency = 1
             Position = 5
-            SelEnd = 0
-            SelStart = 0
             ShowHint = True
             TabOrder = 1
             ThumbLength = 18
-            TickMarks = tmBottomRight
-            TickStyle = tsAuto
             OnChange = trpedzelChange
           end
           object ChRysWygladz: TCheckBox
@@ -527,7 +500,7 @@ object Form1: TForm1
         Left = 0
         Top = 0
         Width = 257
-        Height = 632
+        Height = 624
         Align = alClient
         Color = 14008238
         TabOrder = 0
@@ -684,7 +657,6 @@ object Form1: TForm1
             Max = 9999
             Position = 1
             TabOrder = 3
-            Wrap = False
           end
           object UpDownMisja2: TUpDown
             Left = 156
@@ -697,7 +669,6 @@ object Form1: TForm1
             Max = 9999
             Position = 1
             TabOrder = 4
-            Wrap = False
           end
           object EditMisja2: TEdit
             Left = 120
@@ -726,7 +697,6 @@ object Form1: TForm1
             Max = 99
             Position = 1
             TabOrder = 7
-            Wrap = False
             OnClick = UpDownMisjaPoziomClick
           end
           object EditMisjaGrawitacja: TEdit
@@ -747,7 +717,6 @@ object Form1: TForm1
             Max = 99
             Position = 25
             TabOrder = 9
-            Wrap = False
             OnClick = UpDownMisjaGrawitacjaClick
           end
           object EditMisjaGestosc: TEdit
@@ -768,7 +737,6 @@ object Form1: TForm1
             Max = 99
             Position = 25
             TabOrder = 11
-            Wrap = False
             OnClick = UpDownMisjaGestoscClick
           end
           object EditMisjaWiatr: TEdit
@@ -789,7 +757,6 @@ object Form1: TForm1
             Max = 99
             Position = 15
             TabOrder = 13
-            Wrap = False
             OnClick = UpDownMisjaWiatrClick
           end
           object EditWysMatki: TEdit
@@ -810,7 +777,6 @@ object Form1: TForm1
             Max = 1500
             Position = 900
             TabOrder = 15
-            Wrap = False
           end
           object EditCzasMin: TEdit
             Left = 120
@@ -826,11 +792,9 @@ object Form1: TForm1
             Width = 15
             Height = 21
             Associate = EditCzasMin
-            Min = 0
             Max = 99
             Position = 10
             TabOrder = 17
-            Wrap = False
           end
           object EditCzasSek: TEdit
             Left = 184
@@ -846,11 +810,8 @@ object Form1: TForm1
             Width = 15
             Height = 21
             Associate = EditCzasSek
-            Min = 0
             Max = 59
-            Position = 0
             TabOrder = 19
-            Wrap = False
           end
           object UpDownMisjaPoziomDo: TUpDown
             Left = 228
@@ -862,7 +823,6 @@ object Form1: TForm1
             Max = 99
             Position = 1
             TabOrder = 20
-            Wrap = False
             OnClick = UpDownMisjaPoziomDoClick
           end
           object EditMisjaPoziomDo: TEdit
@@ -891,7 +851,6 @@ object Form1: TForm1
             Max = 99
             Position = 25
             TabOrder = 23
-            Wrap = False
             OnClick = UpDownMisjaGrawitacjaDoClick
           end
           object EditMisjaGestoscDo: TEdit
@@ -912,7 +871,6 @@ object Form1: TForm1
             Max = 99
             Position = 25
             TabOrder = 25
-            Wrap = False
             OnClick = UpDownMisjaGestoscDoClick
           end
           object EditMisjaWiatrDo: TEdit
@@ -933,7 +891,6 @@ object Form1: TForm1
             Max = 99
             Position = 15
             TabOrder = 27
-            Wrap = False
             OnClick = UpDownMisjaWiatrDoClick
           end
           object EditMaxMysliwcow: TEdit
@@ -950,11 +907,9 @@ object Form1: TForm1
             Width = 15
             Height = 21
             Associate = EditMaxMysliwcow
-            Min = 0
             Max = 30
             Position = 1
             TabOrder = 29
-            Wrap = False
             OnClick = UpDownMaxMysliwcowClick
           end
           object EditMaxMysliwcowDo: TEdit
@@ -971,11 +926,9 @@ object Form1: TForm1
             Width = 12
             Height = 21
             Associate = EditMaxMysliwcowDo
-            Min = 0
             Max = 30
             Position = 1
             TabOrder = 31
-            Wrap = False
             OnClick = UpDownMaxMysliwcowDoClick
           end
         end
@@ -1076,7 +1029,6 @@ object Form1: TForm1
             Increment = 7
             Position = 154
             TabOrder = 1
-            Wrap = False
           end
           object EditWymZ: TEdit
             Left = 66
@@ -1101,7 +1053,6 @@ object Form1: TForm1
             Increment = 7
             Position = 154
             TabOrder = 3
-            Wrap = False
           end
           object UpDownWymWlk: TUpDown
             Left = 153
@@ -1112,7 +1063,6 @@ object Form1: TForm1
             Min = 10
             Position = 35
             TabOrder = 4
-            Wrap = False
             OnClick = UpDownWymWlkClick
           end
           object EditWymWlk: TEdit
@@ -1286,7 +1236,7 @@ object Form1: TForm1
         Left = 0
         Top = 0
         Width = 257
-        Height = 632
+        Height = 624
         Align = alClient
         Color = 14008238
         TabOrder = 0
@@ -1334,7 +1284,7 @@ object Form1: TForm1
         Left = 0
         Top = 0
         Width = 257
-        Height = 632
+        Height = 624
         Align = alClient
         Color = 14008238
         TabOrder = 0
@@ -1467,7 +1417,6 @@ object Form1: TForm1
             Max = 50
             Position = 1
             TabOrder = 1
-            Wrap = False
           end
         end
         object GroupBox5: TGroupBox
@@ -1510,7 +1459,6 @@ object Form1: TForm1
             Max = 50
             Position = 1
             TabOrder = 1
-            Wrap = False
           end
           object ChLadLosJakie: TCheckBox
             Left = 101
@@ -1543,7 +1491,6 @@ object Form1: TForm1
           Min = -100
           Position = 1
           TabOrder = 4
-          Wrap = False
         end
         object EditSkalujWys: TEdit
           Left = 198
@@ -1563,7 +1510,6 @@ object Form1: TForm1
           Max = 400
           Position = 100
           TabOrder = 6
-          Wrap = False
         end
         object EditScenTolerancja: TEdit
           Left = 200
@@ -1583,7 +1529,6 @@ object Form1: TForm1
           Max = 300
           Position = 8
           TabOrder = 8
-          Wrap = False
         end
         object EditScenIle: TEdit
           Left = 38
@@ -1602,7 +1547,6 @@ object Form1: TForm1
           Min = 1
           Position = 13
           TabOrder = 10
-          Wrap = False
         end
       end
     end
@@ -1667,7 +1611,6 @@ object Form1: TForm1
     end
   end
   object ColorDialog1: TColorDialog
-    Ctl3D = True
     Options = [cdFullOpen, cdAnyColor]
     Left = 600
     Top = 16

@@ -1413,8 +1413,10 @@ begin
 
   glEnable(GL_COLOR_MATERIAL);
 
-  if ziemia.widac < 1 then
-    glFogf(GL_FOG_DENSITY, 0.0065 - ziemia.widac * 0.005);
+  if ziemia.widac <= 1 then
+    glFogf(GL_FOG_DENSITY, 0.0060 - ziemia.widac * 0.005)
+  else
+    glFogf(GL_FOG_DENSITY, 0.0060 - 1 * 0.005);
 
 
   // punkty
@@ -4263,6 +4265,7 @@ begin
   glEnable(GL_BLEND);
   glColor4fv(@kol);
 
+//  glDisable(GL_CULL_FACE);
   wlacz_teksture(10);
   glBegin(GL_QUADS);
   glTexCoord2f(6, 0);
@@ -4274,8 +4277,9 @@ begin
   glTexCoord2f(6, 6);
   glVertex3f(nx, w, -nz);
   glEnd;
+//  glEnable(GL_CULL_FACE);
 
-  w := w - 40;
+  w := w - 140;
   glMatrixMode(GL_TEXTURE);
   glLoadIdentity();
   glTranslatef(ziemia.chmuryx * 1.5, ziemia.chmuryz * 1.5, 0);
@@ -4290,6 +4294,7 @@ begin
   if kol[3] < 0 then
     kol[3] := 0;
 
+//  w := w - 140;
   { glFogf (GL_FOG_START, 100.0);
     glFogf (GL_FOG_END, 4800.0);
     glFogi (GL_FOG_MODE, GL_LINEAR);
@@ -4300,6 +4305,7 @@ begin
   glColor4fv(@kol);
 
   // wlacz_teksture(10);
+//  glDisable(GL_CULL_FACE);
   glBegin(GL_QUADS);
   glTexCoord2f(3, 0);
   glVertex3f(nx, w, nz);
@@ -4310,6 +4316,7 @@ begin
   glTexCoord2f(3, 3);
   glVertex3f(nx, w, -nz);
   glEnd;
+//  glEnable(GL_CULL_FACE);
 
   wylacz_teksture;
   glDisable(GL_BLEND);
