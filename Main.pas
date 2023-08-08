@@ -119,7 +119,7 @@ begin
     Config.SetDefaults;
     Config.LoadConfig;
 
-    widocznosc := Config.Display.VisibilityRange;
+    widocznosc := Config.Display.VisibilityRange + 40;
     widocznoscpil := 20;
     if widocznoscpil > widocznosc - 5 then
       widocznoscpil := widocznosc - 5;

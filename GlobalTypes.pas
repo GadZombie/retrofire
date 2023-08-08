@@ -112,6 +112,7 @@ type
     pk: array of array of TZiemiaPunkt;
 
     wlk: integer;
+    TexDiv: real;
 
     grawitacja: real;
     gestoscpowietrza: real;

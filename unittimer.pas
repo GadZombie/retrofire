@@ -48,7 +48,7 @@ procedure normalize(var vec: array of GLFloat);
 function cross_prod(in1, in2: TWektor): TWektor;
 
 function gdzie_y(x, z, y: extended): extended;
-procedure xznasiatce(var x: integer; var z: integer; nx, nz: real);
+procedure xznasiatce(var x: integer; var z: integer; nx, nz: extended);
 
 function czy_zawadza_o_scenerie(x, y, z: real; var gx, gz: integer): boolean;
 procedure rozjeb_scenerie(gx, gz: integer);
@@ -404,8 +404,19 @@ begin
     end;
 end;
 
-// ---------------------------------------------------------------------------
-// zwraca pozycje Y terenu w pozycji X i Z na ekranie (wzgledem poczatku ukladu wsp.)
+function IsPointOverMothership(x, y, z: extended): boolean;
+begin
+  result :=
+    (y >= matka.y - 45) and (x >= matka.x - 530) and (x <= matka.x + 410) and
+    (z >= matka.z - (x + matka.x + 530) / 2.52) and (z <= matka.z + (x + matka.x + 530) / 2.52);
+end;
+
+procedure xznasiatce(var x: integer; var z: integer; nx, nz: extended);
+begin
+  x := trunc((nx - ziemia.px) / ziemia.wlk);
+  z := trunc((nz - ziemia.pz) / ziemia.wlk);
+end;
+
 function gdzie_y(x, z, y: extended): extended;
 var
   intX, intZ: integer;
@@ -417,89 +428,59 @@ var
 
   intXplus1, intZplus1: integer;
 begin
-  if (y >= matka.y - 45) and (x >= matka.x - 530) and (x <= matka.x + 410) and
-    (z >= matka.z - (x + matka.x + 530) / 2.52) and (z <= matka.z + (x + matka.x + 530) / 2.52) then
+  if IsPointOverMothership(x, y, z) then
     result := matka.y
   else
   begin
 	  resizedX := (x - ziemia.px) / ziemia.wlk;
 	  resizedZ := (z - ziemia.pz) / ziemia.wlk;
-	
+
 	  intX := trunc(resizedX);
 	  intZ := trunc(resizedZ);
-	
+
 	  fracX := frac(resizedX);
 	  fracZ := frac(resizedZ);
-	
+
 	  intX := intX mod ziemia.wx;
 	  if intX < 0 then
 	  begin
 	    intX := ziemia.wx - 1 + intX;
 	    fracX := 1 + fracX;
 	  end;
-	
+
 	  intZ := intZ mod ziemia.wz;
 	  if intZ < 0 then
 	  begin
 	    intZ := ziemia.wz - 1 + intZ;
 	    fracZ := 1 + fracZ;
 	  end;
-	
+
 	  if (intX + 1 <= ziemia.wx - 1) then
 	    intXplus1 := intX + 1
 	  else
 	    intXplus1 := 0;
-	
+
 	  if (intZ + 1 <= ziemia.wz - 1) then
 	    intZplus1 := intZ + 1
 	  else
 	    intZplus1 := 0;
-	
+
 	  ny1 := ziemia.pk[intX, intZ].p;
 	  ny11 := ziemia.pk[intX, intZplus1].p;
-	
+
 	  ny2 := ziemia.pk[intXplus1, intZ].p;
 	  ny22 := ziemia.pk[intXplus1, intZplus1].p;
-	
+
 	  distY1 := ny11 - ny1;
 	  nyz1 := ny1 + distY1 * fracZ;
-	
+
 	  distY2 := ny22 - ny2;
 	  nyz2 := ny2 + distY2 * fracZ;
-	
+
 	  distY3 := nyz2 - nyz1;
 	  result := nyz1 + distY3 * fracX;
   end;
 
-end;
-
-// ---------------------------------------------------------------------------
-// zwraca informacje czy podana pozycja jest nad matka czy nad zwykla ziemia
-function czy_to_nad_matka(x, z, y: real): boolean;
-var
-  nx, nz: integer;
-  rx, rz: real;
-  ny1, ny2, ny11, ny22, nyz1, nyz2: real;
-  nyy: real;
-
-  dy1, dy2, dy3: real;
-
-begin
-  if (y >= matka.y - 45) and (x >= matka.x - 530) and (x <= matka.x + 410) and
-    (z >= matka.z - (x + matka.x + 530) / 2.52) and (z <= matka.z + (x + matka.x + 530) / 2.52) then
-    result := true
-  else
-  begin
-    result := false;
-  end;
-
-end;
-
-// ---------------------------------------------------------------------------
-procedure xznasiatce(var x: integer; var z: integer; nx, nz: real);
-begin
-  x := trunc((nx - ziemia.px) / ziemia.wlk);
-  z := trunc((nz - ziemia.pz) / ziemia.wlk);
 end;
 
 // ---------------------------------------------------------------------------
@@ -1368,6 +1349,14 @@ begin
           sin(gracz.kier * pi180) * szybstrz + gracz.dx,
           -0.55 * szybstrz + gracz.dy - Distance2D(0, 0, gracz.dx, gracz.dz) * 0.5,
           -cos(gracz.kier * pi180) * szybstrz + gracz.dz, 0, rodzpoc);
+{ debug:
+        szybstrz := 1;
+        nowy_smiec(gracz.x + sin((90 + gracz.kier) * pi180) * (3 * gracz.stronastrzalu), gracz.y - 2,
+          gracz.z - cos((90 + gracz.kier) * pi180) * (3 * gracz.stronastrzalu),
+          sin(gracz.kier * pi180) * szybstrz + gracz.dx,
+          -0.55 * szybstrz + gracz.dy - Distance2D(0, 0, gracz.dx, gracz.dz) * 0.5,
+          -cos(gracz.kier * pi180) * szybstrz + gracz.dz,
+          0, 0);}
 
       if rodzpoc = 0 then
       begin
@@ -1578,7 +1567,7 @@ begin
   xznasiatce(nx, nz, x, z);
   gx := 0;
   gz := 0;
-  if (nx >= 0) and (nz >= 0) and (nx < ziemia.wx) and (nz < ziemia.wz) and (not czy_to_nad_matka(x, z, y)) then
+  if (nx >= 0) and (nz >= 0) and (nx < ziemia.wx) and (nz < ziemia.wz) and (not IsPointOverMothership(x, z, y)) then
   begin
 
     if (ziemia.pk[nx][nz].scen) and (y < gdzie_y(x, z, y) + ziemia.pk[nx][nz].scen_rozm * 13) and
@@ -1742,7 +1731,7 @@ begin
         begin
           wysadz := true;
           xznasiatce(nx, nz, x, z);
-          if (nx >= 0) and (nz >= 0) and (nx < ziemia.wx) and (nz < ziemia.wz) and (not czy_to_nad_matka(x, z, y)) then
+          if (nx >= 0) and (nz >= 0) and (nx < ziemia.wx) and (nz < ziemia.wz) and (not IsPointOverMothership(x, z, y)) then
           begin
             case rodzaj of
               // stopien zaciemnienia terenu zalezny od rodzaju pocisku
@@ -3137,10 +3126,83 @@ begin
     end;
 end;
 
+function Bounce(position, delta: TVec3D): TVec3D;
+var
+  resizedX, resizedZ: extended;
+  intX, intZ: integer;
+  deltaw, refVec, normalw: wek;
+  intXplus1, intZplus1: integer;
+  P1, P2, P3, normV: TVec3D;
+begin
+  if IsPointOverMothership(position.x, position.y, position.z) then
+  begin
+    normalw[0] := 0;
+    normalw[1] := 1;
+    normalw[2] := 0;
+  end
+  else
+  begin
+    xznasiatce(intX, intZ, position.x, position.z);
+
+    intX := intX mod ziemia.wx;
+    if intX < 0 then
+    begin
+      intX := ziemia.wx - 1 + intX;
+    end;
+
+    intZ := intZ mod ziemia.wz;
+    if intZ < 0 then
+    begin
+      intZ := ziemia.wz - 1 + intZ;
+    end;
+
+    if (intX + 1 <= ziemia.wx - 1) then
+      intXplus1 := intX + 1
+    else
+      intXplus1 := 0;
+
+    if (intZ + 1 <= ziemia.wz - 1) then
+      intZplus1 := intZ + 1
+    else
+      intZplus1 := 0;
+
+    P1.x := intX * ziemia.wlk + ziemia.px;
+    P1.y := ziemia.pk[intX, intZ].p;
+    P1.z := intZ * ziemia.wlk + ziemia.pz;
+
+    P2.x := intX * ziemia.wlk + ziemia.px;
+    P2.y := ziemia.pk[intX, intZplus1].p;
+    P2.z := intZplus1 * ziemia.wlk + ziemia.pz;
+
+    P3.x := intXplus1 * ziemia.wlk + ziemia.px;
+    P3.y := ziemia.pk[intXplus1, intZ].p;
+    P3.z := intZ * ziemia.wlk + ziemia.pz;
+
+    normV := cross_prodVec(SubtractPoints(P2, P1), SubtractPoints(P3, P1));
+
+    normalw[0] := normV.x;
+    normalw[1] := normV.y;
+    normalw[2] := normV.z;
+
+    normalize(normalw);
+  end;
+
+  deltaw[0] := delta.x;
+  deltaw[1] := delta.y;
+  deltaw[2] := delta.z;
+
+  refVec := Reflect(deltaw, normalw);
+
+  result.x := refVec[0];
+  result.y := abs(refVec[1]);
+  result.z := refVec[2];
+end;
+
 // ---------------------------------------------------------------------------
 procedure ruch_smieci;
 var
   a, b: integer;
+  newDelta: TVec3D;
 begin
   for a := 0 to high(smiec) do
     with smiec[a] do
@@ -3155,7 +3217,7 @@ begin
         if czas <= 0 then
           jest := false;
 
-        if licz mod 2 = 0 then
+        if licz mod 8 = 0 then
         begin
           dx := dx * ziemia.gestoscpowietrza;
           dz := dz * ziemia.gestoscpowietrza;
@@ -3186,9 +3248,18 @@ begin
                 Sfx.graj_dzwiek(3, x, y, z);
             end;
           end;
-          dy := abs(dy) / 2;
+{          dy := abs(dy) / 2;
           dx := dx * 0.8;
-          dz := dz * 0.8;
+          dz := dz * 0.8;}
+
+          newDelta := Bounce(TVec3D.ToVec(x, y, z), TVec3D.ToVec(dx, dy, dz));
+          x := x - dx;
+          y := y - dy;
+          z := z - dz;
+          dx := newDelta.x * 0.75;
+          dy := newDelta.y * 0.75;
+          dz := newDelta.z * 0.75;
+
           if abs(dy) < 0.01 then
           begin
             y := y - 0.1;
@@ -3203,8 +3274,8 @@ begin
         end
         else
         begin
-          dx := dx + sin(wiatr.kier * pi180) * wiatr.sila / 2;
-          dz := dz - cos(wiatr.kier * pi180) * wiatr.sila / 2;
+          dx := dx + sin(wiatr.kier * pi180) * wiatr.sila / 4;
+          dz := dz - cos(wiatr.kier * pi180) * wiatr.sila / 4;
         end;
 
         obrx := obrx + dx * 30;
@@ -4816,6 +4887,7 @@ begin
       f.Free;
       f := nil;
     end;
+    ziemia.TexDiv := 7 / 3;
   end;
 
 end;
@@ -4880,15 +4952,16 @@ var
 begin
   gra.rodzajmisji := gra.planeta mod 2;
 
+  ziemia.TexDiv := 7 / 3;
   if gra.planeta <= 9 then
   begin
-    ziemia.wx := 120 + random(3);
+    ziemia.wx := 119 + random(4) * 7;
     ziemia.wz := ziemia.wx;
     ziemia.wlk := 30 + random(5);
   end
   else
   begin
-    ziemia.wx := 150 + random(50);
+    ziemia.wx := 147 + random(10) * 7;
     ziemia.wz := ziemia.wx;
     ziemia.wlk := 30 + random(25);
   end;
@@ -4921,19 +4994,32 @@ begin
     setlength(ziemia.pk[a], ziemia.wz);
 
   // decyzja jakie beda kolory
-  kolory[0, 0] := random;
+ { kolory[0, 0] := random;
   for b := 1 to 2 do
   begin
-    kolory[0, b] := KeepValBetween(kolory[0, b - 1] + (random - 0.5) * 0.1, 0, 1);
+    kolory[0, b] := KeepValBetween(kolory[0, b - 1] + (random - 0.5) * 0.1, 0.05, 0.7);
   end;
 
   for a := 1 to 5 do
   begin
     for b := 0 to 2 do
     begin
-      kolory[a, b] := KeepValBetween(kolory[a - 1, b] + (random - 0.5) * 0.3, 0, 1);
+      kolory[a, b] := KeepValBetween(kolory[a - 1, b] + (random - 0.5) * 0.3, 0.05, 0.7);
     end;
   end;
+}
+
+  for a := 0 to 5 do
+  begin
+    n := random(GROUND_COLORS_MAX + 1);
+    k1 := 0.7 + (random * 0.4);
+    for b := 0 to 2 do
+    begin
+      kolory[a, b] := KeepValBetween(groundColors[n][b] * k1, 0.05, 0.7);
+    end;
+  end;
+
+
 
   // generowanie terenu
   minHeight := 1;
@@ -4976,7 +5062,7 @@ begin
     1:
       begin // gory skladane z trojkatow
         rozwys := 100 + random * 500;
-        maxHeight := round(matka.y - 250);
+        maxHeight := round(matka.y - 400);
         minHeight := maxHeight - 700 - random(1500);
 
         ax := round(minHeight + (maxHeight - minHeight) / 2);
@@ -5063,9 +5149,10 @@ begin
       if r > 5 then
         r := 5;
 
-      ziemia.pk[a, b].kr := kolory[trunc(r), 0];
-      ziemia.pk[a, b].kg := kolory[trunc(r), 1];
-      ziemia.pk[a, b].kb := kolory[trunc(r), 2];
+      k1 := (random - 0.5) * 0.03;
+      ziemia.pk[a, b].kr := KeepValBetween(kolory[trunc(r), 0] + k1, 0, 1);
+      ziemia.pk[a, b].kg := KeepValBetween(kolory[trunc(r), 1] + k1, 0, 1);
+      ziemia.pk[a, b].kb := KeepValBetween(kolory[trunc(r), 2] + k1, 0, 1);
 
     end;
   end;
@@ -5200,6 +5287,10 @@ begin
   ziemia.koltla[1] := KeepValBetween(k1 + (random - 0.5) * 0.2, 0, 1);
   ziemia.koltla[2] := KeepValBetween(k1 + (random - 0.5) * 0.2, 0, 1);
 
+{  ziemia.koltla[0] := 0;
+  ziemia.koltla[1] := 0;
+  ziemia.koltla[2] := 0;}
+
   gra.czas := (60 * 7) + (gra.difficultyLevel div 5) * 30;
 end;
 
@@ -5242,7 +5333,7 @@ var
   a, az, ax, bx, bz: integer;
   vek1, vek2, vek3: TWektor;
   losowy: boolean;
-  r: real;
+  r, col1: real;
   planetatmp: integer;
   n, an: integer;
 begin
@@ -5519,26 +5610,15 @@ begin
 
         if ziemia.pk[ax][az].scen then
         begin
+          col1 := (0.5 - random) * 0.4 - 0.2;
           ziemia.pk[ax][az].scen_rodz := random(ile_obiektow_scenerii);
-          ziemia.pk[ax][az].sckr := ziemia.pk[ax][az].kr - (0.5 - random) * 0.4;
-          if ziemia.pk[ax][az].sckr < 0.2 then
-            ziemia.pk[ax][az].sckr := 0.2;
-          if ziemia.pk[ax][az].sckr > 1 then
-            ziemia.pk[ax][az].sckr := 1;
-          ziemia.pk[ax][az].sckg := ziemia.pk[ax][az].kg - (0.5 - random) * 0.4;
-          if ziemia.pk[ax][az].sckg < 0.2 then
-            ziemia.pk[ax][az].sckg := 0.2;
-          if ziemia.pk[ax][az].sckg > 1 then
-            ziemia.pk[ax][az].sckg := 1;
-          ziemia.pk[ax][az].sckb := ziemia.pk[ax][az].kb - (0.5 - random) * 0.4;
-          if ziemia.pk[ax][az].sckb < 0.2 then
-            ziemia.pk[ax][az].sckb := 0.2;
-          if ziemia.pk[ax][az].sckb > 1 then
-            ziemia.pk[ax][az].sckb := 1;
+          ziemia.pk[ax][az].sckr := KeepValBetween(ziemia.pk[ax][az].kr + (random - 0.5) * 0.1 + col1, 0.1, 0.7);
+          ziemia.pk[ax][az].sckg := KeepValBetween(ziemia.pk[ax][az].kg + (random - 0.5) * 0.1 + col1, 0.1, 0.7);
+          ziemia.pk[ax][az].sckb := KeepValBetween(ziemia.pk[ax][az].kb + (random - 0.5) * 0.1 + col1, 0.1, 0.7);
           ziemia.pk[ax][az].scen_obry := random(360);
           ziemia.pk[ax][az].scen_obrx := random(50) - 25;
           ziemia.pk[ax][az].scen_obrz := random(50) - 25;
-          ziemia.pk[ax][az].scen_rozm := random * 4 + 0.5;
+          ziemia.pk[ax][az].scen_rozm := random * 5 + 0.5;
 
           if (ax > 0) then
             ziemia.pk[ax - 1][az].tex := texkrzakow;

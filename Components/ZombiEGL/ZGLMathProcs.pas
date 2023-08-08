@@ -38,9 +38,12 @@ const
 function l2t(liczba:Int64;ilosc_lit:byte):string;
 procedure normalize(var vec: array of GLfloat);
 procedure normalizeVec(var vec: TVec3D);
+function SubtractPoints(const p1, p2: TVec3D): TVec3D;
 procedure normalize2D(var x1, y1: Extended);
 procedure normalize3D(var x1, y1, z1: Extended);
 function cross_prod(in1,in2: wek):wek;
+function cross_prodVec(in1, in2: TVec3D): TVec3D;
+function Reflect(const r, n: wek): wek;
 function sqrt2(v:real):real;
 function deltaToAngle(dx, dy: extended): extended;
 procedure angleToDelta(angle: extended; out dx: extended; out dy: extended; multiplier: extended = 1);
@@ -126,6 +129,12 @@ begin
   normalize3D(vec.x, vec.y, vec.z);
 end;
 
+function SubtractPoints(const p1, p2: TVec3D): TVec3D;
+begin
+  Result.x := p1.x - p2.x;
+  Result.y := p1.y - p2.y;
+  Result.z := p1.z - p2.z;
+end;
 
 //-----------------------------------------------------------------------------
 function cross_prod(in1,in2: wek):wek;
@@ -137,6 +146,42 @@ begin
     normalize(ou);
 
     result:=ou;
+end;
+
+function cross_prodVec(in1, in2: TVec3D): TVec3D;
+var
+  ou: TVec3D;
+begin
+  ou.x := (in1.y * in2.z) - (in2.y * in1.z);
+  ou.y := (in1.z * in2.x) - (in2.z * in1.x);
+  ou.z := (in1.x * in2.y) - (in2.x * in1.y);
+  normalizeVec(ou);
+
+  result := ou;
+end;
+
+function DotProduct(const a, b: wek): Real;
+var
+  i: Integer;
+begin
+  Result := 0.0;
+  for i := 0 to 2 do
+    Result := Result + a[i] * b[i];
+end;
+
+function Reflect(const r, n: wek): wek;
+var
+  vdotProduct: Real;
+  scaledN: wek;
+  i: Integer;
+begin
+  vdotProduct := DotProduct(r, n);
+  scaledN := n;
+  for i := 0 to 2 do
+    scaledN[i] := 2 * vdotProduct * n[i];
+  Result := r;
+  for i := 0 to 2 do
+    Result[i] := Result[i] - scaledN[i];
 end;
 
 //---------------------------------------------------------------------------

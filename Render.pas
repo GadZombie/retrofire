@@ -16,6 +16,7 @@ var
 
 procedure tworz_obiekty;
 procedure RenderInit;
+procedure rysuj_matke;
 
 implementation
 
@@ -1386,12 +1387,114 @@ begin
 
 end;
 
+procedure DrawShadowsBegin;
+begin
+  glDepthMask(GL_FALSE);
+  glDepthFunc(GL_LEQUAL);
+//  glDisable(GL_DEPTH_TEST);
+
+  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+  glEnable(GL_BLEND);
+  wlacz_teksture(4);
+  glEnable(GL_COLOR_MATERIAL);
+end;
+
+procedure DrawShadowsEnd;
+begin
+  glDisable(GL_BLEND);
+  wylacz_teksture;
+  glDepthMask(GL_TRUE);
+  glEnable(GL_DEPTH_TEST);
+  glDepthFunc(GL_LEQUAL);
+end;
+
+procedure DrawShadow(ox, oy, oz: extended; shadowBaseSize, shadowSizeAdd, shadowVanishHeight, shadowAlpha: extended);
+const
+  ADD_Y = 0.3;
+var
+  j: extended;
+begin
+  j := (oy - gdzie_y(ox, oz, oy)) / shadowVanishHeight;
+  if j > 0 then
+  begin
+    if j > 1 then
+      exit; //j := 1;
+
+    glPushMatrix;
+    glTranslatef(ox, 0, oz);
+    glColor4f(1, 1, 1, shadowAlpha - j * shadowAlpha);
+    glBegin(GL_QUADS);
+    glTexCoord2f(0, 1);
+    glVertex3f(-shadowBaseSize - shadowSizeAdd * j, gdzie_y(ox - shadowBaseSize - shadowSizeAdd * j,
+      oz + shadowBaseSize + shadowSizeAdd * j, oy) + ADD_Y, +shadowBaseSize + shadowSizeAdd * j);
+    glTexCoord2f(1, 1);
+    glVertex3f(+shadowBaseSize + shadowSizeAdd * j, gdzie_y(ox + shadowBaseSize + shadowSizeAdd * j,
+      oz + shadowBaseSize + shadowSizeAdd * j, oy) + ADD_Y, +shadowBaseSize + shadowSizeAdd * j);
+    glTexCoord2f(1, 0);
+    glVertex3f(+shadowBaseSize + shadowSizeAdd * j, gdzie_y(ox + shadowBaseSize + shadowSizeAdd * j,
+      oz - shadowBaseSize - shadowSizeAdd * j, oy) + ADD_Y, -shadowBaseSize - shadowSizeAdd * j);
+    glTexCoord2f(0, 0);
+    glVertex3f(-shadowBaseSize - shadowSizeAdd * j, gdzie_y(ox - shadowBaseSize - shadowSizeAdd * j,
+      oz - shadowBaseSize - shadowSizeAdd * j, oy) + ADD_Y, -shadowBaseSize - shadowSizeAdd * j);
+    glEnd;
+    glPopMatrix;
+  end;
+
+end;
+
+procedure DrawGarbageShadows;
+var
+  a: integer;
+begin
+  DrawShadowsBegin;
+  for a := 0 to high(smiec) do
+    if smiec[a].jest then
+      DrawShadow(smiec[a].x, smiec[a].y, smiec[a].z, 2, 7, 70, 0.4);
+  DrawShadowsEnd;
+end;
+
+procedure DrawLanderShadow;
+const
+  SHADOW_SIZE = 5;
+  SHADOW_SIZE_ADD = 8;
+begin
+  DrawShadowsBegin;
+  DrawShadow(gracz.x, gracz.y, gracz.z, SHADOW_SIZE, SHADOW_SIZE_ADD, 400, 0.8);
+  DrawShadowsEnd;
+end;
+
+procedure DrawFighterShadows;
+var
+  a: integer;
+begin
+  DrawShadowsBegin;
+  for a := 0 to high(mysliwiec) do
+    if mysliwiec[a].jest then
+      DrawShadow(mysliwiec[a].x, mysliwiec[a].y, mysliwiec[a].z, 7, 12, 400, 0.6);
+  DrawShadowsEnd;
+end;
+
+procedure DrawRocketShadows;
+var
+  a: integer;
+begin
+  DrawShadowsBegin;
+  for a := 0 to high(rakieta) do
+    if (rakieta[a].jest) and (rakieta[a].rodzaj = 0) then
+      DrawShadow(rakieta[a].x, rakieta[a].y, rakieta[a].z, 1, 4, 100, 0.4);
+  DrawShadowsEnd;
+end;
+
+procedure DrawObjectShadows;
+begin
+  DrawGarbageShadows;
+  DrawFighterShadows;
+  DrawRocketShadows;
+  DrawLanderShadow;
+end;
+
 // ---------------------------------------------------------------------------
 procedure rysuj_podloze;
-
-const
-  tr = 3.5; // 7
-
 var
   v, f, g, o, a, x, z, xod, xdo, zod, zdo, x1, z1, z11, zwz10, zwx10, xsr, zsr: integer;
   mat_2a, mat_2d, mat_2s: array [0 .. 3] of GLFloat;
@@ -1399,14 +1502,17 @@ var
   widocznosc2: integer;
 begin
   if (ziemia.widac <= 0) then
+  begin
+    DrawObjectShadows;
     exit;
+  end;
 
   glEnable(GL_RESCALE_NORMAL);
 
   zwz10 := ziemia.wz * 10;
   zwx10 := ziemia.wx * 10;
 
-  glMaterialf(GL_FRONT, GL_SHININESS, 60);
+  glMaterialf(GL_FRONT, GL_SHININESS, 120);
   glMaterialfv(GL_FRONT, GL_AMBIENT, @mat_1a);
   glMaterialfv(GL_FRONT, GL_DIFFUSE, @mat_1d);
   glMaterialfv(GL_FRONT, GL_SPECULAR, @mat_1s);
@@ -1435,7 +1541,7 @@ begin
 
   widocznosc2 := odlwidzenia div ziemia.wlk + 2;
 
-  glPushMatrix;
+//  glPushMatrix;
   // glPolygonMode(GL_FRONT, GL_LINE);
   wlacz_teksture3d(17);
   z := zod;
@@ -1457,7 +1563,7 @@ begin
           x1 := (x + zwx10) mod ziemia.wx;
 
           glNormal3fv(@ziemia.pk[x1, z1].norm);
-          glTexCoord3f(x / tr, z / tr, ziemia.pk[x1, z1].tex);
+          glTexCoord3f(x / ziemia.TexDiv, z / ziemia.TexDiv, ziemia.pk[x1, z1].tex);
           if (ziemia.pk[x1, z1].rodzaj = 1) and (((x1 > 0) and (ziemia.pk[x1 - 1, z1].rodzaj <> 1)) or
             ((x1 < ziemia.wx - 1) and (ziemia.pk[x1 + 1, z1].rodzaj <> 1)) or
             ((z1 > 0) and (ziemia.pk[x1, z1 - 1].rodzaj <> 1)) or
@@ -1469,7 +1575,7 @@ begin
           glVertex3f(x * ziemia.wlk + ziemia.px, ziemia.pk[x1, z1].p, z * ziemia.wlk + ziemia.pz);
 
           glNormal3fv(@ziemia.pk[x1, z11].norm);
-          glTexCoord3f(x / tr, (z + 1) / tr, ziemia.pk[x1, z11].tex);
+          glTexCoord3f(x / ziemia.TexDiv, (z + 1) / ziemia.TexDiv, ziemia.pk[x1, z11].tex);
           if (ziemia.pk[x1, z1].rodzaj = 1) and (((x1 > 0) and (ziemia.pk[x1 - 1, z11].rodzaj <> 1)) or
             ((x1 < ziemia.wx - 1) and (ziemia.pk[x1 + 1, z11].rodzaj <> 1)) or
             ((z11 > 0) and (ziemia.pk[x1, z11 - 1].rodzaj <> 1)) or
@@ -1526,6 +1632,7 @@ begin
   wylacz_teksture;
   // glPolygonMode(GL_FRONT, GL_FILL);
 
+//  DrawObjectShadows;
 
   // cienie scenerii
 
@@ -1539,6 +1646,7 @@ begin
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
   glDepthMask(GL_FALSE);
   glEnable(GL_BLEND);
+//  glDisable(GL_DEPTH_TEST);
   glColor4f(1, 1, 1, 0.4);
 
   for z := zod to zdo { ziemia.wz-2 } do
@@ -1628,7 +1736,7 @@ begin
   glDisable(GL_COLOR_MATERIAL);
   wylacz_teksture;
 
-  glPopMatrix;
+//  glPopMatrix;
 
   // rysuj_wode;
 
@@ -1891,8 +1999,6 @@ procedure rysuj_gracza;
 
 const
   mata: array [0 .. 3] of GLFloat = (1.00, 1.00, 0.80, 1.0);
-  SHADOW_SIZE = 5;
-  SHADOW_SIZE_ADD = 8;
 var
   g, ax: integer;
   r, zni: real;
@@ -2073,11 +2179,20 @@ begin
     glDisable(GL_BLEND); }
   // glPopMatrix;
 
+//  DrawShadowsBegin;
+//  DrawShadow(gracz.x, gracz.y, gracz.z, SHADOW_SIZE, SHADOW_SIZE_ADD, 400, 0.8);
+//  DrawShadowsEnd;
+(*
   j := (gracz.y - gracz.cieny) / 400;
   if j > 0 then
   begin
     if j > 1 then
       j := 1;
+
+    glDepthMask(GL_FALSE);
+//      glDepthFunc(GL_LEQUAL);
+    glDisable(GL_DEPTH_TEST);
+
     glPushMatrix;
     // glTranslatef(gracz.x,gracz.cieny,gracz.z);
     // gluSphere(dupa,1,4,4);
@@ -2101,7 +2216,11 @@ begin
     glDisable(GL_BLEND);
     wylacz_teksture;
     glPopMatrix;
-  end;
+
+    glDepthMask(GL_TRUE);
+    glEnable(GL_DEPTH_TEST);
+    glDepthFunc(GL_LEQUAL);
+  end;   *)
 end;
 
 
@@ -2331,9 +2450,9 @@ begin
 
 end;
 
+
 // ---------------------------------------------------------------------------
 procedure rysuj_smieci;
-
 var
   a: integer;
   xod, xdo, zod, zdo, x1, z1: real;
@@ -2390,6 +2509,7 @@ begin
           glPopMatrix;
         end;
       end;
+
 end;
 
 // ---------------------------------------------------------------------------
@@ -3118,7 +3238,7 @@ begin
 
           glPopMatrix;
 
-          j := (y - gdzie_y(x, z, y)) / 400;
+{          j := (y - gdzie_y(x, z, y)) / 400;
           if j > 0 then
           begin
             if j > 0.6 then
@@ -3143,7 +3263,7 @@ begin
             glDisable(GL_BLEND);
             wylacz_teksture;
             glPopMatrix;
-          end;
+          end;          }
         end;
       end;
 end;
@@ -3366,9 +3486,12 @@ begin
     glMatrixMode(GL_MODELVIEW);
   end;
 
+  glDisable(GL_FOG);
+  glDisable(GL_DEPTH_TEST);
   glDepthMask(GL_FALSE);
   glDisable(GL_FOG);
-  glDepthFunc(GL_ALWAYS);
+  glDepthFunc(GL_NEVER);
+  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
   rysuj_swiatelko_obr(-4200, 2700, -3000, 4100, 1, 0.6, 0.5, 0.23, sin(licz / 723.2) * 62);
   rysuj_swiatelko_obr(-4200, 2700, -3000, 2800, 1, 1, 0.95, 0.44, cos(licz / 591.2) * 41);
   rysuj_swiatelko_obr(-4200, 2700, -3000, 2200, 1, 1, 0.85, 0.97, sin(licz / 572) * 30);
@@ -3386,7 +3509,8 @@ begin
   end;
 
   glPopMatrix;
-
+  glEnable(GL_DEPTH_TEST);
+  glEnable(GL_FOG);
 end;
 
 procedure rysuj_puste_tlo;
@@ -4214,15 +4338,12 @@ begin
   glLoadIdentity();
   glMatrixMode(GL_MODELVIEW);
 
+  //starfield
   w := w + 400;
   kol[0] := 1; // ziemia.jestkoltla[0];
   kol[1] := 1; // ziemia.jestkoltla[1];
   kol[2] := 1; // ziemia.jestkoltla[2];
-  kol[3] := ((w - 300) - gracz.y) / 300;
-  if kol[3] > 1 then
-    kol[3] := 1;
-  if kol[3] < 0 then
-    kol[3] := 0;
+  kol[3] := KeepValBetween(((w - 400) - gracz.y) / 400, 0, 1);
 
   glEnable(GL_BLEND);
   glColor4fv(@kol);
@@ -4241,6 +4362,7 @@ begin
 
   wylacz_teksture;
 
+  //clouds 1
   w := w - 400;
   glMatrixMode(GL_TEXTURE);
   glLoadIdentity();
@@ -4279,6 +4401,8 @@ begin
   glEnd;
 //  glEnable(GL_CULL_FACE);
 
+
+  //clouds 2
   w := w - 140;
   glMatrixMode(GL_TEXTURE);
   glLoadIdentity();
@@ -4319,6 +4443,7 @@ begin
 //  glEnable(GL_CULL_FACE);
 
   wylacz_teksture;
+
   glDisable(GL_BLEND);
 
   glDepthMask(GL_TRUE);
@@ -4545,12 +4670,14 @@ begin
 
       if (gra.etap = 1) and (matka.widac > 0) then
         rysuj_gwiazdy(true);
-      // rysuj_slonce;
+//      rysuj_slonce;
       if (gra.etap = 1) and (ziemia.widac > 0) then
         rysuj_niebo;
 
       glEnable(GL_CULL_FACE);
       glCullFace(GL_BACK);
+
+      rysuj_matke;
 
       if gra.etap = 1 then
       begin
@@ -4568,16 +4695,10 @@ begin
       else if (gra.etap = 0) and (intro.scena = 0) then
         rysuj_planete(false, 0.3);
 
-      rysuj_matke;
+//      rysuj_matke;
 
-      { if ((kamera<>7) or (gra.pauza)) and
-        (((gra.etap=0) and (intro.scena=1)) or
-        ((gra.etap=1) and (gracz.zyje))) then rysuj_gracza }
       if ((gra.etap = 0) and (intro.scena = 1)) or ((gra.etap = 1) and ((kamera <> 7) or gra.pauza) and gracz.zyje) then
         rysuj_gracza;
-
-//      else if (gra.etap = 1) and (kamera = 7) and (gracz.zyje) then
-//        rysuj_kokpit;
 
       if gra.etap = 1 then
       begin
@@ -4591,6 +4712,7 @@ begin
       if (gra.etap = 1) and (kamera = 7) and (gracz.zyje) then
         rysuj_kokpit;
 
+      DrawObjectShadows;
       rysuj_dymy;
       rysuj_iskry;
 
