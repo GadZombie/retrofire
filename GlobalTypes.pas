@@ -121,6 +121,7 @@ type
     widac: real;
 
     chmuryx, chmuryz: real;
+    showStars, showClouds: boolean;
   end;
 
   TLightsource = record

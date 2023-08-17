@@ -4826,6 +4826,9 @@ begin
       ziemia.koltla[1] := bg / 256;
       ziemia.koltla[2] := bb / 256;
 
+      ziemia.showStars := (ziemia.koltla[0] <= 0.1) and (ziemia.koltla[1] <= 0.1) and (ziemia.koltla[2] <= 0.1);
+      ziemia.showClouds := ziemia.showStars;
+
       gra.nazwaplanety := wczytajstring(f);
       gra.tekstintro := wczytajstring(f);
       gra.tekstoutrowin := wczytajstring(f);
@@ -5367,15 +5370,22 @@ begin
   for a := 0 to high(pilot) do
     pilot[a].nalotnisku := random(length(ladowiska));
 
-  k1 := random;
-  ziemia.koltla[0] := KeepValBetween(k1 + (random - 0.5) * 0.2, 0, 1);
-  ziemia.koltla[1] := KeepValBetween(k1 + (random - 0.5) * 0.2, 0, 1);
-  ziemia.koltla[2] := KeepValBetween(k1 + (random - 0.5) * 0.2, 0, 1);
-                        {
-  ziemia.koltla[0] := 0;
-  ziemia.koltla[1] := 0;
-  ziemia.koltla[2] := 0;
-                         }
+  ziemia.showStars := random(12) = 0;
+  ziemia.showClouds := random(12) > 0;
+
+  if not ziemia.showStars then
+  begin
+    k1 := random;
+    ziemia.koltla[0] := KeepValBetween(k1 + (random - 0.5) * 0.2, 0, 1);
+    ziemia.koltla[1] := KeepValBetween(k1 + (random - 0.5) * 0.2, 0, 1);
+    ziemia.koltla[2] := KeepValBetween(k1 + (random - 0.5) * 0.2, 0, 1);
+  end
+  else
+  begin
+    ziemia.koltla[0] := 0;
+    ziemia.koltla[1] := 0;
+    ziemia.koltla[2] := 0;
+  end;
   gra.czas := (60 * 7) + (gra.difficultyLevel div 5) * 30;
 end;
 

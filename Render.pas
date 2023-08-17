@@ -3440,7 +3440,10 @@ begin
       glFogf(GL_FOG_DENSITY, s);}
 
       glEnable(GL_BLEND);
-      glcolor4f(1, 1, 1, KeepValBetween((gracz.y - (matka.y - 100)) / 100, 0, 1) );
+      if ziemia.showStars then
+        glColor3f(1, 1, 1)
+      else
+        glcolor4f(1, 1, 1, KeepValBetween((gracz.y - (matka.y - 100)) / 100, 0, 1) );
 
 {    end
     else
@@ -3465,7 +3468,7 @@ begin
     glEnable(GL_CLIP_PLANE0);
   end;
 
-  if not ((gra.etap = 1) and (matka.widac <= 0)) then
+  if not ((gra.etap = 1) and not ziemia.showStars and (matka.widac <= 0)) then
   begin
     if pol then
       gluSphere(dupa, 9000, 20, 20)
@@ -4376,9 +4379,6 @@ begin
   kol[0] := ziemia.jestkoltla[0] * 1;
   kol[1] := ziemia.jestkoltla[1] * 1;
   kol[2] := ziemia.jestkoltla[2] * 1;
-//  kol[0] := ziemia.jestkoltla[0];
-//  kol[1] := ziemia.jestkoltla[1];
-//  kol[2] := ziemia.jestkoltla[2];
   kol[3] := KeepValBetween((wb - gracz.y) / 300, 0, 1);
 //  glFogfv(GL_FOG_COLOR, @kol);
 //  glFogf(GL_FOG_START, 2000.0);
@@ -4388,7 +4388,7 @@ begin
 //  glFogf(GL_FOG_DENSITY, 0.00015);
   glFogi(GL_FOG_MODE, GL_EXP2);
 
-  //sky
+  //sky color
   w := w + 400;
   colSky[0] := KeepValBetween(ziemia.jestkoltla[0] * 1.5, 0, 1);
   colSky[1] := KeepValBetween(ziemia.jestkoltla[1] * 1.5, 0, 1);
@@ -4401,41 +4401,23 @@ begin
   glEnable(GL_COLOR_MATERIAL);
   glColor4fv(@colSky);
   glFogfv(GL_FOG_COLOR, @kol);
-//
-////  glDisable(GL_FOG);
-//  gluQuadricTexture(dupa, GLU_TRUE);
-//  gluQuadricNormals(dupa, GLU_SMOOTH);
-//  gluQuadricOrientation(dupa, GLU_INSIDE);
-////  wlacz_teksture(7);
-//  glPushMatrix;
-//  glTranslatef(0, -300, 0);
-////  glClipPlane(GL_CLIP_PLANE0, @eqn);
-//  glDepthMask(GL_FALSE);
-////  glEnable(GL_CLIP_PLANE0);
-//  glRotatef(90, -1, 0, 0);
-////  gluSphere(dupa, 50000, 12, 12);
-//  gluCylinder(dupa, 10000, 1000, 4000, 16, 2);
-////  glDisable(GL_CLIP_PLANE0);
-//  glDepthMask(GL_TRUE);
-////  glTranslatef(0, 13000, 0);
-//  glPopMatrix;
-
 
   wylacz_teksture;
-  //wlacz_teksture(7);
-  glDepthMask(GL_FALSE);
-  glBegin(GL_QUADS);
-  glTexCoord2f(7, 0);
-  glVertex3f(skyx, w, skyz);
-  glTexCoord2f(0, 0);
-  glVertex3f(-skyx, w, skyz);
-  glTexCoord2f(0, 7);
-  glVertex3f(-skyx, w, -skyz);
-  glTexCoord2f(7, 7);
-  glVertex3f(skyx, w, -skyz);
-  glEnd;
-  glDisable(GL_BLEND);
-
+  if not ziemia.showStars then
+  begin
+    glDepthMask(GL_FALSE);
+    glBegin(GL_QUADS);
+    glTexCoord2f(7, 0);
+    glVertex3f(skyx, w, skyz);
+    glTexCoord2f(0, 0);
+    glVertex3f(-skyx, w, skyz);
+    glTexCoord2f(0, 7);
+    glVertex3f(-skyx, w, -skyz);
+    glTexCoord2f(7, 7);
+    glVertex3f(skyx, w, -skyz);
+    glEnd;
+    glDisable(GL_BLEND);
+  end;
   wylacz_teksture;
   glDepthMask(GL_TRUE);
   glEnable(GL_DEPTH_TEST);
@@ -4470,24 +4452,24 @@ begin
 //  glFogi(GL_FOG_MODE, GL_LINEAR);
 //  glFogfv(GL_FOG_COLOR, @ziemia.jestkoltla);
 
-  glDepthMask(GL_FALSE);
-  glEnable(GL_BLEND);
-  glColor4fv(@kol);
+  if ziemia.showClouds then
+  begin
+    glDepthMask(GL_FALSE);
+    glEnable(GL_BLEND);
+    glColor4fv(@kol);
 
-//  glDisable(GL_CULL_FACE);
-  wlacz_teksture(10);
-  glBegin(GL_QUADS);
-  glTexCoord2f(6, 0);
-  glVertex3f(nx, w, nz);
-  glTexCoord2f(0, 0);
-  glVertex3f(-nx, w, nz);
-  glTexCoord2f(0, 6);
-  glVertex3f(-nx, w, -nz);
-  glTexCoord2f(6, 6);
-  glVertex3f(nx, w, -nz);
-  glEnd;
-//  glEnable(GL_CULL_FACE);
-
+    wlacz_teksture(10);
+    glBegin(GL_QUADS);
+    glTexCoord2f(6, 0);
+    glVertex3f(nx, w, nz);
+    glTexCoord2f(0, 0);
+    glVertex3f(-nx, w, nz);
+    glTexCoord2f(0, 6);
+    glVertex3f(-nx, w, -nz);
+    glTexCoord2f(6, 6);
+    glVertex3f(nx, w, -nz);
+    glEnd;
+  end;
 
 //  glFogfv(GL_FOG_COLOR, @colSky);
   //clouds 2
@@ -4502,29 +4484,21 @@ begin
   kol[2] := 0.8;
   kol[3] := KeepValBetween((w - gracz.y) / 250, 0, 0.6);
 
-//  w := w - 140;
-  { glFogf (GL_FOG_START, 100.0);
-    glFogf (GL_FOG_END, 4800.0);
-    glFogi (GL_FOG_MODE, GL_LINEAR);
-    glFogfv(GL_FOG_COLOR, @ziemia.jestkoltla);
-
-    glDepthMask(GL_FALSE);
-    glEnable(GL_BLEND); }
-  glColor4fv(@kol);
-
-  // wlacz_teksture(10);
-//  glDisable(GL_CULL_FACE);
-  glBegin(GL_QUADS);
-  glTexCoord2f(3, 0);
-  glVertex3f(nx, w, nz);
-  glTexCoord2f(0, 0);
-  glVertex3f(-nx, w, nz);
-  glTexCoord2f(0, 3);
-  glVertex3f(-nx, w, -nz);
-  glTexCoord2f(3, 3);
-  glVertex3f(nx, w, -nz);
-  glEnd;
-//  glEnable(GL_CULL_FACE);
+  if ziemia.showClouds then
+  begin
+    glColor4fv(@kol);
+    wlacz_teksture(10);
+    glBegin(GL_QUADS);
+    glTexCoord2f(3, 0);
+    glVertex3f(nx, w, nz);
+    glTexCoord2f(0, 0);
+    glVertex3f(-nx, w, nz);
+    glTexCoord2f(0, 3);
+    glVertex3f(-nx, w, -nz);
+    glTexCoord2f(3, 3);
+    glVertex3f(nx, w, -nz);
+    glEnd;
+  end;
 
   //finish
   wylacz_teksture;
