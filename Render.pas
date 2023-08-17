@@ -1499,7 +1499,9 @@ var
   v, f, g, o, a, x, z, xod, xdo, zod, zdo, x1, z1, z11, zwz10, zwx10, xsr, zsr: integer;
   mat_2a, mat_2d, mat_2s: array [0 .. 3] of GLFloat;
   obrx, obry, obrz, odl, r, gx1, gz1: real;
-  widocznosc2: integer;
+  showRange, fadeRange: integer;
+  distance, fadeDiv: extended;
+  transparency: GLFloat;
 begin
   if (ziemia.widac <= 0) then
   begin
@@ -1539,8 +1541,11 @@ begin
   xsr := (xdo - xod) div 2 + xod;
   zsr := (zdo - zod) div 2 + zod;
 
-  widocznosc2 := odlwidzenia div ziemia.wlk + 2;
+  showRange := odlwidzenia div ziemia.wlk + 2;
+  fadeRange := showRange - 10;
+  fadeDiv := (showRange - fadeRange);
 
+  glEnable(GL_BLEND);
 //  glPushMatrix;
   // glPolygonMode(GL_FRONT, GL_LINE);
   wlacz_teksture3d(17);
@@ -1548,7 +1553,7 @@ begin
   while z <= zdo do
   begin
 
-    if abs(z - zsr) < widocznosc2 then
+    if abs(z - zsr) < showRange then
     begin
 
       z1 := (z + zwz10) mod ziemia.wz;
@@ -1558,8 +1563,16 @@ begin
       while x <= xdo do
       begin
 
-        if sqrt2(sqr(abs(x - xsr)) + sqr(abs(z - zsr))) < widocznosc2 then
+        distance := sqrt2(sqr(abs(x - xsr)) + sqr(abs(z - zsr)));
+        if distance < showRange then
         begin
+          transparency := KeepValBetween( 1 - (distance - fadeRange) / fadeDiv, 0, 1);
+          if transparency = 1 then
+            glDisable(GL_BLEND)
+          else
+            glEnable(GL_BLEND);
+
+
           x1 := (x + zwx10) mod ziemia.wx;
 
           glNormal3fv(@ziemia.pk[x1, z1].norm);
@@ -1568,9 +1581,9 @@ begin
             ((x1 < ziemia.wx - 1) and (ziemia.pk[x1 + 1, z1].rodzaj <> 1)) or
             ((z1 > 0) and (ziemia.pk[x1, z1 - 1].rodzaj <> 1)) or
             ((z1 < ziemia.wz - 1) and (ziemia.pk[x1, z1 + 1].rodzaj <> 1))) then
-            glcolor3f(1, 1, 1)
+            glcolor4f(1, 1, 1, transparency)
           else
-            glcolor3f(ziemia.pk[x1, z1].kr, ziemia.pk[x1, z1].kg, ziemia.pk[x1, z1].kb);
+            glcolor4f(ziemia.pk[x1, z1].kr, ziemia.pk[x1, z1].kg, ziemia.pk[x1, z1].kb, transparency);
 
           glVertex3f(x * ziemia.wlk + ziemia.px, ziemia.pk[x1, z1].p, z * ziemia.wlk + ziemia.pz);
 
@@ -1580,9 +1593,9 @@ begin
             ((x1 < ziemia.wx - 1) and (ziemia.pk[x1 + 1, z11].rodzaj <> 1)) or
             ((z11 > 0) and (ziemia.pk[x1, z11 - 1].rodzaj <> 1)) or
             ((z11 < ziemia.wz - 1) and (ziemia.pk[x1, z11 + 1].rodzaj <> 1))) then
-            glcolor3f(1, 1, 1)
+            glcolor4f(1, 1, 1, transparency)
           else
-            glcolor3f(ziemia.pk[x1, z11].kr, ziemia.pk[x1, z11].kg, ziemia.pk[x1, z11].kb);
+            glcolor4f(ziemia.pk[x1, z11].kr, ziemia.pk[x1, z11].kg, ziemia.pk[x1, z11].kb, transparency);
 
           glVertex3f(x * ziemia.wlk + ziemia.px, ziemia.pk[x1, z11].p, (z + 1) * ziemia.wlk + ziemia.pz);
 
@@ -1595,6 +1608,7 @@ begin
 
     inc(z);
   end;
+  glDisable(GL_BLEND);
 
   (*
     for z:=zod to zdo{ziemia.wz-2} do begin
@@ -2621,9 +2635,9 @@ begin
   glPushMatrix;
   glScalef(30, 30, 30);
 
-  if matka.widac < 1 then
-    // glFogf (GL_FOG_DENSITY, 0.0065);
-    glFogf(GL_FOG_DENSITY, 0.0065 - matka.widac * 0.005);
+//  if (gra.etap = 1) and (matka.widac < 1) then
+//    glFogf(GL_FOG_DENSITY, 0.0005 - matka.widac * 0.0005);
+  glFogi(GL_FOG_MODE, GL_EXP);
 
   glDisable(GL_RESCALE_NORMAL);
   pokaz_obiekt(obiekt[ob_matka]);
@@ -3390,8 +3404,9 @@ begin
 
   glDisable(GL_LIGHTING);
   glDisable(GL_FOG);
-  glDisable(GL_COLOR_MATERIAL);
-  glcolor3f(0.5, 0.5, 0.5);
+  glEnable(GL_COLOR_MATERIAL);
+  glcolor3f(1, 1, 1);
+//  glcolor3f(ziemia.koltla[0],ziemia.koltla[1],ziemia.koltla[2]);
   wlacz_teksture(7);
 
   glMatrixMode(GL_TEXTURE);
@@ -3399,6 +3414,9 @@ begin
   glScalef(2, 2, 2);
 
   glMatrixMode(GL_MODELVIEW);
+  glTranslatef(gra.jestkamera[0, 0], gra.jestkamera[0, 1], gra.jestkamera[0, 2]);
+
+  glDepthMask(GL_FALSE);
 
   if gra.etap = 1 then
   begin
@@ -3408,28 +3426,34 @@ begin
     gluPerspective(katwidzenia, currentScreenParams.Aspect, 0.2, 25000.0);
     glMatrixMode(GL_MODELVIEW);
 
-    if matka.widac < 1 then
-    begin
-      glEnable(GL_FOG);
-      if gracz.y > matka.y - 250 then
+//    if matka.widac < 1 then
+//    begin
+{      glEnable(GL_FOG);
+      glFogfv(GL_FOG_COLOR, @ziemia.jestkoltla);
+      glFogi(GL_FOG_MODE, GL_EXP);
+        if gracz.y > matka.y - 250 then
       begin
-        s := 0.0025 * ((matka.y - gracz.y) / 250);
+        s := 0.00025 * ((matka.y - gracz.y) / 250);
       end
       else
-        s := 0.0025;
-      glFogf(GL_FOG_DENSITY, s);
-    end
+        s := 0.00025;
+      glFogf(GL_FOG_DENSITY, s);}
+
+      glEnable(GL_BLEND);
+      glcolor4f(1, 1, 1, KeepValBetween((gracz.y - (matka.y - 100)) / 100, 0, 1) );
+
+{    end
     else
     begin
       glDisable(GL_FOG);
-    end;
+    end;}
   end;
 
   gluQuadricTexture(dupa, GLU_TRUE);
   gluQuadricNormals(dupa, GLU_SMOOTH);
   gluQuadricOrientation(dupa, GLU_INSIDE);
 
-  glTranslatef(matka.x, matka.y, matka.z);
+//  glTranslatef(matka.x, matka.y, matka.z);
 
   glRotatef(90, 1, 0, 0);
   if gra.etap <> 1 then
@@ -3441,15 +3465,19 @@ begin
     glEnable(GL_CLIP_PLANE0);
   end;
 
-  if pol then
-    gluSphere(dupa, 9000, 20, 20)
-  else
-    gluSphere(dupa, 5000, 20, 20);
+  if not ((gra.etap = 1) and (matka.widac <= 0)) then
+  begin
+    if pol then
+      gluSphere(dupa, 9000, 20, 20)
+    else
+      gluSphere(dupa, 5000, 20, 20);
+  end;
 
   if pol then
   begin
     glDisable(GL_CLIP_PLANE0);
   end;
+  glDepthMask(GL_TRUE);
 
   gluQuadricOrientation(dupa, GLU_OUTSIDE);
   glEnable(GL_LIGHTING);
@@ -4314,54 +4342,117 @@ end;
 // ---------------------------------------------------------------------------
 procedure rysuj_niebo;
 
+const
+  eqn: array [0 .. 3] of GLdouble = (0.0, 1.0, 0.0, 300.0);
 var
-  nx, nz, w: real;
+  nx, nz, w, wb,
+  skyx, skyz: real;
 
 var
-  kol: array [0 .. 3] of GLFloat;
+  kol, colSky: array [0 .. 3] of GLFloat;
 begin
   w := round(matka.y - 200);
-  nx := abs(ziemia.px) * 3;
-  nz := abs(ziemia.pz) * 3;
+  wb := w;
+  nx := 10000;// abs(ziemia.px) * 3;
+  nz := 10000;//abs(ziemia.pz) * 3;
   // glFogf(GL_FOG_DENSITY, 0.0065-ziemia.widac*0.005);
+  skyx := 50000;
+  skyz := 50000;
 
   glDisable(GL_LIGHTING);
 
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
-  gluPerspective(katwidzenia, currentScreenParams.Aspect, 0.2, 5000.0);
-
+  gluPerspective(katwidzenia, currentScreenParams.Aspect, 1, 20000.0);
+  glRotatef(5, -1, 0, 0);
   glMatrixMode(GL_MODELVIEW);
   glNormal3f(0, -1, 0);
   glPushMatrix;
   glMatrixMode(GL_TEXTURE);
   glLoadIdentity();
   glMatrixMode(GL_MODELVIEW);
+  glTranslatef(gra.jestkamera[0, 0], 0, gra.jestkamera[0, 2]);
 
-  //starfield
+  kol[0] := ziemia.jestkoltla[0] * 1;
+  kol[1] := ziemia.jestkoltla[1] * 1;
+  kol[2] := ziemia.jestkoltla[2] * 1;
+//  kol[0] := ziemia.jestkoltla[0];
+//  kol[1] := ziemia.jestkoltla[1];
+//  kol[2] := ziemia.jestkoltla[2];
+  kol[3] := KeepValBetween((wb - gracz.y) / 300, 0, 1);
+//  glFogfv(GL_FOG_COLOR, @kol);
+//  glFogf(GL_FOG_START, 2000.0);
+//  glFogf(GL_FOG_END, 9000.0);
+//  glFogi(GL_FOG_MODE, GL_LINEAR);
+  glFogf(GL_FOG_DENSITY, 0.00012);
+//  glFogf(GL_FOG_DENSITY, 0.00015);
+  glFogi(GL_FOG_MODE, GL_EXP2);
+
+  //sky
   w := w + 400;
-  kol[0] := 1; // ziemia.jestkoltla[0];
-  kol[1] := 1; // ziemia.jestkoltla[1];
-  kol[2] := 1; // ziemia.jestkoltla[2];
-  kol[3] := KeepValBetween(((w - 400) - gracz.y) / 400, 0, 1);
+  colSky[0] := KeepValBetween(ziemia.jestkoltla[0] * 1.5, 0, 1);
+  colSky[1] := KeepValBetween(ziemia.jestkoltla[1] * 1.5, 0, 1);
+  colSky[2] := KeepValBetween(ziemia.jestkoltla[2] * 1.5, 0, 1);
+  colSky[3] := KeepValBetween((wb - gracz.y) / 250, 0, 1);
+
+  glDisable(GL_DEPTH_TEST);
 
   glEnable(GL_BLEND);
-  glColor4fv(@kol);
-  wlacz_teksture(7);
+  glEnable(GL_COLOR_MATERIAL);
+  glColor4fv(@colSky);
+  glFogfv(GL_FOG_COLOR, @kol);
+//
+////  glDisable(GL_FOG);
+//  gluQuadricTexture(dupa, GLU_TRUE);
+//  gluQuadricNormals(dupa, GLU_SMOOTH);
+//  gluQuadricOrientation(dupa, GLU_INSIDE);
+////  wlacz_teksture(7);
+//  glPushMatrix;
+//  glTranslatef(0, -300, 0);
+////  glClipPlane(GL_CLIP_PLANE0, @eqn);
+//  glDepthMask(GL_FALSE);
+////  glEnable(GL_CLIP_PLANE0);
+//  glRotatef(90, -1, 0, 0);
+////  gluSphere(dupa, 50000, 12, 12);
+//  gluCylinder(dupa, 10000, 1000, 4000, 16, 2);
+////  glDisable(GL_CLIP_PLANE0);
+//  glDepthMask(GL_TRUE);
+////  glTranslatef(0, 13000, 0);
+//  glPopMatrix;
+
+
+  wylacz_teksture;
+  //wlacz_teksture(7);
+  glDepthMask(GL_FALSE);
   glBegin(GL_QUADS);
   glTexCoord2f(7, 0);
-  glVertex3f(nx * 2, w, nz * 2);
+  glVertex3f(skyx, w, skyz);
   glTexCoord2f(0, 0);
-  glVertex3f(-nx * 2, w, nz * 2);
+  glVertex3f(-skyx, w, skyz);
   glTexCoord2f(0, 7);
-  glVertex3f(-nx * 2, w, -nz * 2);
+  glVertex3f(-skyx, w, -skyz);
   glTexCoord2f(7, 7);
-  glVertex3f(nx * 2, w, -nz * 2);
+  glVertex3f(skyx, w, -skyz);
   glEnd;
   glDisable(GL_BLEND);
 
   wylacz_teksture;
+  glDepthMask(GL_TRUE);
+  glEnable(GL_DEPTH_TEST);
 
+  //clouds
+
+  glFogfv(GL_FOG_COLOR, @colSky);
+  glFogf(GL_FOG_DENSITY, 0.0005);
+  glFogi(GL_FOG_MODE, GL_EXP2);
+
+  glMatrixMode(GL_PROJECTION);
+  glLoadIdentity();
+  gluPerspective(katwidzenia, currentScreenParams.Aspect, 0.2, 10000.0);
+
+  glMatrixMode(GL_MODELVIEW);
+
+//  glFogfv(GL_FOG_COLOR, @kol);
   //clouds 1
   w := w - 400;
   glMatrixMode(GL_TEXTURE);
@@ -4369,19 +4460,15 @@ begin
   glTranslatef(ziemia.chmuryx, ziemia.chmuryz, 0);
   glMatrixMode(GL_MODELVIEW);
 
-  kol[0] := 0.7;
-  kol[1] := 0.7;
-  kol[2] := 0.7;
-  kol[3] := (w - gracz.y) / 300;
-  if kol[3] > 0.7 then
-    kol[3] := 0.7;
-  if kol[3] < 0 then
-    kol[3] := 0;
+  kol[0] := 0.6;
+  kol[1] := 0.6;
+  kol[2] := 0.6;
+  kol[3] := KeepValBetween((w - gracz.y) / 300, 0, 0.7);
 
-  glFogf(GL_FOG_START, 100.0);
-  glFogf(GL_FOG_END, 4800.0);
-  glFogi(GL_FOG_MODE, GL_LINEAR);
-  glFogfv(GL_FOG_COLOR, @ziemia.jestkoltla);
+//  glFogf(GL_FOG_START, 100.0);
+//  glFogf(GL_FOG_END, 4800.0);
+//  glFogi(GL_FOG_MODE, GL_LINEAR);
+//  glFogfv(GL_FOG_COLOR, @ziemia.jestkoltla);
 
   glDepthMask(GL_FALSE);
   glEnable(GL_BLEND);
@@ -4402,6 +4489,7 @@ begin
 //  glEnable(GL_CULL_FACE);
 
 
+//  glFogfv(GL_FOG_COLOR, @colSky);
   //clouds 2
   w := w - 140;
   glMatrixMode(GL_TEXTURE);
@@ -4412,11 +4500,7 @@ begin
   kol[0] := 0.8;
   kol[1] := 0.8;
   kol[2] := 0.8;
-  kol[3] := (w - gracz.y) / 250;
-  if kol[3] > 0.6 then
-    kol[3] := 0.6;
-  if kol[3] < 0 then
-    kol[3] := 0;
+  kol[3] := KeepValBetween((w - gracz.y) / 250, 0, 0.6);
 
 //  w := w - 140;
   { glFogf (GL_FOG_START, 100.0);
@@ -4442,6 +4526,7 @@ begin
   glEnd;
 //  glEnable(GL_CULL_FACE);
 
+  //finish
   wylacz_teksture;
 
   glDisable(GL_BLEND);
@@ -4671,13 +4756,22 @@ begin
       if (gra.etap = 1) and (matka.widac > 0) then
         rysuj_gwiazdy(true);
 //      rysuj_slonce;
-      if (gra.etap = 1) and (ziemia.widac > 0) then
-        rysuj_niebo;
+//      if (gra.etap = 1) and (ziemia.widac > 0) then
+//      begin
+//        rysuj_gwiazdy(true);
+//        rysuj_niebo;
+//      end;
 
       glEnable(GL_CULL_FACE);
       glCullFace(GL_BACK);
 
       rysuj_matke;
+
+      if (gra.etap = 1) and (ziemia.widac > 0) then
+      begin
+        rysuj_gwiazdy(true);
+        rysuj_niebo;
+      end;
 
       if gra.etap = 1 then
       begin

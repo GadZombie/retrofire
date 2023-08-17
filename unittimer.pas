@@ -654,6 +654,79 @@ begin
     0, fadeSpeed);
 end;
 
+function Bounce(position, delta: TVec3D): TVec3D;
+var
+  resizedX, resizedZ: extended;
+  intX, intZ: integer;
+  deltaw, refVec, normalw: wek;
+  intXplus1, intZplus1: integer;
+  P1, P2, P3, normV: TVec3D;
+begin
+  if IsPointOverMothership(position.x, position.y, position.z) then
+  begin
+    normalw[0] := 0;
+    normalw[1] := 1;
+    normalw[2] := 0;
+  end
+  else
+  begin
+    xznasiatce(intX, intZ, position.x, position.z);
+
+    intX := intX mod ziemia.wx;
+    if intX < 0 then
+    begin
+      intX := ziemia.wx - 1 + intX;
+    end;
+
+    intZ := intZ mod ziemia.wz;
+    if intZ < 0 then
+    begin
+      intZ := ziemia.wz - 1 + intZ;
+    end;
+
+    if (intX + 1 <= ziemia.wx - 1) then
+      intXplus1 := intX + 1
+    else
+      intXplus1 := 0;
+
+    if (intZ + 1 <= ziemia.wz - 1) then
+      intZplus1 := intZ + 1
+    else
+      intZplus1 := 0;
+
+    P1.x := intX * ziemia.wlk + ziemia.px;
+    P1.y := ziemia.pk[intX, intZ].p;
+    P1.z := intZ * ziemia.wlk + ziemia.pz;
+
+    P2.x := intX * ziemia.wlk + ziemia.px;
+    P2.y := ziemia.pk[intX, intZplus1].p;
+    P2.z := intZplus1 * ziemia.wlk + ziemia.pz;
+
+    P3.x := intXplus1 * ziemia.wlk + ziemia.px;
+    P3.y := ziemia.pk[intXplus1, intZ].p;
+    P3.z := intZ * ziemia.wlk + ziemia.pz;
+
+    normV := cross_prodVec(SubtractPoints(P2, P1), SubtractPoints(P3, P1));
+
+    normalw[0] := normV.x;
+    normalw[1] := normV.y;
+    normalw[2] := normV.z;
+
+    normalize(normalw);
+  end;
+
+  deltaw[0] := delta.x;
+  deltaw[1] := delta.y;
+  deltaw[2] := delta.z;
+
+  refVec := Reflect(deltaw, normalw);
+
+  result.x := refVec[0];
+  result.y := abs(refVec[1]);
+  result.z := refVec[2];
+end;
+
+
 // ---------------------------------------------------------------------------
 procedure ruch_gracza;
 var
@@ -664,6 +737,7 @@ var
   k, k1, gx1, gz1, szybstrz: real;
   dzwiekognia: boolean;
   rodzpoc: byte;
+  newDelta: TVec3D;
 
 begin
   gracz.grlot := -1;
@@ -1055,8 +1129,17 @@ begin
 
       if gracz.y < gdzie_y(gracz.x, gracz.z, gracz.y) + 4.99 then
       begin
-        gracz.y := gracz.y + 0.001;
-        gracz.dy := gracz.dy * 0.8;
+{        gracz.y := gracz.y + 0.001;
+        gracz.dy := gracz.dy * 0.8;}
+
+        newDelta := Bounce(TVec3D.ToVec(gracz.x, gracz.y, gracz.z), TVec3D.ToVec(gracz.dx, gracz.dy, gracz.dz));
+        gracz.x := gracz.x - gracz.dx;
+        gracz.y := gracz.y - gracz.dy;
+        gracz.z := gracz.z - gracz.dz;
+        gracz.dx := newDelta.x * 0.6;
+        gracz.dy := newDelta.y * 0.6;
+        gracz.dz := newDelta.z * 0.6;
+
       end;
       // gracz.y:=gdzie_y(gracz.x,gracz.z)+0.001+5+5;
 
@@ -3126,78 +3209,6 @@ begin
     end;
 end;
 
-function Bounce(position, delta: TVec3D): TVec3D;
-var
-  resizedX, resizedZ: extended;
-  intX, intZ: integer;
-  deltaw, refVec, normalw: wek;
-  intXplus1, intZplus1: integer;
-  P1, P2, P3, normV: TVec3D;
-begin
-  if IsPointOverMothership(position.x, position.y, position.z) then
-  begin
-    normalw[0] := 0;
-    normalw[1] := 1;
-    normalw[2] := 0;
-  end
-  else
-  begin
-    xznasiatce(intX, intZ, position.x, position.z);
-
-    intX := intX mod ziemia.wx;
-    if intX < 0 then
-    begin
-      intX := ziemia.wx - 1 + intX;
-    end;
-
-    intZ := intZ mod ziemia.wz;
-    if intZ < 0 then
-    begin
-      intZ := ziemia.wz - 1 + intZ;
-    end;
-
-    if (intX + 1 <= ziemia.wx - 1) then
-      intXplus1 := intX + 1
-    else
-      intXplus1 := 0;
-
-    if (intZ + 1 <= ziemia.wz - 1) then
-      intZplus1 := intZ + 1
-    else
-      intZplus1 := 0;
-
-    P1.x := intX * ziemia.wlk + ziemia.px;
-    P1.y := ziemia.pk[intX, intZ].p;
-    P1.z := intZ * ziemia.wlk + ziemia.pz;
-
-    P2.x := intX * ziemia.wlk + ziemia.px;
-    P2.y := ziemia.pk[intX, intZplus1].p;
-    P2.z := intZplus1 * ziemia.wlk + ziemia.pz;
-
-    P3.x := intXplus1 * ziemia.wlk + ziemia.px;
-    P3.y := ziemia.pk[intXplus1, intZ].p;
-    P3.z := intZ * ziemia.wlk + ziemia.pz;
-
-    normV := cross_prodVec(SubtractPoints(P2, P1), SubtractPoints(P3, P1));
-
-    normalw[0] := normV.x;
-    normalw[1] := normV.y;
-    normalw[2] := normV.z;
-
-    normalize(normalw);
-  end;
-
-  deltaw[0] := delta.x;
-  deltaw[1] := delta.y;
-  deltaw[2] := delta.z;
-
-  refVec := Reflect(deltaw, normalw);
-
-  result.x := refVec[0];
-  result.y := abs(refVec[1]);
-  result.z := refVec[2];
-end;
-
 // ---------------------------------------------------------------------------
 procedure ruch_smieci;
 var
@@ -3248,19 +3259,16 @@ begin
                 Sfx.graj_dzwiek(3, x, y, z);
             end;
           end;
-{          dy := abs(dy) / 2;
-          dx := dx * 0.8;
-          dz := dz * 0.8;}
 
           newDelta := Bounce(TVec3D.ToVec(x, y, z), TVec3D.ToVec(dx, dy, dz));
           x := x - dx;
           y := y - dy;
           z := z - dz;
-          dx := newDelta.x * 0.75;
-          dy := newDelta.y * 0.75;
-          dz := newDelta.z * 0.75;
+          dx := newDelta.x * 0.6;
+          dy := newDelta.y * 0.6;
+          dz := newDelta.z * 0.6;
 
-          if abs(dy) < 0.01 then
+          if abs(dy) < 0.02 then
           begin
             y := y - 0.1;
             if y <= gdzie_y(x, z, y) - 8 then
@@ -3335,9 +3343,9 @@ var
 begin
   for a := 0 to 2 do
   begin
-    if gracz.y > matka.y - 250 then
+    if gracz.y > matka.y - 350 then
     begin
-      ziemia.jestkoltla[a] := ziemia.koltla[a] * ((matka.y - gracz.y) / 250);
+      ziemia.jestkoltla[a] := ziemia.koltla[a] * ((matka.y - 100 - gracz.y) / 250);
     end
     else
       ziemia.jestkoltla[a] := ziemia.koltla[a];
@@ -3807,9 +3815,9 @@ begin
 
   ustaw_kolor_tla;
 
-  if gracz.y > matka.y - 250 then
+  if gracz.y > matka.y - 350 then
   begin
-    ziemia.widac := (matka.y - gracz.y) / 250;
+    ziemia.widac := KeepValBetween((matka.y - 100 - gracz.y) / 250, 0, 1);
   end
   else
     ziemia.widac := 1;
@@ -3819,8 +3827,8 @@ begin
     ziemia.widac := 1;
   matka.widac := 1 - ziemia.widac;
 
-  ziemia.chmuryx := ziemia.chmuryx - sin(wiatr.kier * pi180) * (wiatr.sila / 8);
-  ziemia.chmuryz := ziemia.chmuryz - cos(wiatr.kier * pi180) * (wiatr.sila / 8);
+  ziemia.chmuryx := ziemia.chmuryx - sin(wiatr.kier * pi180) * (wiatr.sila / 20) + gracz.dx * 0.0001;
+  ziemia.chmuryz := ziemia.chmuryz - cos(wiatr.kier * pi180) * (wiatr.sila / 20) - gracz.dz * 0.0001;
 
   glFogfv(GL_FOG_COLOR, @ziemia.jestkoltla);
   glClearColor(ziemia.jestkoltla[0], ziemia.jestkoltla[1], ziemia.jestkoltla[2], ziemia.jestkoltla[3]);
@@ -4000,6 +4008,10 @@ procedure ruch_intro;
 var
   a, b: integer;
 begin
+{$IFDEF DEBUG_AUTO_START}
+  intro.scena := 3;
+{$ENDIF}
+
   { inc(intro.czas);
 
     ustaw_kolor_tla;
@@ -4112,6 +4124,15 @@ begin
     Sfx.muzyke_wlacz(0, true);
     FSOUND_SetPaused(muzchannel, false);
     FSOUND_Stream_SetTime(muzstream, 0);
+
+    {$IFDEF DEBUG_AUTO_START}
+      cheaty.full := true;
+      cheaty.god := true;
+      cheaty.weapon := true;
+      gracz.y := matka.y - 200;
+      kamera := 4;
+    {$ENDIF}
+
   end;
 
 end;
@@ -4249,6 +4270,14 @@ end;
 // ---------------------------------------------------------------------------
 procedure obsluga_winiety;
 begin
+{$IFDEF DEBUG_AUTO_START}
+  winieta.kursor := 1;
+  winieta.planetapocz := 20;
+  winieta.jest := false;
+  Sfx.muzyke_wylacz;
+  nowa_gra(-1, 1);
+{$ENDIF}
+
   case winieta.corobi of
     0:
       begin // winieta
@@ -4530,6 +4559,10 @@ procedure ruch_glowneintro;
 var
   a, b: integer;
 begin
+{$IFDEF DEBUG_AUTO_START}
+  glowneintro.scena := 6;
+  glowneintro.czas := 1600;
+{$ENDIF}
 
   if glowneintro.czas = 0 then
   begin
@@ -4540,7 +4573,7 @@ begin
   inc(glowneintro.czas2);
 
   if (glowneintro.czas = 200) or (glowneintro.czas = 500) or (glowneintro.czas = 800) or (glowneintro.czas = 1100) or
-    (glowneintro.czas = 1400) or (glowneintro.czas = 1600) // koniec
+    (glowneintro.czas = 1400) or (glowneintro.czas >= 1600) // koniec
   then
   begin
     inc(glowneintro.scena);
@@ -4930,6 +4963,56 @@ begin
 
 end;
 
+procedure DrawCircle(centerX, centerZ, radius, height: integer);
+var
+  x, z, fx, fz: integer;
+  w: extended;
+begin
+  for fz := centerZ - radius to centerZ + radius do
+    for fx := centerX - radius to centerX + radius do
+    begin
+      x := fx mod ziemia.wx;
+      if x < 0 then
+        x := ziemia.wx - 1 + x;
+      z := fz mod ziemia.wz;
+      if z < 0 then
+        z := ziemia.wz - 1 + z;
+
+      if (x >= 0) and (z >= 0) and (x < ziemia.wx) and (z < ziemia.wz) then
+      begin
+        if (fx - centerX = 0) and (fz - centerZ = 0) then
+          w := ((radius + 1) - sqrt2(sqr(1) + sqr(0))) / radius
+        else
+          w := ((radius + 1) - sqrt2(sqr(fx - centerX) + sqr(fz - centerZ))) / radius;
+
+        if w < 0 then
+          w := 0;
+
+        ziemia.pk[x, z].p := ziemia.pk[x, z].p + height * w;
+
+      end;
+    end;
+end;
+
+// ---------------------------------------------------------------------------
+procedure MakeCraters;
+var
+  a, centerx, centerz, radius, height: integer;
+begin
+  for a := 0 to 1 + random(50) do
+  begin
+    centerx := random(high(ziemia.pk) * 2);
+    centerz := random(high(ziemia.pk[0]) * 2 - centerx) + centerx;
+
+    radius := 5 + random(40);
+    height := 50 + random(300);
+
+    DrawCircle(centerx, centerz, radius, height);
+    DrawCircle(centerx, centerz, radius - 5 - random(10), -round(height * (1 + random)) );
+  end;
+
+end;
+
 // ---------------------------------------------------------------------------
 procedure generuj_losowy;
 var
@@ -5167,6 +5250,8 @@ begin
 
   softenTerrain;
 
+  MakeCraters;
+
   for az := 0 to ziemia.wz - 1 do
     for ax := 0 to ziemia.wx - 1 do
     begin
@@ -5286,11 +5371,11 @@ begin
   ziemia.koltla[0] := KeepValBetween(k1 + (random - 0.5) * 0.2, 0, 1);
   ziemia.koltla[1] := KeepValBetween(k1 + (random - 0.5) * 0.2, 0, 1);
   ziemia.koltla[2] := KeepValBetween(k1 + (random - 0.5) * 0.2, 0, 1);
-
-{  ziemia.koltla[0] := 0;
+                        {
+  ziemia.koltla[0] := 0;
   ziemia.koltla[1] := 0;
-  ziemia.koltla[2] := 0;}
-
+  ziemia.koltla[2] := 0;
+                         }
   gra.czas := (60 * 7) + (gra.difficultyLevel div 5) * 30;
 end;
 
@@ -5330,7 +5415,7 @@ const
   texladowiska = 0.35;
   texkrzakow = 0;
 var
-  a, az, ax, bx, bz: integer;
+  a, az, ax, bx, bz, mapx, mapz: integer;
   vek1, vek2, vek3: TWektor;
   losowy: boolean;
   r, col1: real;
@@ -5428,7 +5513,15 @@ begin
 
         for bx := ax - 1 to ax do
           for bz := az - 1 to az do
-            ziemia.pk[bx, bz].p := r;
+          begin
+            mapx := bx mod ziemia.wx;
+            if mapx < 0 then
+              mapx := ziemia.wx - 1 + mapx;
+            mapz := bz mod ziemia.wz;
+            if mapz < 0 then
+              mapz := ziemia.wz - 1 + mapz;
+            ziemia.pk[mapx, mapz].p := r;
+          end;
       end;
 
       y := 2 + gdzie_y(x, z, 0);
