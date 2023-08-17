@@ -270,9 +270,12 @@ begin
 end;
 
 // ---------------------------------------------------------------------------
-procedure strzel(sx, sy, sz, sdx, sdy, sdz: real; czyj: byte; rodz: byte = 0);
+procedure strzel(sx, sy, sz, sdx, sdy, sdz: real; czyj: byte; rodz: byte;
+  size: extended; baseDelta: TVec3D);
 var
   n: integer;
+  deltaVec: TVec3D;
+  deltaDiv, fade: extended;
 begin
   n := 0;
   while (n <= high(rakieta)) and (rakieta[n].jest) do
@@ -304,6 +307,23 @@ begin
 
       czyja := czyj;
 
+      //
+      if rodz <> 2 then
+      begin
+        deltaVec := TVec3D.ToVec(sdx, sdy, sdz);
+        normalizeVec(deltaVec);
+        deltaDiv := 7;
+        if size < 1 then
+          fade := 0.07
+        else
+          fade := 0.01;
+
+        nowy_dym(sx, sy, sz,
+          baseDelta.x + deltaVec.x / deltaDiv,
+          baseDelta.y + deltaVec.y / deltaDiv,
+          baseDelta.z + deltaVec.z / deltaDiv,
+          size, 0, fade);
+      end;
     end;
 end;
 
@@ -1389,7 +1409,7 @@ begin
           -(sin(k * pi180) * cos(k1 * pi180)) * szybstrz, -sin(k1 * pi180) * szybstrz,
           -(-cos(k * pi180) * cos(k1 * pi180)) * szybstrz,
 
-          0, rodzpoc);
+          0, rodzpoc, 0.3, Vec3D(gracz.dx, gracz.dy, gracz.dz));
 
       end
       else if (gracz.conamierzone = 1) and (gracz.namierzone >= 0) then
@@ -1423,7 +1443,7 @@ begin
           -(sin(k * pi180) * cos(k1 * pi180)) * szybstrz, -sin(k1 * pi180) * szybstrz,
           -(-cos(k * pi180) * cos(k1 * pi180)) * szybstrz,
 
-          0, rodzpoc);
+          0, rodzpoc, 0.3, Vec3D(gracz.dx, gracz.dy, gracz.dz));
 
       end
       else // strzel prosto
@@ -1431,7 +1451,8 @@ begin
           gracz.z - cos((90 + gracz.kier) * pi180) * (3 * gracz.stronastrzalu),
           sin(gracz.kier * pi180) * szybstrz + gracz.dx,
           -0.55 * szybstrz + gracz.dy - Distance2D(0, 0, gracz.dx, gracz.dz) * 0.5,
-          -cos(gracz.kier * pi180) * szybstrz + gracz.dz, 0, rodzpoc);
+          -cos(gracz.kier * pi180) * szybstrz + gracz.dz, 0,
+          rodzpoc, 0.3, Vec3D(gracz.dx, gracz.dy, gracz.dz));
 { debug:
         szybstrz := 1;
         nowy_smiec(gracz.x + sin((90 + gracz.kier) * pi180) * (3 * gracz.stronastrzalu), gracz.y - 2,
@@ -2382,7 +2403,8 @@ begin
                 z + (-cos(kier * pi180) * cos(kierdol * pi180)) * 9, (sin(kier * pi180) * cos(kierdol * pi180)) *
                 (15 + gra.difficultyLevel / 15) + (random - 0.5), -sin(kierdol * pi180) * (15 + gra.difficultyLevel / 15) +
                 (random - 0.5), (-cos(kier * pi180) * cos(kierdol * pi180)) * (15 + gra.difficultyLevel / 15) +
-                (random - 0.5), 1, 1);
+                (random - 0.5), 1, 1,
+                0.6, Vec3D(dx, dy, dz));
 
               Sfx.graj_dzwiek(20, x, y, z);
 
@@ -2937,6 +2959,7 @@ procedure ruch_dzialek;
 const
   ciemno: array [0 .. 4] of record x, z: integer end = ((x: 0; z: 0), (x: 1; z: 0), (x: 0; z: 1), (x: - 1; z: 0),
     (x: 0; z: - 1));
+  BARREL_LENGTH = 13;
 var
   a, b, grlot, nx, nz, k1, nk1: integer;
   k, k2, s, s1, gx1, gz1: real;
@@ -3087,19 +3110,29 @@ begin
                   begin
                     if rodzaj = 0 then
                     begin
-                      strzel(x + (sin(kier * pi180) * cos(kat * pi180)) * 9, y + sin(kat * pi180) * 9,
-                        z + (-cos(kier * pi180) * cos(kat * pi180)) * 9, (sin(kier * pi180) * cos(kat * pi180)) * s1 +
+                      strzel(
+                        x + (sin(kier * pi180) * cos(kat * pi180)) * BARREL_LENGTH,
+                        y + sin(kat * pi180) * BARREL_LENGTH,
+                        z + (-cos(kier * pi180) * cos(kat * pi180)) * BARREL_LENGTH,
+                        (sin(kier * pi180) * cos(kat * pi180)) * s1 +
                         (random - 0.5) / 3, sin(kat * pi180) * s1 + (random - 0.5) / 3,
-                        (-cos(kier * pi180) * cos(kat * pi180)) * s1 + (random - 0.5) / 3, 1);
+                        (-cos(kier * pi180) * cos(kat * pi180)) * s1 + (random - 0.5) / 3, 1, 0, 2.3, Vec3d(0, 0, 0));
 
                       Sfx.graj_dzwiek(6, x, y, z);
                     end
                     else
                     begin
-                      strzel(x + (sin(kier * pi180) * cos(kat * pi180)) * 9, y + sin(kat * pi180) * 9,
-                        z + (-cos(kier * pi180) * cos(kat * pi180)) * 9, (sin(kier * pi180) * cos(kat * pi180)) * s1 +
+                      if shootSide = 1 then
+                        shootSide := -1
+                      else
+                        shootSide := 1;
+                      strzel(
+                        x + (sin(kier * pi180) * cos(kat * pi180)) * BARREL_LENGTH  + sin((90 + gracz.kier) * pi180) * (1.9 * shootSide),
+                        y + sin(kat * pi180) * BARREL_LENGTH,
+                        z + (-cos(kier * pi180) * cos(kat * pi180)) * BARREL_LENGTH  - cos((90 + gracz.kier) * pi180) *  (1.9 * shootSide),
+                        (sin(kier * pi180) * cos(kat * pi180)) * s1 +
                         (random - 0.5) / 3, sin(kat * pi180) * s1 + (random - 0.5) / 3,
-                        (-cos(kier * pi180) * cos(kat * pi180)) * s1 + (random - 0.5) / 3, 1, 1);
+                        (-cos(kier * pi180) * cos(kat * pi180)) * s1 + (random - 0.5) / 3, 1, 1, 0.99, Vec3d(0, 0, 0));
 
                       Sfx.graj_dzwiek(20, x, y, z);
 
@@ -3405,7 +3438,7 @@ begin
       c1 := sqrt2(sqr((gx1 - gracz.dx) - x1) + sqr((gz1 - gracz.dz) - z1));
 
       if ((c < 900) and (c1 >= 900)) and (random(4) = 0) then
-        strzel(x1, gdzie_y(x1, z1, 0) + 10, z1, random - 0.5, 1.3 + random, random - 0.5, 0, 2);
+        strzel(x1, gdzie_y(x1, z1, 0) + 10, z1, random - 0.5, 1.3 + random, random - 0.5, 0, 2, 1, Vec3D(0, 0, 0));
 
     end;
 
@@ -4273,6 +4306,7 @@ begin
 {$IFDEF DEBUG_AUTO_START}
   winieta.kursor := 1;
   winieta.planetapocz := 20;
+  winieta.poziomtrudnosci := 20;
   winieta.jest := false;
   Sfx.muzyke_wylacz;
   nowa_gra(-1, 1);
@@ -4827,7 +4861,7 @@ begin
       ziemia.koltla[2] := bb / 256;
 
       ziemia.showStars := (ziemia.koltla[0] <= 0.1) and (ziemia.koltla[1] <= 0.1) and (ziemia.koltla[2] <= 0.1);
-      ziemia.showClouds := ziemia.showStars;
+      ziemia.showClouds := not ziemia.showStars;
 
       gra.nazwaplanety := wczytajstring(f);
       gra.tekstintro := wczytajstring(f);

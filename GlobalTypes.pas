@@ -203,6 +203,7 @@ type
 
     rozwalone: boolean;
     swiatlo: byte;
+    shootSide: integer;
   end;
 
   TRocket = record
