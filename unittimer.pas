@@ -848,12 +848,17 @@ begin
 
     if not gracz.stoi then
     begin
-      if gracz.y < matka.y - 120 then
+      if (gracz.y < matka.y - 120) and (gracz.y > gdzie_y(gracz.x, gracz.z, gracz.y) + 5) then
       begin
         gracz.dx := gracz.dx + sin(wiatr.kier * pi180) * wiatr.sila;
         gracz.dz := gracz.dz - cos(wiatr.kier * pi180) * wiatr.sila;
       end;
-      gracz.dy := gracz.dy - ziemia.grawitacja - gracz.pilotow * 0.0005;
+
+      if gracz.y < gdzie_y(gracz.x, gracz.z, gracz.y) + 5 then
+        moc := - ziemia.grawitacja / 2 - gracz.pilotow * 0.0001
+      else
+        moc := - ziemia.grawitacja - gracz.pilotow * 0.0004;
+      gracz.dy := gracz.dy + moc;
     end;
 
     ilegrzeje := 0;
