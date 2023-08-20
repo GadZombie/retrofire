@@ -118,6 +118,7 @@ type
     gestoscpowietrza: real;
 
     koltla, jestkoltla: array [0 .. 3] of GLFloat;
+    skyBrightness: extended;
     widac: real;
 
     chmuryx, chmuryz: real;

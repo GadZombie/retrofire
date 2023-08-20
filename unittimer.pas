@@ -1671,7 +1671,7 @@ begin
   xznasiatce(nx, nz, x, z);
   gx := 0;
   gz := 0;
-  if (nx >= 0) and (nz >= 0) and (nx < ziemia.wx) and (nz < ziemia.wz) and (not IsPointOverMothership(x, z, y)) then
+  if (nx >= 0) and (nz >= 0) and (nx < ziemia.wx) and (nz < ziemia.wz) and (not IsPointOverMothership(x, y, z)) then
   begin
 
     if (ziemia.pk[nx][nz].scen) and (y < gdzie_y(x, z, y) + ziemia.pk[nx][nz].scen_rozm * 13) and
@@ -1835,7 +1835,7 @@ begin
         begin
           wysadz := true;
           xznasiatce(nx, nz, x, z);
-          if (nx >= 0) and (nz >= 0) and (nx < ziemia.wx) and (nz < ziemia.wz) and (not IsPointOverMothership(x, z, y)) then
+          if (nx >= 0) and (nz >= 0) and (nx < ziemia.wx) and (nz < ziemia.wz) and (not IsPointOverMothership(x, y, z)) then
           begin
             case rodzaj of
               // stopien zaciemnienia terenu zalezny od rodzaju pocisku
@@ -3347,7 +3347,7 @@ begin
   // matka
   if gra.etap = 1 then
   begin
-    if gracz.y > matka.y - 250 then
+    if gracz.y > matka.y - 500 then
     begin
       if random(3) = 0 then
         nowy_dym(matka.x - 315, matka.y - 70, matka.z, (random - 0.5) / 20, -0.9, (random - 0.5) / 20,
@@ -3854,11 +3854,11 @@ begin
   end
   else
     ziemia.widac := 1;
-  if ziemia.widac < 0 then
-    ziemia.widac := 0;
-  if ziemia.widac > 1 then
-    ziemia.widac := 1;
-  matka.widac := 1 - ziemia.widac;
+
+  if ziemia.showStars then
+    matka.widac := 1
+  else
+    matka.widac := KeepValBetween(1 - (matka.y - 100 - gracz.y) / 400, 0, 1);
 
   ziemia.chmuryx := ziemia.chmuryx - sin(wiatr.kier * pi180) * (wiatr.sila / 20) + gracz.dx * 0.0001;
   ziemia.chmuryz := ziemia.chmuryz - cos(wiatr.kier * pi180) * (wiatr.sila / 20) - gracz.dz * 0.0001;
@@ -4862,6 +4862,7 @@ begin
 
       ziemia.showStars := (ziemia.koltla[0] <= 0.1) and (ziemia.koltla[1] <= 0.1) and (ziemia.koltla[2] <= 0.1);
       ziemia.showClouds := not ziemia.showStars;
+      ziemia.skyBrightness := 1.5;
 
       gra.nazwaplanety := wczytajstring(f);
       gra.tekstintro := wczytajstring(f);
@@ -5050,6 +5051,22 @@ begin
 
 end;
 
+procedure GetMinMaxGroundHeight(out minHeight: extended; out maxHeight: extended);
+var
+  a, b: integer;
+begin
+  minHeight := ziemia.pk[0, 0].p;
+  maxHeight := ziemia.pk[0, 0].p;
+  for a := 0 to high(ziemia.pk) do
+    for b := 0 to high(ziemia.pk[a]) do
+    begin
+      if ziemia.pk[a, b].p > maxHeight then
+        maxHeight := ziemia.pk[a, b].p;
+      if ziemia.pk[a, b].p < minHeight then
+        minHeight := ziemia.pk[a, b].p;
+    end;
+end;
+
 // ---------------------------------------------------------------------------
 procedure generuj_losowy;
 var
@@ -5065,7 +5082,7 @@ var
   dsz, sz, dtz, tz, sw,
   k1: real;
   c, _s, _t: integer;
-  najwyzszy, najnizszy, koldziel: real;
+  najwyzszy, najnizszy, koldziel: extended;
   rodzaj_gor: integer;
   minHeight, maxHeight: integer;
 
@@ -5094,7 +5111,7 @@ begin
   else
     randomize;
 
-  rodzaj_gor := 1;//random(2);
+  rodzaj_gor := 1;//random(2); nie ma ju¿ innego algorytmu ni¿ 1
 
   a := round(20 + (random * 2 - 0.6) * ((10 + gra.planeta) / 4.5)); // 25
   ziemia.grawitacja := a / 10000;
@@ -5143,11 +5160,12 @@ begin
 
   // generowanie terenu
   minHeight := 1;
-  maxHeight := round(matka.y - 200);
+  maxHeight := round(matka.y - 400);
   case rodzaj_gor of
     0:
       begin // gory po staremu (randomowe)
-        rozwys := 10 + random * 50;
+(* stary algorytm usuniêty, by³ s³aby
+       rozwys := 10 + random * 50;
         rozwys2 := rozwys / 2;
         minHeight := 1;
         maxHeight := round(matka.y - 200);
@@ -5177,7 +5195,7 @@ begin
 
             ziemia.pk[a, b].p := KeepValBetween(ziemia.pk[a, b].p, minHeight, maxHeight);
           end;
-        end;
+        end;*)
       end;
     1:
       begin // gory skladane z trojkatow
@@ -5237,18 +5255,7 @@ begin
       end;
   end;
 
-  // wyszukaj najnizszy i najwyzszy punkt
-  najnizszy := 99999;
-  najwyzszy := -99999;
-  for a := 0 to high(ziemia.pk) do
-    for b := 0 to high(ziemia.pk[a]) do
-    begin
-      if ziemia.pk[a, b].p > najwyzszy then
-        najwyzszy := ziemia.pk[a, b].p;
-      if ziemia.pk[a, b].p < najnizszy then
-        najnizszy := ziemia.pk[a, b].p;
-    end;
-
+  GetMinMaxGroundHeight(najnizszy, najwyzszy);
   koldziel := (najwyzszy - najnizszy) / 5;
 
   // kolorowanie
@@ -5410,6 +5417,7 @@ begin
   if not ziemia.showStars then
   begin
     k1 := random;
+    ziemia.skyBrightness := 1.5 + random * 0.5;
     ziemia.koltla[0] := KeepValBetween(k1 + (random - 0.5) * 0.2, 0, 1);
     ziemia.koltla[1] := KeepValBetween(k1 + (random - 0.5) * 0.2, 0, 1);
     ziemia.koltla[2] := KeepValBetween(k1 + (random - 0.5) * 0.2, 0, 1);
@@ -5419,6 +5427,7 @@ begin
     ziemia.koltla[0] := 0;
     ziemia.koltla[1] := 0;
     ziemia.koltla[2] := 0;
+    ziemia.skyBrightness := 1;
   end;
   gra.czas := (60 * 7) + (gra.difficultyLevel div 5) * 30;
 end;
@@ -5465,6 +5474,7 @@ var
   r, col1: real;
   planetatmp: integer;
   n, an: integer;
+  minHeight, maxHeight: extended;
 begin
   planetatmp := gra.planeta;
 
@@ -5510,6 +5520,11 @@ begin
   end;
 
   // rzeczy koncowe przymusowe-----------------------------------------------------
+  GetMinMaxGroundHeight(minHeight, maxHeight);
+  if matka.y < maxHeight + 450 then
+    matka.y := maxHeight + 450;
+
+
   if not losowy then
   begin
     //ustaw difficultyLevel ponownie po wczytaniu terenu

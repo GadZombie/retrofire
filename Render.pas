@@ -2740,8 +2740,8 @@ begin
     glPopAttrib;
   end;
 
-  if matka.widac < 1 then
-    glFogf(GL_FOG_DENSITY, 0.0015);
+//  if matka.widac < 1 then
+  glFogf(GL_FOG_DENSITY, 0.0015);
   glPopMatrix;
 
   if matka.widac >= 1 then
@@ -3594,7 +3594,7 @@ begin
         glMatrixMode(GL_PROJECTION);
         glLoadIdentity();
 
-        gluPerspective(katwidzenia, currentScreenParams.Aspect, 0.2, 9000.0);
+        gluPerspective(katwidzenia, currentScreenParams.Aspect, 0.2, 15000.0);
         glMatrixMode(GL_MODELVIEW);
         glLoadIdentity();
 
@@ -3637,7 +3637,7 @@ begin
         glMatrixMode(GL_PROJECTION);
         glLoadIdentity();
 
-        gluPerspective(katwidzenia, currentScreenParams.Aspect, 0.2, 9000.0);
+        gluPerspective(katwidzenia, currentScreenParams.Aspect, 0.2, 15000.0);
 
         glMatrixMode(GL_MODELVIEW);
         glLoadIdentity();
@@ -4390,9 +4390,9 @@ begin
 
   //sky color
   w := w + 400;
-  colSky[0] := KeepValBetween(ziemia.jestkoltla[0] * 1.5, 0, 1);
-  colSky[1] := KeepValBetween(ziemia.jestkoltla[1] * 1.5, 0, 1);
-  colSky[2] := KeepValBetween(ziemia.jestkoltla[2] * 1.5, 0, 1);
+  colSky[0] := KeepValBetween(ziemia.jestkoltla[0] * ziemia.skyBrightness, 0, 1);
+  colSky[1] := KeepValBetween(ziemia.jestkoltla[1] * ziemia.skyBrightness, 0, 1);
+  colSky[2] := KeepValBetween(ziemia.jestkoltla[2] * ziemia.skyBrightness, 0, 1);
   colSky[3] := KeepValBetween((wb - gracz.y) / 250, 0, 1);
 
   glDisable(GL_DEPTH_TEST);
