@@ -674,6 +674,30 @@ begin
     0, fadeSpeed);
 end;
 
+procedure ShootDir(SourcePosition, SourceSpeed, Offset: TVec3D; power: extended; DirectionVector: TVec3D; TransformProc: TTransformProc;
+  czyj: byte; rodz: byte; size: extended; randomDirFactor: extended);
+var
+  a: integer;
+  s1: real;
+  enginePosition, fireDirectionVec: TVec3D;
+begin
+  normalizeVec(DirectionVector);
+  GetTransformedPositionAndDirectionVector(
+    Vec3D(SourcePosition.x, SourcePosition.y, SourcePosition.z), DirectionVector,
+    enginePosition, fireDirectionVec, TransformProc);
+
+  strzel(
+    Offset.x + enginePosition.x - SourceSpeed.x,
+    Offset.y + enginePosition.y - SourceSpeed.y,
+    Offset.z + enginePosition.z - SourceSpeed.z,
+
+    fireDirectionVec.x * power + SourceSpeed.x + (random - 0.5) * randomDirFactor,
+    fireDirectionVec.y * power + SourceSpeed.y + (random - 0.5) * randomDirFactor,
+    fireDirectionVec.z * power + SourceSpeed.z + (random - 0.5) * randomDirFactor,
+
+    czyj, rodz, size, SourceSpeed);
+end;
+
 function Bounce(position, delta: TVec3D): TVec3D;
 var
   resizedX, resizedZ: extended;
@@ -1452,12 +1476,27 @@ begin
 
       end
       else // strzel prosto
+
         strzel(gracz.x + sin((90 + gracz.kier) * pi180) * (3 * gracz.stronastrzalu), gracz.y - 2,
           gracz.z - cos((90 + gracz.kier) * pi180) * (3 * gracz.stronastrzalu),
+
           sin(gracz.kier * pi180) * szybstrz + gracz.dx,
           -0.55 * szybstrz + gracz.dy - Distance2D(0, 0, gracz.dx, gracz.dz) * 0.5,
           -cos(gracz.kier * pi180) * szybstrz + gracz.dz, 0,
+
           rodzpoc, 0.3, Vec3D(gracz.dx, gracz.dy, gracz.dz));
+
+{        ShootDir(
+          Vec3D(gracz.stronastrzalu * 3, -2, 2),
+          Vec3D(gracz.dx, gracz.dy, gracz.dz),
+          Vec3D(gracz.x, gracz.y, gracz.z),
+
+          szybstrz,
+          Vec3D(0, -0.55 + Distance2D(0, 0, gracz.dx, gracz.dz) * 0.125, 1),
+          PlayerObjectTransform,
+          0, rodzpoc, 0.3,
+          0);}
+
 { debug:
         szybstrz := 1;
         nowy_smiec(gracz.x + sin((90 + gracz.kier) * pi180) * (3 * gracz.stronastrzalu), gracz.y - 2,
@@ -2070,6 +2109,7 @@ begin
             end;
           end;
 
+//          {$IFNDEF DEBUG_AUTO_START}
           if gracz.zyje then
           begin
             s := sqrt2(sqr(gracz.x - x) + sqr(gracz.y - y) + sqr(gracz.z - z));
@@ -2086,6 +2126,7 @@ begin
               gracz.dz := gracz.dz + (dz / 3) / dzielsile;
             end;
           end;
+//          {$ENDIF}
 
           jest := false;
         end;
@@ -2403,13 +2444,21 @@ begin
 
             if okstrzal and (s < 500 + gra.difficultyLevel) and (random(round(22 - gra.difficultyLevel / 7)) = 0) then
             begin
+              if shootSide = 1 then
+                shootSide := -1
+              else
+                shootSide := 1;
 
-              strzel(x + (sin(kier * pi180) * cos(kierdol * pi180)) * 9, y - sin(kierdol * pi180) * 9,
-                z + (-cos(kier * pi180) * cos(kierdol * pi180)) * 9, (sin(kier * pi180) * cos(kierdol * pi180)) *
-                (15 + gra.difficultyLevel / 15) + (random - 0.5), -sin(kierdol * pi180) * (15 + gra.difficultyLevel / 15) +
-                (random - 0.5), (-cos(kier * pi180) * cos(kierdol * pi180)) * (15 + gra.difficultyLevel / 15) +
-                (random - 0.5), 1, 1,
-                0.6, Vec3D(dx, dy, dz));
+              ShootDir(
+                Vec3D(9, -1, shootSide * 3.6),
+                Vec3D(dx, dy, dz),
+                Vec3D(x, y, z),
+
+                (15 + gra.difficultyLevel / 15),
+                Vec3D(1, 0, 0),
+                FighterObjectTransformProc(a),
+                1, 1, 0.6,
+                0.4);
 
               Sfx.graj_dzwiek(20, x, y, z);
 

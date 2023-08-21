@@ -85,7 +85,7 @@ begin
         begin // dym
           tekstura := 2;
           przezr := 0.7 - random / 8;
-          r := 0.4 - random * 0.4;
+          r := 0.1 - random * 0.1;
           kolr := r;
           kolg := r;
           kolb := r;

@@ -238,6 +238,7 @@ type
     sila: real;
     zniszczony: boolean;
     atakuje: boolean; // czyli leci za graczem, albo w przeciwna strone
+    shootSide: integer;
 
     dzw_kanal: longint;
     dzw_slychac: boolean; // zaleznie od odleglosci od gracza
