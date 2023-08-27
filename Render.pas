@@ -660,24 +660,45 @@ begin
   DrawHudShape(width, height);
 
   glColor4f(1, 1, 1, 0.5);
-  case gra.rodzajmisji of
-    0:
-      begin
-        pisz2d(Format(STR_MISSION_RESCUE_PEOPLE, [gra.planeta]), 10, height - 10, 5);
+  if not gra.sandboxMode then
+  begin
+    case gra.rodzajmisji of
+      0:
+        begin
+          pisz2d(Format(STR_MISSION_RESCUE_PEOPLE, [gra.planeta]), 10, height - 10, 5);
 
-        pisz2d(STR_MISSION_BOARDED + inttostr(gracz.pilotow) + '/' + inttostr(gracz.ladownosc), currentScreenParams.HudWidth - 10, height - 10, 4, 2);
-        pisz2d(STR_MISSION_LEFT + inttostr(gra.ilepilotow + gracz.pilotow), currentScreenParams.HudWidth - 10, height - 20, 4, 2);
-        pisz2d(STR_MISSION_RESCUED + inttostr(gra.zabranych) + '/' + inttostr(gra.minimum), currentScreenParams.HudWidth - 10, height - 30, 4, 2);
-        pisz2d(STR_MISSION_KILLED + inttostr(gra.zginelo), currentScreenParams.HudWidth - 10, height - 40, 4, 2);
-      end;
-    1:
-      begin
-        pisz2d(Format(STR_MISSION_DESTROY_ENEMY, [gra.planeta]), 10, height - 10, 5);
+          pisz2d(STR_MISSION_BOARDED + inttostr(gracz.pilotow) + '/' + inttostr(gracz.ladownosc), currentScreenParams.HudWidth - 10, height - 10, 4, 2);
+          pisz2d(STR_MISSION_LEFT + inttostr(gra.ilepilotow + gracz.pilotow), currentScreenParams.HudWidth - 10, height - 20, 4, 2);
+          pisz2d(STR_MISSION_RESCUED + inttostr(gra.zabranych) + '/' + inttostr(gra.minimum), currentScreenParams.HudWidth - 10, height - 30, 4, 2);
+          pisz2d(STR_MISSION_KILLED + inttostr(gra.zginelo), currentScreenParams.HudWidth - 10, height - 40, 4, 2);
+        end;
+      1:
+        begin
+          pisz2d(Format(STR_MISSION_DESTROY_ENEMY, [gra.planeta]), 10, height - 10, 5);
 
-        pisz2d(STR_MISSION_DESTROYED + inttostr(gra.dzialekzniszczonych) + '/' + inttostr(gra.dzialekminimum), currentScreenParams.HudWidth - 10, height - 20, 4, 2);
-        pisz2d(STR_MISSION_LEFT + inttostr(gra.iledzialek), currentScreenParams.HudWidth - 10, height - 10, 4, 2);
-      end;
-  end;
+          pisz2d(STR_MISSION_DESTROYED + inttostr(gra.dzialekzniszczonych) + '/' + inttostr(gra.dzialekminimum), currentScreenParams.HudWidth - 10, height - 20, 4, 2);
+          pisz2d(STR_MISSION_LEFT + inttostr(gra.iledzialek), currentScreenParams.HudWidth - 10, height - 10, 4, 2);
+        end;
+      2:
+        begin
+          pisz2d(Format(STR_MISSION_DOGFIGHT, [gra.planeta]), 10, height - 10, 5);
+          pisz2d(STR_MISSION_FIGHTERS_DESTROYED + inttostr(gra.fightersDestroyed) + '/' + inttostr(gra.fightersMinimum), currentScreenParams.HudWidth - 10, height - 20, 4, 2);
+        end;
+    end;
+  end
+  else
+    begin
+      pisz2d(STR_MISSION_SANDBOX_MODE, 10, height - 10, 5);
+
+      pisz2d(STR_MISSION_BOARDED + inttostr(gracz.pilotow) + '/' + inttostr(gracz.ladownosc), currentScreenParams.HudWidth - 10, height - 10, 4, 2);
+      pisz2d(STR_MISSION_LEFT + inttostr(gra.ilepilotow + gracz.pilotow), currentScreenParams.HudWidth - 10, height - 20, 4, 2);
+      pisz2d(STR_MISSION_KILLED + inttostr(gra.zginelo), currentScreenParams.HudWidth - 10, height - 30, 4, 2);
+
+      pisz2d(STR_MISSION_DESTROYED + inttostr(gra.dzialekzniszczonych), currentScreenParams.HudWidth - 10, height - 40, 4, 2);
+      pisz2d(STR_MISSION_LEFT + inttostr(gra.iledzialek), currentScreenParams.HudWidth - 10, height - 50, 4, 2);
+
+      pisz2d(STR_MISSION_FIGHTERS_DESTROYED + inttostr(gra.fightersDestroyed), currentScreenParams.HudWidth - 10, height - 60, 4, 2);
+    end;
 
   // cheaty
   glColor4f(0.4, 0.8, 1, 0.8);
@@ -875,66 +896,74 @@ begin
   glEnd;
 
   glPointSize(1);
-  if licz mod 20 <= 12 then
-    jas := (8 - licz mod 20) / 8
-  else
-    jas := 1;
-  // if licz mod 20<=12 then begin
   glBegin(GL_POINTS);
-  case gra.rodzajmisji of
-    0:
-      begin
-        for a := 0 to high(pilot) do
-          if pilot[a].jest and (pilot[a].nalotnisku >= 0) then
-          begin
-            px := radrx - ((pilot[a].x - ziemia.px - gracz.x) / ziemia.wlk) * rx;
-            py := -radry + ((pilot[a].z - ziemia.pz - gracz.z) / ziemia.wlk) * ry;
-            if px < -radrx then
-              px := px + radrx * 2
-            else if px > radrx then
-              px := px - radrx * 2;
-            if py < -radry then
-              py := py + radry * 2
-            else if py > radry then
-              py := py - radry * 2;
 
-            j := sqrt2(sqr(px) + sqr(py));
-            if j <= radrx then
-            begin
-              glColor4f(1, 1, 1, (0.2 + ziemia.widac / 2) * jas);
-              glVertex2f(px, py);
-            end;
-          end;
+  if (gra.rodzajmisji = 0) or (gra.sandboxMode) then
+  begin
+    if licz mod 20 <= 12 then
+      jas := (8 - licz mod 20) / 8
+    else
+      jas := 1;
+    for a := 0 to high(pilot) do
+      if pilot[a].jest and (pilot[a].nalotnisku >= 0) then
+      begin
+        px := radrx - ((pilot[a].x - ziemia.px - gracz.x) / ziemia.wlk) * rx;
+        py := -radry + ((pilot[a].z - ziemia.pz - gracz.z) / ziemia.wlk) * ry;
+        if px < -radrx then
+          px := px + radrx * 2
+        else if px > radrx then
+          px := px - radrx * 2;
+        if py < -radry then
+          py := py + radry * 2
+        else if py > radry then
+          py := py - radry * 2;
+
+        j := sqrt2(sqr(px) + sqr(py));
+        if j <= radrx then
+        begin
+          glColor4f(0.5, 1, 0.5, (0.2 + ziemia.widac / 2) * jas);
+          glVertex2f(px, py);
+        end;
       end;
-    1:
-      begin
-        for a := 0 to high(dzialko) do
-          if dzialko[a].jest and not dzialko[a].rozwalone then
-          begin
-            px := radrx - ((dzialko[a].x - ziemia.px - gracz.x) / ziemia.wlk) * rx;
-            py := -radry + ((dzialko[a].z - ziemia.pz - gracz.z) / ziemia.wlk) * ry;
-            if px < -radrx then
-              px := px + radrx * 2
-            else if px > radrx then
-              px := px - radrx * 2;
-            if py < -radry then
-              py := py + radry * 2
-            else if py > radry then
-              py := py - radry * 2;
+  end;
 
-            j := sqrt2(sqr(px) + sqr(py));
-            if j <= radrx then
-            begin
-              glColor4f(1, 1, 1, (0.2 + ziemia.widac / 2) * jas);
-              glVertex2f(px, py);
-            end;
-          end;
+  if (gra.rodzajmisji in [1, 2]) or (gra.sandboxMode) then
+  begin
+    if (licz + 10) mod 20 <= 12 then
+      jas := (8 - licz mod 20) / 8
+    else
+      jas := 1;
+
+    for a := 0 to high(dzialko) do
+      if dzialko[a].jest and not dzialko[a].rozwalone then
+      begin
+        px := radrx - ((dzialko[a].x - ziemia.px - gracz.x) / ziemia.wlk) * rx;
+        py := -radry + ((dzialko[a].z - ziemia.pz - gracz.z) / ziemia.wlk) * ry;
+        if px < -radrx then
+          px := px + radrx * 2
+        else if px > radrx then
+          px := px - radrx * 2;
+        if py < -radry then
+          py := py + radry * 2
+        else if py > radry then
+          py := py - radry * 2;
+
+        j := sqrt2(sqr(px) + sqr(py));
+        if j <= radrx then
+        begin
+          glColor4f(1, 0.5, 0.5, (0.2 + ziemia.widac / 2) * jas);
+          glVertex2f(px, py);
+        end;
       end;
   end;
 
   glEnd;
   // end;
 
+  if (licz + 10) mod 20 <= 12 then
+    jas := (8 - licz mod 20) / 8
+  else
+    jas := 1;
   glBegin(GL_TRIANGLES);
   glColor4f(0, 1.0, 0.0, 0.1 + matka.widac / 2);
   px := radrx - ((matka.x - ziemia.px - gracz.x) / ziemia.wlk) * rx;
@@ -1084,23 +1113,32 @@ begin
     pisz2d('ZAJEBIOZA! NIE MA JU¯ LUDZI DO WZIÊCIA!', width div 2, height-120, 9,1);
   }
 
+  if (gra.koniecgry) then
+  begin
+    glcolor3f(0.3, 0.8, 1);
+    pisz2d(STR_GAME_OVER, width div 2, height div 2, 12, 1);
+  end
+  else if not gra.sandboxMode and
+    (gra.moznakonczyc and ((gracz.stoi and gracz.namatce and (gracz.mothershipTime >= 20)) or (not gracz.zyje))) then
+  begin
+    glColor4f(0.7, 0.3, 1.0, 0.8);
+    pisz2d(STR_MISSION_FINISHED, width div 2, height div 2 + 70, 7, 1);
+    pisz2d(Format(STR_PRESS_KEY_TO_CONTINUE, [GameController.Control(8).GetAsString]), width div 2, height div 2 + 45, 6, 1);
+  end
+  else if not gra.sandboxMode and
+    (gra.returnToMothership and gracz.zyje and not (gracz.stoi and gracz.namatce and (gracz.mothershipTime >= 20))) then
+  begin
+    glColor4f(0.7, 0.3, 1.0, 0.8 - abs(sin(licz / 30) * 0.6));
+    pisz2d(STR_MISSION_FINISHED, width div 2, height - 76, 6, 1);
+    pisz2d(STR_RETURN_TO_MOTHERSHIP, width div 2, height - 90, 6, 1);
+  end
+  else
   if (gracz.zyje and gracz.stoi and gracz.namatce) and (gra.pkt = 0) then
   begin
     glColor4f(1.0, 1.0, 1.0, 0.8 - abs(sin(licz / 30) * 0.6));
     pisz2d(STR_START_TIP, width div 2, height - 90, 5, 1);
   end;
 
-  if (gra.koniecgry) then
-  begin
-    glcolor3f(0.3, 0.8, 1);
-    pisz2d(STR_GAME_OVER, width div 2, height div 2, 12, 1);
-  end
-  else if (gra.moznakonczyc and ((gracz.stoi and gracz.namatce) or (not gracz.zyje))) then
-  begin
-    glColor4f(0.7, 0.3, 1.0, 0.8);
-    pisz2d(STR_MISSION_FINISHED, width div 2, height div 2 + 70, 7, 1);
-    pisz2d(Format(STR_PRESS_KEY_TO_CONTINUE, [GameController.Control(8).GetAsString]), width div 2, height div 2 + 45, 6, 1);
-  end;
 
   if (gra.pauza) then
   begin
@@ -1201,10 +1239,15 @@ begin
   if intro.czas >= 30 then
   begin
     glColor4f(0.2, 1, 0.3, 0.7);
-    if gra.jakiemisje <> 2 then
-      n := STR_MISSION + ' ' + inttostr(gra.planeta) + ', ' + gra.nazwaplanety
+    if not gra.sandboxMode then
+    begin
+      if gra.jakiemisje <> 2 then
+        n := STR_MISSION + ' ' + inttostr(gra.planeta) + ', ' + gra.nazwaplanety
+      else
+        n := STR_MISSION + ' ' + inttostr(winieta.epizodmisja) + ', ' + gra.nazwaplanety;
+      end
     else
-      n := STR_MISSION + ' ' + inttostr(winieta.epizodmisja) + ', ' + gra.nazwaplanety;
+      n := STR_MISSION_SANDBOX_MODE;
     a := (intro.czas - 30) div 2;
     if a > length(n) then
       a := length(n);
@@ -1306,6 +1349,10 @@ begin
         else if gra.rodzajmisji = 1 then
           pisz2d(Format(STR_MISSION_END_TURRETS_BONUS,
             [(gra.dzialekzniszczonych - gra.dzialekminimum) * 350, (gra.dzialekzniszczonych - gra.dzialekminimum) * 30]),
+            40, 50, 5)
+        else if gra.rodzajmisji = 2 then
+          pisz2d(Format(STR_MISSION_END_DOGFIGHT_BONUS,
+            [(gra.fightersDestroyed - gra.fightersMinimum) * 350, (gra.fightersDestroyed - gra.fightersMinimum) * 30]),
             40, 50, 5);
 
       end
@@ -3801,27 +3848,38 @@ begin
           glColor4f(0.1, 0.6, 0.1, 0.6);
         pisz2d(Format(STR_TITLE_NEW_GAME_NORMAL, [winieta.planetapocz]), currentScreenParams.MenuCenter,
           height - 250, 8 + ord(winieta.kursor = 0), 1);
+
         if winieta.kursor = 1 then
           glColor4f(0.2, 1.0, 0.2, 0.7)
         else
           glColor4f(0.1, 0.6, 0.1, 0.6);
         pisz2d(Format(STR_TITLE_NEW_GAME_RANDOM, [winieta.poziomtrudnosci]), currentScreenParams.MenuCenter,
           height - 280, 8 + ord(winieta.kursor = 1), 1);
+
         if winieta.kursor = 2 then
           glColor4f(0.2, 1.0, 0.2, 0.7)
         else
           glColor4f(0.1, 0.6, 0.1, 0.6);
-        pisz2d(STR_TITLE_ADDITIONAL_MISSIONS, currentScreenParams.MenuCenter, height - 310, 8 + ord(winieta.kursor = 2), 1);
+        pisz2d(STR_TITLE_SANDBOX_MODE, currentScreenParams.MenuCenter,
+          height - 310, 8 + ord(winieta.kursor = 2), 1);
+
         if winieta.kursor = 3 then
           glColor4f(0.2, 1.0, 0.2, 0.7)
         else
           glColor4f(0.1, 0.6, 0.1, 0.6);
-        pisz2d(STR_TITLE_LOAD_GAME, currentScreenParams.MenuCenter, height - 340, 8 + ord(winieta.kursor = 3), 1);
+        pisz2d(STR_TITLE_ADDITIONAL_MISSIONS, currentScreenParams.MenuCenter, height - 340, 8 + ord(winieta.kursor = 3), 1);
+
         if winieta.kursor = 4 then
           glColor4f(0.2, 1.0, 0.2, 0.7)
         else
           glColor4f(0.1, 0.6, 0.1, 0.6);
-        pisz2d(STR_TITLE_EXIT, currentScreenParams.MenuCenter, height - 370, 8 + ord(winieta.kursor = 4), 1);
+        pisz2d(STR_TITLE_LOAD_GAME, currentScreenParams.MenuCenter, height - 370, 8 + ord(winieta.kursor = 4), 1);
+
+        if winieta.kursor = 5 then
+          glColor4f(0.2, 1.0, 0.2, 0.7)
+        else
+          glColor4f(0.1, 0.6, 0.1, 0.6);
+        pisz2d(STR_TITLE_EXIT, currentScreenParams.MenuCenter, height - 400, 8 + ord(winieta.kursor = 5), 1);
 
         glColor4f(1.0, 0.2, 0.1, 0.6);
         pisz2d(STR_TITLE_VERSION + PROGRAM_VERSION, currentScreenParams.MenuCenter, 57, 4, 1);
@@ -4149,6 +4207,39 @@ begin
         end;
 
       end;
+
+    5:
+      begin // sandbox menu
+
+        for a := 0 to 7 do
+        begin
+          if winieta.kursor = a then
+            glColor4f(0.2, 1.0, 0.2, 0.7)
+          else
+            glColor4f(0.1, 0.6, 0.1, 0.6);
+          case a of
+            0: s := STR_TITLE_SB_START_GAME;
+            1: s := Format(STR_TITLE_SB_DIFFICULTY, [winieta.sandboxSettings.difficultyLevel + 1]);
+            2: s := Format(STR_TITLE_SB_MAP_SIZE, [STR_TITLE_SB_MAP_SIZES[winieta.sandboxSettings.mapSize]]);
+            3: s := Format(STR_TITLE_SB_TERRAIN_HEIGHT, [STR_TITLE_SB_TERRAIN_HEIGHT_VALUES[winieta.sandboxSettings.mapSize]]);
+            4: s := Format(STR_TITLE_SB_WIND_STRENGTH, [STR_TITLE_SB_WIND_STRENGTH_VALUES[winieta.sandboxSettings.mapSize]]);
+            5: s := Format(STR_TITLE_SB_GRAVITY, [STR_TITLE_SB_GRAVITY_VALUES[winieta.sandboxSettings.mapSize]]);
+            6: s := Format(STR_TITLE_SB_AIR_DENSITY, [STR_TITLE_SB_AIR_DENSITY_VALUES[winieta.sandboxSettings.mapSize]]);
+            7: s := STR_TITLE_SB_RETURN;
+          end;
+          if a = 7 then
+            b1 := 450
+          else
+            b1 := 90 + a * 15;
+          if a = 0 then
+            b2 := 10
+          else
+            b2 := 8;
+          pisz2d(s, 70, height - b1, b2);
+        end;
+
+      end;
+
   end;
 
   glDepthMask(GL_TRUE);
@@ -4347,6 +4438,8 @@ procedure rysuj_niebo;
 
 const
   eqn: array [0 .. 3] of GLdouble = (0.0, 1.0, 0.0, 300.0);
+  clouds_size_h = 7;
+  clouds_size_d = 6;
 var
   nx, nz, w, wb,
   skyx, skyz: real;
@@ -4407,13 +4500,13 @@ begin
   begin
     glDepthMask(GL_FALSE);
     glBegin(GL_QUADS);
-    glTexCoord2f(7, 0);
+    glTexCoord2f(clouds_size_h, 0);
     glVertex3f(skyx, w, skyz);
     glTexCoord2f(0, 0);
     glVertex3f(-skyx, w, skyz);
-    glTexCoord2f(0, 7);
+    glTexCoord2f(0, clouds_size_h);
     glVertex3f(-skyx, w, -skyz);
-    glTexCoord2f(7, 7);
+    glTexCoord2f(clouds_size_h, clouds_size_h);
     glVertex3f(skyx, w, -skyz);
     glEnd;
     glDisable(GL_BLEND);
@@ -4460,13 +4553,13 @@ begin
 
     wlacz_teksture(10);
     glBegin(GL_QUADS);
-    glTexCoord2f(6, 0);
+    glTexCoord2f(clouds_size_d, 0);
     glVertex3f(nx, w, nz);
     glTexCoord2f(0, 0);
     glVertex3f(-nx, w, nz);
-    glTexCoord2f(0, 6);
+    glTexCoord2f(0, clouds_size_d);
     glVertex3f(-nx, w, -nz);
-    glTexCoord2f(6, 6);
+    glTexCoord2f(clouds_size_d, clouds_size_d);
     glVertex3f(nx, w, -nz);
     glEnd;
   end;

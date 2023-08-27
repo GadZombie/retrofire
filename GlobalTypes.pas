@@ -48,6 +48,7 @@ type
     zyje: boolean;
 
     stoi, namatce: boolean;
+    mothershipTime: integer;
 
     pilotow, ladownosc, zlychpilotow: integer;
 
@@ -246,10 +247,12 @@ type
 
   TGame = record
     jakiemisje: byte; { 0:norma, 1:losowe, 2:dodatkowe(wyczytwane) }
-    rodzajmisji: byte; { 0:zbieraj pilotow, 1:zniszcz dzialka }
+    rodzajmisji: byte; { 0:zbieraj pilotow, 1:zniszcz dzialka, 2:dogfight TODO }
     ilepilotow, zginelo, zabranych, minimum, pilotowbiegniedomatki: integer;
+    sandboxMode: boolean;
 
     iledzialek, dzialekzniszczonych, dzialekminimum: integer;
+    fightersDestroyed, fightersMinimum: integer;
 
     poziomupgrade: array [0 .. 5] of byte;
 
@@ -261,7 +264,7 @@ type
     katkamera: real;
 
     planeta: integer;
-    difficultyLevel: integer; //connected to planet number
+    difficultyLevel: integer; //connected to planet number = planeta * DIFFICULTY_MULTIPLIER
 
     zycia: integer;
     kasa, pkt: int64;
@@ -272,7 +275,7 @@ type
     *)
     czasdorozpoczecia: integer; { jesli>0, to sie czeka. dziala po rozwaleniu sie, zeby chwile odczekalo }
     koniecgry: boolean;
-    misjawypelniona, moznakonczyc: boolean;
+    misjawypelniona, moznakonczyc, returnToMothership: boolean;
     pauza: boolean;
 
     //
@@ -280,6 +283,12 @@ type
     pozycjaYtekstuintro: integer;
 
     nazwamp3: string;
+  end;
+
+  TSandboxSettings = record
+    mapSize: integer; // 0 = small .. 3 = big
+    terrainHeight: integer; // 0 = flat .. 4 = high
+    difficultyLevel: integer;
   end;
 
   TIntro = record
@@ -300,9 +309,10 @@ type
     poziomtrudnosci: integer;
     epizod, epizodmisja: integer;
 
-    corobi: byte; { 0:winieta, 1:sklep, 2:zapis gry, 3:wczytanie gry }
+    corobi: byte; { 0:winieta, 1:sklep, 2:zapis gry, 3:wczytanie gry, 4: wybór epizodu, 5: sandbox menu }
 
     skrol: integer;
+    sandboxSettings: TSandboxSettings;
   end;
 
   TEpisode = record

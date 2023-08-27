@@ -1166,6 +1166,13 @@ begin
       gracz.wykrecsila := 2;
 
     gracz.namatce := (gracz.y <= gdzie_y(gracz.x, gracz.z, gracz.y) + 5) and (gracz.y > matka.y - 75);
+    if gracz.namatce then
+    begin
+      if gracz.mothershipTime < 1000 then
+        inc(gracz.mothershipTime);
+    end
+    else
+      gracz.mothershipTime := 0;
 
     s := sqrt2(sqr(gracz.dx) + sqr(gracz.dy) + sqr(gracz.dz));
 
@@ -1789,7 +1796,7 @@ end;
 procedure ruch_rakiet;
 var
   a, b, a1, nx, nz, gx, gz: integer;
-  s: real;
+  s, oldVal: real;
   wysadz: boolean;
   dzielsile, mn: real;
 
@@ -2054,14 +2061,18 @@ begin
               s := sqrt2(sqr(mysliwiec[b].x - x) + sqr(mysliwiec[b].y - y) + sqr(mysliwiec[b].z - z));
               if s <= 15 then
               begin
+                oldVal := mysliwiec[b].sila;
                 mysliwiec[b].sila := mysliwiec[b].sila - ((15 - s) / 3) / dzielsile;
                 if mysliwiec[b].sila <= 0 then
                 begin
                   // mysliwiec[b].sila:=0;
-                  if czyja = 0 then
+                  if (czyja = 0) and (oldVal > 0) then
                   begin
+                    if mysliwiec[b].sila = 0 then
+                      mysliwiec[b].sila := -0.01;
                     inc(gra.kasa, 10);
                     inc(gra.pkt, 100);
+                    inc(gra.fightersDestroyed);
                   end;
                 end;
                 if czyja = 0 then
@@ -3560,6 +3571,7 @@ begin
               begin
                 gra.misjawypelniona := true;
                 gra.moznakonczyc := true;
+                gra.returnToMothership := true;
               end;
             8:
               begin
@@ -3654,6 +3666,21 @@ begin
     gra.czas := 99 * 60;
   end;
 
+end;
+
+function canCreateFighters: boolean;
+begin
+  if gra.rodzajmisji in [0, 1] then
+  begin
+    result := (gracz.y <= matka.y - 150) and
+      (gra.iledzialek > 0) and
+      (random(1100 - gra.difficultyLevel * 5) = 0);
+  end
+  else
+  begin
+    result :=
+      (random(1100 - gra.difficultyLevel * 10) = 0);
+  end;
 end;
 
 // ---------------------------------------------------------------------------
@@ -3894,7 +3921,7 @@ begin
   if GameController.Control(15).Pressed then
     kamera := 6;
   if GameController.Control(16).Pressed then
-    kamera := 7;
+    kamera := 8;
 
   sprawdzaj_cheat_codes;
 
@@ -3923,7 +3950,7 @@ begin
 
   // mysliwce
 
-  if (gracz.y <= matka.y - 150) and (gra.iledzialek > 0) and (random(1100) = 0) then
+  if canCreateFighters then
   begin
     c := random * 360; // kierunek, skad przyleci
     c1 := 900; // odleglosc od gracza
@@ -3991,6 +4018,20 @@ begin
 
   // zakonczenie etapu
   if not gra.koniecgry then
+  begin
+    case gra.rodzajmisji of
+      0:
+        gra.returnToMothership :=
+          (gra.zabranych + gracz.pilotow + gra.pilotowbiegniedomatki >= gra.minimum) or (gra.ilepilotow = 0);
+      1:
+        gra.returnToMothership :=
+          (gra.dzialekzniszczonych >= gra.dzialekminimum) or (gra.iledzialek = 0);
+      2:
+        gra.returnToMothership :=
+          (gra.fightersDestroyed >= gra.fightersMinimum);
+    end;
+
+
     case gra.rodzajmisji of
       0:
         begin
@@ -3998,9 +4039,7 @@ begin
             (gra.pilotowbiegniedomatki <= 0) and (((gracz.zyje) and (gracz.stoi) and (gracz.namatce)) or
             (not gracz.zyje and (gra.zycia >= 1)))) then
           begin
-
             gra.misjawypelniona := gra.zabranych >= gra.minimum;
-
             gra.moznakonczyc := true;
           end;
         end;
@@ -4009,19 +4048,28 @@ begin
           if (gra.czas <= 0) or (((gra.dzialekzniszczonych >= gra.dzialekminimum) or (gra.iledzialek = 0)) and
             ((gracz.zyje and gracz.stoi and gracz.namatce) or (not gracz.zyje and (gra.zycia >= 1)))) then
           begin
-
             gra.misjawypelniona := gra.dzialekzniszczonych >= gra.dzialekminimum;
-
             gra.moznakonczyc := true;
-
+          end;
+        end;
+      2:
+        begin
+          if (gra.czas <= 0) or ((gra.fightersDestroyed >= gra.fightersMinimum) and
+            ((gracz.zyje and gracz.stoi and gracz.namatce) or (not gracz.zyje and (gra.zycia >= 1)))) then
+          begin
+            gra.misjawypelniona := gra.fightersDestroyed >= gra.fightersMinimum;
+            gra.moznakonczyc := true;
           end;
         end;
     end;
+  end;
 
-  /// /////*****
-{   gra.misjawypelniona:=true;
-    gra.moznakonczyc:=true;}
-  /// /////*****
+  if gra.sandboxMode then
+  begin
+    gra.misjawypelniona := false;
+    gra.moznakonczyc := false;
+    gra.returnToMothership := false;
+  end;
 
   // misja wypelniona
   if (gra.moznakonczyc and ((gracz.stoi and gracz.namatce) or (not gracz.zyje))) and (GameController.Control(8).Active) or
@@ -4040,6 +4088,11 @@ begin
             inc(gra.kasa, (gra.dzialekzniszczonych - gra.dzialekminimum) * 30);
             inc(gra.pkt, (gra.dzialekzniszczonych - gra.dzialekminimum) * 350);
           end;
+        2:
+          begin
+            inc(gra.kasa, (gra.fightersDestroyed - gra.fightersMinimum) * 30);
+            inc(gra.pkt, (gra.fightersDestroyed - gra.fightersMinimum) * 350);
+          end;
       end;
       inc(gra.kasa, gra.czas);
       inc(gra.pkt, gra.czas * 4);
@@ -4047,6 +4100,11 @@ begin
 
     frmMain.TimerCzas.Enabled := false;
 
+    if gra.sandboxMode then
+    begin
+      gra.koniecgry := true;
+    end
+    else
     if (gra.czas <= 0) and (not gracz.stoi and not gracz.namatce) then
     begin
       gracz.sila := 0;
@@ -4079,12 +4137,15 @@ begin
     gracz.sila:=0;
     end;
   }
-  if gra.koniecgry and (frmMain.PwrInp.KeyPressed[DIK_space]) then
+  if gra.koniecgry and ((frmMain.PwrInp.KeyPressed[DIK_space]) or gra.sandboxMode) then
   begin
     zatrzymaj_dzwieki_ciagle;
     winieta.jest := true;
-    winieta.corobi := 0;
     winieta.skrol := 0;
+    if gra.sandboxMode then
+      winieta.corobi := 5
+    else
+      winieta.corobi := 0;
     FSOUND_SetPaused(muzchannel, true);
     Sfx.muzyke_wlacz(1, true);
   end;
@@ -4384,8 +4445,8 @@ begin
           Sfx.graj_dzwiek(16, 0, 0, 0, false);
         end;
         if winieta.kursor < 0 then
-          winieta.kursor := 4;
-        if winieta.kursor > 4 then
+          winieta.kursor := 5;
+        if winieta.kursor > 5 then
           winieta.kursor := 0;
 
         case winieta.kursor of
@@ -4464,18 +4525,26 @@ begin
               end;
             end;
           2:
+            begin
+              if (frmMain.PwrInp.KeyPressed[DIK_space]) or (frmMain.PwrInp.KeyPressed[DIK_RETURN]) then
+              begin
+                winieta.corobi := 5;
+                winieta.kursor := 0;
+              end;
+            end;
+          3:
             if (frmMain.PwrInp.KeyPressed[DIK_space]) or (frmMain.PwrInp.KeyPressed[DIK_RETURN]) then
             begin
               winieta.corobi := 4;
               winieta.kursor := 0;
             end;
-          3:
+          4:
             if (frmMain.PwrInp.KeyPressed[DIK_space]) or (frmMain.PwrInp.KeyPressed[DIK_RETURN]) then
             begin
               winieta.corobi := 3;
               winieta.kursor := 0;
             end;
-          4:
+          5:
             if (frmMain.PwrInp.KeyPressed[DIK_space]) or (frmMain.PwrInp.KeyPressed[DIK_RETURN]) then
             begin
               frmMain.close;
@@ -4638,6 +4707,100 @@ begin
 
       end;
 
+    5:
+      begin // sandbox menu
+        if frmMain.PwrInp.KeyPressed[DIK_DOWN] then
+        begin
+          inc(winieta.kursor);
+          Sfx.graj_dzwiek(16, 0, 0, 0, false);
+        end;
+        if frmMain.PwrInp.KeyPressed[DIK_UP] then
+        begin
+          dec(winieta.kursor);
+          Sfx.graj_dzwiek(16, 0, 0, 0, false);
+        end;
+        if winieta.kursor < 0 then
+          winieta.kursor := 7;
+        if winieta.kursor > 7 then
+          winieta.kursor := 0;
+
+        case winieta.kursor of
+
+          0:
+          begin
+            if (frmMain.PwrInp.KeyPressed[DIK_space]) or (frmMain.PwrInp.KeyPressed[DIK_RETURN]) then
+            begin
+              winieta.jest := false;
+              Sfx.muzyke_wylacz;
+              nowa_gra(-1, 3);
+            end;
+          end;
+
+          1:
+          begin
+            if frmMain.PwrInp.KeyPressed[DIK_RIGHT] then
+            begin
+              inc(winieta.sandboxSettings.difficultyLevel);
+              if winieta.sandboxSettings.difficultyLevel > RANDOM_GAME_MAX_LEVELS then
+                winieta.sandboxSettings.difficultyLevel := 1;
+              Sfx.graj_dzwiek(16, 0, 0, 0, false);
+            end;
+            if frmMain.PwrInp.KeyPressed[DIK_LEFT] then
+            begin
+              dec(winieta.sandboxSettings.difficultyLevel);
+              if winieta.sandboxSettings.difficultyLevel < 1 then
+                winieta.sandboxSettings.difficultyLevel := RANDOM_GAME_MAX_LEVELS;
+              Sfx.graj_dzwiek(16, 0, 0, 0, false);
+            end;
+            if frmMain.PwrInp.KeyPressed[DIK_PGDN] then
+            begin
+              inc(winieta.sandboxSettings.difficultyLevel, 10);
+              if winieta.sandboxSettings.difficultyLevel > RANDOM_GAME_MAX_LEVELS then
+                dec(winieta.sandboxSettings.difficultyLevel, RANDOM_GAME_MAX_LEVELS);
+              Sfx.graj_dzwiek(16, 0, 0, 0, false);
+            end;
+            if frmMain.PwrInp.KeyPressed[DIK_PGUP] then
+            begin
+              dec(winieta.sandboxSettings.difficultyLevel, 10);
+              if winieta.sandboxSettings.difficultyLevel < 1 then
+                inc(winieta.sandboxSettings.difficultyLevel, RANDOM_GAME_MAX_LEVELS);
+              Sfx.graj_dzwiek(16, 0, 0, 0, false);
+            end;
+          end;
+
+          2:
+          begin
+            if frmMain.PwrInp.KeyPressed[DIK_RIGHT] then
+            begin
+              inc(winieta.sandboxSettings.mapSize);
+              if winieta.sandboxSettings.mapSize > 3 then
+                winieta.sandboxSettings.mapSize := 0;
+              Sfx.graj_dzwiek(16, 0, 0, 0, false);
+            end;
+            if frmMain.PwrInp.KeyPressed[DIK_LEFT] then
+            begin
+              dec(winieta.sandboxSettings.mapSize);
+              if winieta.sandboxSettings.mapSize < 0 then
+                winieta.sandboxSettings.mapSize := 3;
+              Sfx.graj_dzwiek(16, 0, 0, 0, false);
+            end;
+          end;
+
+        end;
+
+
+        if frmMain.PwrInp.KeyPressed[DIK_ESCAPE] or (
+            (frmMain.PwrInp.KeyPressed[DIK_space] or frmMain.PwrInp.KeyPressed[DIK_RETURN]) and
+            (winieta.kursor = 7)
+        ) then
+        begin
+          winieta.corobi := 0;
+          winieta.skrol := 0;
+          winieta.kursor := 2;
+        end;
+
+      end;
+
   end;
 
 end;
@@ -4748,7 +4911,10 @@ begin
                 frmMain.TimerCzas.Enabled := false;
                 winieta.jest := true;
                 Sfx.muzyke_wlacz(1, true);
-                winieta.corobi := 0;
+                if gra.sandboxMode then
+                  winieta.corobi := 5
+                else
+                  winieta.corobi := 0;
                 winieta.skrol := 0;
                 // FSOUND_SetPaused(muzchannel, true);
               end;
@@ -4825,6 +4991,11 @@ begin
   gracz.silaskrzywien := 0;
 end;
 
+procedure setDifficultyLevel;
+begin
+  gra.difficultyLevel := gra.planeta * DIFFICULTY_MULTIPLIER;
+end;
+
 procedure wczytaj_teren(nazwa: string; gdzie: byte = 0);
 var
   a, b, i, a1: integer;
@@ -4883,6 +5054,7 @@ begin
       f.readBuffer(bt, sizeof(bt));
       f.readBuffer(bt2, sizeof(bt2));
       gra.planeta := bt + random(bt2) - 1;
+      setDifficultyLevel;
       // grawitacja
       f.readBuffer(r, sizeof(r));
       f.readBuffer(r2, sizeof(r2));
@@ -5121,7 +5293,6 @@ begin
     end;
 end;
 
-// ---------------------------------------------------------------------------
 procedure generuj_losowy;
 var
   a, b, n, az, ax, bx, bz: integer;
@@ -5141,20 +5312,30 @@ var
   minHeight, maxHeight: integer;
 
 begin
-  gra.rodzajmisji := gra.planeta mod 2;
-
   ziemia.TexDiv := 7 / 3;
-  if gra.planeta <= 9 then
+  setDifficultyLevel;
+  gra.rodzajmisji := gra.planeta mod 3;
+
+  if not gra.sandboxMode then
   begin
-    ziemia.wx := 119 + random(4) * 7;
-    ziemia.wz := ziemia.wx;
-    ziemia.wlk := 30 + random(5);
+    if gra.planeta <= 9 then
+    begin
+      ziemia.wx := 119 + random(4) * 7;
+      ziemia.wz := ziemia.wx;
+      ziemia.wlk := 30 + random(5);
+    end
+    else
+    begin
+      ziemia.wx := 147 + random(10) * 7;
+      ziemia.wz := ziemia.wx;
+      ziemia.wlk := 30 + random(25);
+    end;
   end
   else
   begin
-    ziemia.wx := 147 + random(10) * 7;
+    ziemia.wx := 105 + (winieta.sandboxSettings.mapSize * 7) * 7;
     ziemia.wz := ziemia.wx;
-    ziemia.wlk := 30 + random(25);
+    ziemia.wlk := 30 + winieta.sandboxSettings.mapSize;
   end;
 
   ziemia.px := -(ziemia.wx / 2) * ziemia.wlk; // *
@@ -5253,9 +5434,21 @@ begin
       end;
     1:
       begin // gory skladane z trojkatow
-        rozwys := 100 + random * 500;
-        maxHeight := round(matka.y - 400);
-        minHeight := maxHeight - 700 - random(1500);
+        if not gra.sandboxMode then
+        begin
+          rozwys := 100 + random * 500;
+          maxHeight := round(matka.y - 400);
+          minHeight := maxHeight - 700 - random(1500)
+        end
+        else
+        begin
+          if winieta.sandboxSettings.terrainHeight = 0 then
+            rozwys := 10 + random * 50
+          else
+            rozwys := 100 + random * 500;
+          maxHeight := round(matka.y - 400 - (4 - winieta.sandboxSettings.terrainHeight) * 80 + random(200) );
+          minHeight := maxHeight - 100 - winieta.sandboxSettings.terrainHeight * 600;
+        end;
 
         ax := round(minHeight + (maxHeight - minHeight) / 2);
         for a := 0 to high(ziemia.pk) do
@@ -5392,10 +5585,10 @@ begin
 
     ladowiska[n].pilotow := random(4);
 
-    if gra.rodzajmisji = 1 then
-      ladowiska[n].dobre := false
+    if (gra.rodzajmisji = 0) or gra.sandboxMode then
+      ladowiska[n].dobre := (random(3) <= 1) or (n = 0)
     else
-      ladowiska[n].dobre := (random(3) <= 1) or (n = 0);
+      ladowiska[n].dobre := false;
   end;
 
   // dzialka
@@ -5470,7 +5663,7 @@ begin
 
   if not ziemia.showStars then
   begin
-    k1 := random;
+    k1 := random * 0.9;
     ziemia.skyBrightness := 1.5 + random * 0.5;
     ziemia.koltla[0] := KeepValBetween(k1 + (random - 0.5) * 0.2, 0, 1);
     ziemia.koltla[1] := KeepValBetween(k1 + (random - 0.5) * 0.2, 0, 1);
@@ -5529,6 +5722,7 @@ var
   planetatmp: integer;
   n, an: integer;
   minHeight, maxHeight: extended;
+  fightersCount: integer;
 begin
   planetatmp := gra.planeta;
 
@@ -5544,10 +5738,6 @@ begin
   matka.x := 0;
   matka.z := 0;
 
-  //najpierw ustaw difficultyLevel, bo jest potrzebny do losowych etapów
-  gra.difficultyLevel := gra.planeta * DIFFICULTY_MULTIPLIER;
-  setlength(mysliwiec, (gra.difficultyLevel + 5) div 14);
-
   // rzeczy losowane (generowanie terenu)------------------------------------------
   if gra.jakiemisje = 0 then
   begin // normalna gra
@@ -5561,7 +5751,7 @@ begin
 {    if losowy then
       generuj_losowy
     else}
-      wczytaj_teren(inttostr(gra.planeta + 1), 1);
+    wczytaj_teren(inttostr(gra.planeta + 1), 1);
 
     gra.planeta := planetatmp;
   end
@@ -5578,13 +5768,6 @@ begin
   if matka.y < maxHeight + 450 then
     matka.y := maxHeight + 450;
 
-
-  if not losowy then
-  begin
-    //ustaw difficultyLevel ponownie po wczytaniu terenu
-    gra.difficultyLevel := gra.planeta * DIFFICULTY_MULTIPLIER;
-    setlength(mysliwiec, (gra.difficultyLevel + 5) div 14);
-  end;
 
   if gra.jakiemisje = 0 then
     RandSeed := gra.planeta + 12357
@@ -5642,7 +5825,6 @@ begin
     end;
   end;
 
-  // if gra.rodzajmisji=0 then begin
   // piloci
   gra.ilepilotow := 0;
   for a := 0 to high(pilot) do
@@ -5665,13 +5847,20 @@ begin
         inc(gra.ilepilotow);
     end;
   end;
-  { end else
-    setlength(pilot,0); }
+
+  if gra.rodzajmisji <> 2 then
+    fightersCount := (gra.difficultyLevel + 5) div 14
+  else
+    fightersCount := 2 + (gra.difficultyLevel + 5) div 17;
+  setlength(mysliwiec, fightersCount);
+
 
   gra.iledzialek := length(dzialko);
   gra.dzialekzniszczonych := 0;
   gra.zginelo := 0;
   gra.zabranych := 0;
+  gra.fightersDestroyed := 0;
+  gra.fightersMinimum := 0;
 
   if losowy then
     case gra.rodzajmisji of
@@ -5690,8 +5879,21 @@ begin
           if gra.dzialekminimum > length(dzialko) then
             gra.dzialekminimum := length(dzialko);
         end;
+      2:
+        begin
+          gra.minimum := 0;
+          gra.fightersMinimum := round(3 + gra.difficultyLevel / 3);
+        end;
     end;
 
+  if gra.sandboxMode then
+  begin
+    gra.nazwaplanety := '';
+    gra.tekstintro := STR_MISSION_SANDBOX_TASK;
+    gra.tekstoutrowin := '';
+    gra.tekstoutrolost := '';
+  end
+  else
   if not MISSIONS_USE_STORYLINE or losowy then
     case gra.rodzajmisji of
       0:
@@ -5705,6 +5907,13 @@ begin
         begin
           gra.nazwaplanety := STR_MISSION_PLANET + ' ' + losujnazwe;
           gra.tekstintro := STR_MISSION_DESTROY_TASK;
+          gra.tekstoutrowin := STR_MISSION_DESTROY_WIN;
+          gra.tekstoutrolost := STR_MISSION_DESTROY_LOST;
+        end;
+      2:
+        begin
+          gra.nazwaplanety := STR_MISSION_PLANET + ' ' + losujnazwe;
+          gra.tekstintro := STR_MISSION_DOGFIGHT_TASK;
           gra.tekstoutrowin := STR_MISSION_DESTROY_WIN;
           gra.tekstoutrolost := STR_MISSION_DESTROY_LOST;
         end;
@@ -5742,6 +5951,12 @@ begin
     delete(gra.tekstintro, a, 2);
     insert(inttostr(gra.czas div 60) + ':' + l2t(gra.czas mod 60, 2), gra.tekstintro, a);
   end;
+  while pos('%6', gra.tekstintro) > 0 do
+  begin
+    a := pos('%6', gra.tekstintro);
+    delete(gra.tekstintro, a, 2);
+    insert(inttostr(gra.fightersMinimum), gra.tekstintro, a);
+  end;
 
   gra.pozycjaYtekstuintro := 50;
   for a := 1 to length(gra.tekstintro) do
@@ -5749,7 +5964,7 @@ begin
       inc(gra.pozycjaYtekstuintro, 10);
 
   // normalne terenu:
-  if gra.jakiemisje <> 1 then
+  if (gra.jakiemisje <> 1) and not gra.sandboxMode then
     RandSeed := 43000
     // zawsze jednakowe ustawienie scenerii w normalnej grze i wczytywanej
   else
@@ -5914,7 +6129,7 @@ begin
   // nizej juz nie wolno robic NIC randomowego, co mialoby byc jednakowe w danych misjach (tak jak dziala normalna gra)
 
   // przywrocenie generatora l.losowych tak, aby byl ustalony dla misji normalnych, a dla pozostalych losowy
-  if gra.jakiemisje = 0 then
+  if (gra.jakiemisje = 0) and not gra.sandboxMode then
     RandSeed := gra.planeta + 15000
   else
     randomize;
@@ -5927,6 +6142,7 @@ begin
   licz := 0;
   gra.misjawypelniona := false;
   gra.moznakonczyc := false;
+  gra.returnToMothership := false;
 
   SmokesClear;
   for a := 0 to high(iskry) do
@@ -5981,13 +6197,17 @@ begin
 
   randomize;
   frmMain.TimerCzas.Enabled := false;
-  // gracz.pilotow:=7;//*****
 end;
 
 // ---------------------------------------------------------------------------
 procedure nowa_gra(wczytaj_nr: integer; jaka: integer);
 begin
-  gra.jakiemisje := jaka;
+  gra.sandboxMode := jaka = 3;
+  if not gra.sandboxMode then
+    gra.jakiemisje := jaka
+  else
+    gra.jakiemisje := 1;
+
   case jaka of
     0:
       gra.planeta := winieta.planetapocz - 1;
@@ -5995,6 +6215,8 @@ begin
       gra.planeta := winieta.poziomtrudnosci - 1;
     2:
       gra.planeta := winieta.epizodmisja - 1;
+    3:
+      gra.planeta := winieta.sandboxSettings.difficultyLevel;
   end;
   gra.koniecgry := false;
   gra.zycia := 5;
@@ -6025,13 +6247,13 @@ begin
       nowy_teren(epizody[winieta.epizod].misje[0]);
   end;
 
-  cheaty.full := false;
-  cheaty.god := false;
-  cheaty.fuel := false;
-  cheaty.weapon := false;
-  cheaty.lives := false;
-  cheaty.load := false;
-  cheaty.time := false;
+  cheaty.full := gra.sandboxMode;
+  cheaty.god := gra.sandboxMode;
+  cheaty.fuel := gra.sandboxMode;
+  cheaty.weapon := gra.sandboxMode;
+  cheaty.lives := gra.sandboxMode;
+  cheaty.load := gra.sandboxMode;
+  cheaty.time := gra.sandboxMode;
   setlength(cheaty.wpisany_tekst, 0);
 
   // gracz.pilotow:=10;
