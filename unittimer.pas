@@ -4,6 +4,7 @@ interface
 
 uses
   System.Generics.Collections,
+  Math,
   directinput8, OpenGl, gl, Glu, glext, ZGLTextures, obj, sysutils, classes,
   windows,
   fmod, fmodtypes, fmoderrors, fmodpresets, powerinputs, forms,
@@ -5705,20 +5706,140 @@ begin
   result := s;
 end;
 
+
+procedure MakeSceneryRegions;
+  type
+    TIntArray = array of integer;
+
+  function getRandomSceneryArray: TIntArray;
+  var
+    n: integer;
+  begin
+    setlength(result, 1 + random(2));
+    result[0] := random(ile_obiektow_scenerii);
+    if length(result) > 0 then
+    begin
+      repeat
+        result[1] := random(ile_obiektow_scenerii);
+      until result[1] <> result[0];
+    end;
+  end;
+
+  procedure MakeRegion(centerX, centerZ, radius: integer; sceneryArray: TIntArray);
+  var
+    x, z, fx, fz: integer;
+    w: extended;
+  begin
+    for fz := centerZ - radius to centerZ + radius do
+      for fx := centerX - radius to centerX + radius do
+      begin
+        x := fx mod ziemia.wx;
+        if x < 0 then
+          x := ziemia.wx - 1 + x;
+        z := fz mod ziemia.wz;
+        if z < 0 then
+          z := ziemia.wz - 1 + z;
+
+        if (x >= 0) and (z >= 0) and (x < ziemia.wx) and (z < ziemia.wz) then
+        begin
+          if (fx - centerX = 0) and (fz - centerZ = 0) then
+            w := ((radius + 1) - sqrt2(sqr(1) + sqr(0))) / radius
+          else
+            w := ((radius + 1) - sqrt2(sqr(fx - centerX) + sqr(fz - centerZ))) / radius;
+
+          if (w >= 0) and ziemia.pk[x][z].scen then
+            ziemia.pk[x][z].scen_rodz := sceneryArray[random(length(sceneryArray))];
+
+        end;
+      end;
+  end;
+
+var
+  n, count, size: integer;
+  centerx, centerz: integer;
+begin
+  count := round(5 + (ziemia.wx * ziemia.wz) / 1000);
+  for n := 0 to count do
+  begin
+    size := round(1 + Max(ziemia.wx, ziemia.wz) * 0.3);
+    centerx := random(ziemia.wx);
+    centerz := random(ziemia.wz);
+    MakeRegion(centerx, centerz, 20 + random(size), getRandomSceneryArray);
+  end;
+
+end;
+
+procedure SetSceneryObjects(losowy: boolean);
+const
+  texladowiska = 0.35;
+  texkrzakow = 0;
+var
+  az, ax: integer;
+  col1: real;
+begin
+  for az := 0 to ziemia.wz - 1 do
+  begin
+    for ax := 0 to ziemia.wx - 1 do
+    begin
+      if (ziemia.pk[ax][az].rodzaj = 1) or (ax = 0) or (az = 0) or (ax >= ziemia.wx - 2) or (az >= ziemia.wz - 2) then
+      begin
+
+        ziemia.pk[ax][az].scen := false;
+        ziemia.pk[ax][az].tex := texladowiska;
+
+      end
+      else
+      begin
+        ziemia.pk[ax][az].tex := ziemia.pk[ax][az].p / 500;
+
+        if losowy then
+        begin
+          ziemia.pk[ax][az].scen := random(8) = 0;
+
+          if (abs(ziemia.pk[ax][az].p - ziemia.pk[ax + 1][az].p) > 8) or
+            (abs(ziemia.pk[ax][az].p - ziemia.pk[ax - 1][az].p) > 8) or
+            (abs(ziemia.pk[ax][az].p - ziemia.pk[ax][az + 1].p) > 8) or
+            (abs(ziemia.pk[ax][az].p - ziemia.pk[ax][az - 1].p) > 8) then
+            ziemia.pk[ax][az].scen := false;
+        end;
+
+        if ziemia.pk[ax][az].scen then
+        begin
+          col1 := (0.5 - random) * 0.4 - 0.2;
+          ziemia.pk[ax][az].scen_rodz := random(ile_obiektow_scenerii);
+          ziemia.pk[ax][az].sckr := KeepValBetween(ziemia.pk[ax][az].kr + (random - 0.5) * 0.1 + col1, 0.1, 0.7);
+          ziemia.pk[ax][az].sckg := KeepValBetween(ziemia.pk[ax][az].kg + (random - 0.5) * 0.1 + col1, 0.1, 0.7);
+          ziemia.pk[ax][az].sckb := KeepValBetween(ziemia.pk[ax][az].kb + (random - 0.5) * 0.1 + col1, 0.1, 0.7);
+          ziemia.pk[ax][az].scen_obry := random(360);
+          ziemia.pk[ax][az].scen_obrx := random(50) - 25;
+          ziemia.pk[ax][az].scen_obrz := random(50) - 25;
+          ziemia.pk[ax][az].scen_rozm := random * 5 + 0.5;
+
+          if (ax > 0) then
+            ziemia.pk[ax - 1][az].tex := texkrzakow;
+          if (az > 0) then
+            ziemia.pk[ax][az - 1].tex := texkrzakow;
+          ziemia.pk[ax][az].tex := texkrzakow;
+
+        end;
+      end;
+
+    end;
+  end;
+
+  MakeSceneryRegions;
+end;
+
 // ---------------------------------------------------------------------------
 procedure nowy_teren(wczytaj_nazwa: string = '');
 const
   // lista numerow etapow, ktore sa wczytywane a nie generowane w normalnej grze
-{  wczytywane: array [0 .. 23] of integer = (1, 2, 3, 8, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80, 85,
-    90, 95, 98, 99);}
-
-  texladowiska = 0.35;
-  texkrzakow = 0;
+  wczytywane: array [0 .. 23] of integer = (1, 2, 3, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25);
 var
   a, az, ax, bx, bz, mapx, mapz: integer;
   vek1, vek2, vek3: TWektor;
   losowy: boolean;
-  r, col1: real;
+  r: real;
   planetatmp: integer;
   n, an: integer;
   minHeight, maxHeight: extended;
@@ -5743,15 +5864,14 @@ begin
   begin // normalna gra
     a := 0;
 
-{    while (a <= high(wczytywane)) and (wczytywane[a] <> gra.planeta + 1) do
+    while (a <= high(wczytywane)) and (wczytywane[a] <> gra.planeta + 1) do
       inc(a);
+    losowy := a > high(wczytywane);
 
-    losowy := a > high(wczytywane);}
-
-{    if losowy then
+    if losowy then
       generuj_losowy
-    else}
-    wczytaj_teren(inttostr(gra.planeta + 1), 1);
+    else
+      wczytaj_teren(inttostr(gra.planeta + 1), 1);
 
     gra.planeta := planetatmp;
   end
@@ -6006,61 +6126,19 @@ begin
       if ziemia.pk[ax][az].kb > 1 then
         ziemia.pk[ax][az].kb := 1;
 
-      // sceneria
-      if (ziemia.pk[ax][az].rodzaj = 1) or (ax = 0) or (az = 0) or (ax = ziemia.wx - 2) or (az = ziemia.wz - 2) then
-      begin
-
-        ziemia.pk[ax][az].scen := false;
-        ziemia.pk[ax][az].tex := texladowiska;
-
-      end
-      else
-      begin
-        ziemia.pk[ax][az].tex := ziemia.pk[ax][az].p / 500;
-
-        if losowy then
-        begin
-          ziemia.pk[ax][az].scen := random(8) = 0;
-
-          if (abs(ziemia.pk[ax][az].p - ziemia.pk[ax + 1][az].p) > 8) or
-            (abs(ziemia.pk[ax][az].p - ziemia.pk[ax - 1][az].p) > 8) or
-            (abs(ziemia.pk[ax][az].p - ziemia.pk[ax][az + 1].p) > 8) or
-            (abs(ziemia.pk[ax][az].p - ziemia.pk[ax][az - 1].p) > 8) then
-            ziemia.pk[ax][az].scen := false;
-        end;
-
-        if ziemia.pk[ax][az].scen then
-        begin
-          col1 := (0.5 - random) * 0.4 - 0.2;
-          ziemia.pk[ax][az].scen_rodz := random(ile_obiektow_scenerii);
-          ziemia.pk[ax][az].sckr := KeepValBetween(ziemia.pk[ax][az].kr + (random - 0.5) * 0.1 + col1, 0.1, 0.7);
-          ziemia.pk[ax][az].sckg := KeepValBetween(ziemia.pk[ax][az].kg + (random - 0.5) * 0.1 + col1, 0.1, 0.7);
-          ziemia.pk[ax][az].sckb := KeepValBetween(ziemia.pk[ax][az].kb + (random - 0.5) * 0.1 + col1, 0.1, 0.7);
-          ziemia.pk[ax][az].scen_obry := random(360);
-          ziemia.pk[ax][az].scen_obrx := random(50) - 25;
-          ziemia.pk[ax][az].scen_obrz := random(50) - 25;
-          ziemia.pk[ax][az].scen_rozm := random * 5 + 0.5;
-
-          if (ax > 0) then
-            ziemia.pk[ax - 1][az].tex := texkrzakow;
-          if (az > 0) then
-            ziemia.pk[ax][az - 1].tex := texkrzakow;
-          ziemia.pk[ax][az].tex := texkrzakow;
-
-        end;
-      end;
-
     end;
   end;
+
+  SetSceneryObjects(losowy);
 
   if Config.Display.ShowGrass then
   begin
     // krzaki
-    for az := 0 to ziemia.wz - 2 do
+    for az := 0 to ziemia.wz - 1 do
     begin
-      for ax := 0 to ziemia.wx - 2 do
+      for ax := 0 to ziemia.wx - 1 do
       begin
-        if (ziemia.pk[ax][az].rodzaj = 1) or (ax = 0) or (az = 0) or (ax = ziemia.wx - 2) or (az = ziemia.wz - 2) then
+        if (ziemia.pk[ax][az].rodzaj = 1) or (ax = 0) or (az = 0) or (ax >= ziemia.wx - 2) or (az >= ziemia.wz - 2) then
         begin
           setlength(ziemia.pk[ax][az].krzaki, 0);
         end
