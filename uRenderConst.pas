@@ -8,9 +8,9 @@ var
   widocznosc: integer = 80; { dla 1300 bylo 60 }
   widocznoscpil: integer = 20; // pilotow
   widocznoscdzial: integer = 80; // dzialka
-  widocznoscscen: integer = 53; // sceneria
+  widocznoscscen: integer = 90; // sceneria
   widocznoscscencien: integer = 25; // cien scenerii
-  widocznosckrzak: integer = 10; // krzaki
+  widocznosckrzak: integer = 13; // krzaki
   odlwidzenia: integer = 2000;
 
 const

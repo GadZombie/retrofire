@@ -288,7 +288,14 @@ type
   TSandboxSettings = record
     mapSize: integer; // 0 = small .. 3 = big
     terrainHeight: integer; // 0 = flat .. 4 = high
-    difficultyLevel: integer;
+    difficultyLevel: integer; // 0 .. RANDOM_GAME_MAX_LEVELS (24)
+    windStrength: integer; // 0 = none .. 3 = strong
+    gravity: integer; // 0 = very low .. 3 = high
+    airDensity: integer;  // 0 = very low .. high
+    fightersCount: integer;  // 0 = none .. 3 = many
+    landfieldsCount: integer;  // 0 = none .. 3 = many
+    survivorsCount: integer;  // 0 = none .. 3 = many
+    turretsCount: integer;  // 0 = none .. 3 = many
   end;
 
   TIntro = record

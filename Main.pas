@@ -124,10 +124,10 @@ begin
     if widocznoscpil > widocznosc - 5 then
       widocznoscpil := widocznosc - 5;
 
-    if widocznoscscen > widocznosc - 2 then
-      widocznoscscen := widocznosc - 2;
-    if widocznoscscen > 40 then
-      widocznoscscen := 40;
+    if widocznoscscen > widocznosc - 5 then
+      widocznoscscen := widocznosc - 5;
+    if widocznoscscen > 70 then
+      widocznoscscen := 70;
 
     if widocznoscscencien > widocznoscscen - 10 then
       widocznoscscencien := widocznoscscen - 10;
@@ -269,7 +269,7 @@ end;
 
 procedure TfrmMain.TimerCzasTimer(Sender: TObject);
 begin
-  inc(gra.czas);
+  dec(gra.czas);
 end;
 
 procedure TfrmMain.FormShow(Sender: TObject);

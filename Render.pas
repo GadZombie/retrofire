@@ -1580,11 +1580,7 @@ begin
   xdo := trunc((gra.jestkamera[0, 0] - ziemia.px) / ziemia.wlk) + widocznosc;
   zod := trunc((gra.jestkamera[0, 2] - ziemia.pz) / ziemia.wlk) - widocznosc;
   zdo := trunc((gra.jestkamera[0, 2] - ziemia.pz) / ziemia.wlk) + widocznosc;
-  { xod:=trunc((gracz.x-ziemia.px)/ziemia.wlk)-widocznosc;
-    xdo:=trunc((gracz.x-ziemia.px)/ziemia.wlk)+widocznosc;
-    zod:=trunc((gracz.z-ziemia.pz)/ziemia.wlk)-widocznosc;
-    zdo:=trunc((gracz.z-ziemia.pz)/ziemia.wlk)+widocznosc;
-  }
+
   xsr := (xdo - xod) div 2 + xod;
   zsr := (zdo - zod) div 2 + zod;
 
@@ -1697,10 +1693,10 @@ begin
 
   // cienie scenerii
 
-  xod := trunc((gracz.x - ziemia.px) / ziemia.wlk) - widocznoscscencien;
-  xdo := trunc((gracz.x - ziemia.px) / ziemia.wlk) + widocznoscscencien;
-  zod := trunc((gracz.z - ziemia.pz) / ziemia.wlk) - widocznoscscencien;
-  zdo := trunc((gracz.z - ziemia.pz) / ziemia.wlk) + widocznoscscencien;
+  xod := trunc((gra.jestkamera[0, 0] - ziemia.px) / ziemia.wlk) - widocznoscscencien;
+  xdo := trunc((gra.jestkamera[0, 0] - ziemia.px) / ziemia.wlk) + widocznoscscencien;
+  zod := trunc((gra.jestkamera[0, 2] - ziemia.pz) / ziemia.wlk) - widocznoscscencien;
+  zdo := trunc((gra.jestkamera[0, 2] - ziemia.pz) / ziemia.wlk) + widocznoscscencien;
 
   glPushAttrib(GL_ALL_ATTRIB_BITS);
   wlacz_teksture(4);
@@ -1737,10 +1733,10 @@ begin
   // sceneria
   glMaterialf(GL_FRONT, GL_SHININESS, 60);
 
-  xod := trunc((gracz.x - ziemia.px) / ziemia.wlk) - widocznoscscen;
-  xdo := trunc((gracz.x - ziemia.px) / ziemia.wlk) + widocznoscscen;
-  zod := trunc((gracz.z - ziemia.pz) / ziemia.wlk) - widocznoscscen;
-  zdo := trunc((gracz.z - ziemia.pz) / ziemia.wlk) + widocznoscscen;
+  xod := trunc((gra.jestkamera[0, 0] - ziemia.px) / ziemia.wlk) - widocznoscscen;
+  xdo := trunc((gra.jestkamera[0, 0] - ziemia.px) / ziemia.wlk) + widocznoscscen;
+  zod := trunc((gra.jestkamera[0, 2] - ziemia.pz) / ziemia.wlk) - widocznoscscen;
+  zdo := trunc((gra.jestkamera[0, 2] - ziemia.pz) / ziemia.wlk) + widocznoscscen;
 
   for z := zod to zdo { ziemia.wz-2 } do
   begin
@@ -3728,7 +3724,7 @@ end;
 procedure pokaz_winiete;
 
 var
-  width, height, a, b1, b2, b: integer;
+  width, height, a, b1, b2, b, b3: integer;
   viewMatrix: array [0 .. 15] of GLFloat;
   s: string;
   koltla: array [0 .. 3] of GLFloat;
@@ -4210,32 +4206,51 @@ begin
 
     5:
       begin // sandbox menu
+        glColor4f(0.1, 0.6, 0.1, 0.8);
+        pisz2d(STR_TITLE_SB_SETTINGS, currentScreenParams.MenuCenter, height - 90, 12, 1);
 
-        for a := 0 to 7 do
+        for a := 0 to 11 do
         begin
           if winieta.kursor = a then
             glColor4f(0.2, 1.0, 0.2, 0.7)
           else
             glColor4f(0.1, 0.6, 0.1, 0.6);
           case a of
-            0: s := STR_TITLE_SB_START_GAME;
-            1: s := Format(STR_TITLE_SB_DIFFICULTY, [winieta.sandboxSettings.difficultyLevel + 1]);
-            2: s := Format(STR_TITLE_SB_MAP_SIZE, [STR_TITLE_SB_MAP_SIZES[winieta.sandboxSettings.mapSize]]);
-            3: s := Format(STR_TITLE_SB_TERRAIN_HEIGHT, [STR_TITLE_SB_TERRAIN_HEIGHT_VALUES[winieta.sandboxSettings.mapSize]]);
-            4: s := Format(STR_TITLE_SB_WIND_STRENGTH, [STR_TITLE_SB_WIND_STRENGTH_VALUES[winieta.sandboxSettings.mapSize]]);
-            5: s := Format(STR_TITLE_SB_GRAVITY, [STR_TITLE_SB_GRAVITY_VALUES[winieta.sandboxSettings.mapSize]]);
-            6: s := Format(STR_TITLE_SB_AIR_DENSITY, [STR_TITLE_SB_AIR_DENSITY_VALUES[winieta.sandboxSettings.mapSize]]);
-            7: s := STR_TITLE_SB_RETURN;
+            0: s := Format(STR_TITLE_SB_DIFFICULTY, [winieta.sandboxSettings.difficultyLevel]);
+            1: s := Format(STR_TITLE_SB_MAP_SIZE, [STR_TITLE_SB_MAP_SIZES[winieta.sandboxSettings.mapSize]]);
+            2: s := Format(STR_TITLE_SB_TERRAIN_HEIGHT, [STR_TITLE_SB_TERRAIN_HEIGHT_VALUES[winieta.sandboxSettings.terrainHeight]]);
+            3: s := Format(STR_TITLE_SB_WIND_STRENGTH, [STR_TITLE_SB_WIND_STRENGTH_VALUES[winieta.sandboxSettings.windStrength]]);
+            4: s := Format(STR_TITLE_SB_GRAVITY, [STR_TITLE_SB_GRAVITY_VALUES[winieta.sandboxSettings.gravity]]);
+            5: s := Format(STR_TITLE_SB_AIR_DENSITY, [STR_TITLE_SB_AIR_DENSITY_VALUES[winieta.sandboxSettings.airDensity]]);
+            6: s := Format(STR_TITLE_SB_LANDFIELDS_COUNT, [STR_TITLE_SB_LANDFIELDS_COUNT_VALUES[winieta.sandboxSettings.landfieldsCount]]);
+            7: s := Format(STR_TITLE_SB_SURVIVORS_COUNT, [STR_TITLE_SB_SURVIVORS_COUNT_VALUES[winieta.sandboxSettings.survivorsCount]]);
+            8: s := Format(STR_TITLE_SB_TURRETS_COUNT, [STR_TITLE_SB_TURRETS_COUNT_VALUES[winieta.sandboxSettings.turretsCount]]);
+            9: s := Format(STR_TITLE_SB_FIGHTERS_COUNT, [STR_TITLE_SB_FIGHTERS_COUNT_VALUES[winieta.sandboxSettings.fightersCount]]);
+
+            10: s := STR_TITLE_SB_START_GAME;
+            11: s := STR_TITLE_SB_RETURN;
           end;
-          if a = 7 then
+
+          if a = 10 then
+            b1 := 130 + 9 * 15 + 40
+          else
+          if a = 11 then
             b1 := 450
           else
-            b1 := 90 + a * 15;
-          if a = 0 then
-            b2 := 10
+            b1 := 130 + a * 15;
+
+          if a = 10 then
+          begin
+            b2 := 10;
+            b3 := 85;
+          end
           else
+          begin
             b2 := 8;
-          pisz2d(s, 70, height - b1, b2);
+            b3 := 85;
+          end;
+
+          pisz2d(s, b3, height - b1, b2);
         end;
 
       end;

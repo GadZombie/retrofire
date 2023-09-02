@@ -782,7 +782,7 @@ var
   k, k1, gx1, gz1, szybstrz: real;
   dzwiekognia: boolean;
   rodzpoc: byte;
-  newDelta: TVec3D;
+  newDelta, oldDelta: TVec3D;
 
 begin
   gracz.grlot := -1;
@@ -1184,6 +1184,7 @@ begin
       while abs(gracz.nacisk) > 0.2 do
         gracz.nacisk := gracz.nacisk * 0.9;
 
+      oldDelta := TVec3D.ToVec(gracz.dx, gracz.dy, gracz.dz);
       if gracz.y < gdzie_y(gracz.x, gracz.z, gracz.y) + 4.99 then
       begin
 {        gracz.y := gracz.y + 0.001;
@@ -1216,22 +1217,25 @@ begin
       if ((nx >= 0) and (nz >= 0) and (nx < ziemia.wx) and (nz < ziemia.wz) and (ziemia.pk[nx, nz].rodzaj <> 1) and
         not gracz.namatce) or
         (gracz.namatce and ((gracz.y < matka.y - 10) or (sqrt2(sqr(gracz.x - matka.x) + sqr(gracz.z - matka.z)) > 35)))
-        or (sqrt2(sqr(gracz.dx) + sqr(gracz.dz)) > 0.1) or (gracz.dy < -0.17) or (abs(gracz.szybkier) > 0.4)
+        or (sqrt2(sqr(oldDelta.x) + sqr(oldDelta.z)) > 0.1) or (oldDelta.y < -0.17) or (abs(gracz.szybkier) > 0.4)
 
       then
       begin
 
         gracz.oslonablysk := maxoslonablysk;
-        s := sqrt2(sqr(gracz.dx) + sqr(gracz.dz)) / 5 + abs(gracz.dy) / 3 + abs(gracz.szybkier) / 15;
+//        s := (sqrt2(sqr(oldDelta.x) + sqr(oldDelta.z)) / 3 + abs(oldDelta.y) / 2 + abs(gracz.szybkier) / 10);
+        s := (sqrt2(sqr(oldDelta.x) + sqr(oldDelta.z) + sqr(oldDelta.y)) / 2 + abs(gracz.szybkier) / 10);
+
+        if ((nx >= 0) and (nz >= 0) and (nx < ziemia.wx) and (nz < ziemia.wz)) and (ziemia.pk[nx, nz].rodzaj <> 1) then
+        begin
+          s := s * 2;
+{          gracz.sila := gracz.sila - 0.2;
+          uszkodz(true, 2);}
+        end;
         gracz.sila := gracz.sila - s;
 
         uszkodz(true, s * 2);
 
-        if ((nx >= 0) and (nz >= 0) and (nx < ziemia.wx) and (nz < ziemia.wz)) and (ziemia.pk[nx, nz].rodzaj <> 1) then
-        begin
-          gracz.sila := gracz.sila - 0.2;
-          uszkodz(true, 2);
-        end;
         if (gracz.namatce and (gracz.y < matka.y - 10)) then
           gracz.dy := -abs(gracz.dy);
 
@@ -1477,7 +1481,8 @@ begin
         strzel(gracz.x + sin((90 + gracz.kier) * pi180) * (3 * gracz.stronastrzalu), gracz.y - 2,
           gracz.z - cos((90 + gracz.kier) * pi180) * (3 * gracz.stronastrzalu),
 
-          -(sin(k * pi180) * cos(k1 * pi180)) * szybstrz, -sin(k1 * pi180) * szybstrz,
+          -(sin(k * pi180) * cos(k1 * pi180)) * szybstrz,
+          -sin(k1 * pi180) * szybstrz,
           -(-cos(k * pi180) * cos(k1 * pi180)) * szybstrz,
 
           0, rodzpoc, 0.3, Vec3D(gracz.dx, gracz.dy, gracz.dz));
@@ -2202,6 +2207,7 @@ var
   k, k2: real;
   k1, nk1: integer;
   skreca, okstrzal: boolean;
+  distStopAttack: integer;
 
 begin
   for a := 0 to high(mysliwiec) do
@@ -2359,15 +2365,16 @@ begin
             end;
           end;
 
+          distStopAttack := 1000 + gra.difficultyLevel * 5;
           if s <= 55 * szybkosc then
           begin
             if random(6) = 0 then
               atakuje := false
           end
-          else if (s > 100 * szybkosc) and (s <= 1000) and (random(50) = 0) then
+          else if (s > 100 * szybkosc) and (s <= distStopAttack) and (random(50) = 0) then
             atakuje := true;
 
-          if (s > 1000) then
+          if (s > distStopAttack) then
             atakuje := false;
 
           if s > 1500 then
@@ -2376,7 +2383,7 @@ begin
           if atakuje then
           begin // lec za graczem
             // przyspiesz
-            if szybkosc < 0.9 + gra.difficultyLevel / 100 then
+            if szybkosc < 0.9 + gra.difficultyLevel / 75 then
               szybkosc := szybkosc + 0.1;
 
             okstrzal := false;
@@ -2598,11 +2605,11 @@ begin
             szybkosc := szybkosc + 0.1
           else if szybkosc < 2.2 then
             szybkosc := szybkosc + 0.01;
-          if kierdol < 90 then
+          if kierdol < 60 then
           begin
             kierdol := kierdol + 1;
-            if kierdol > 90 then
-              kierdol := 90;
+            if kierdol > 60 then
+              kierdol := 60;
           end;
 
           obrot := obrot + szybkosc * 4;
@@ -3671,7 +3678,7 @@ end;
 
 function canCreateFighters: boolean;
 begin
-  if gra.rodzajmisji in [0, 1] then
+  if not gra.sandboxMode and (gra.rodzajmisji in [0, 1]) then
   begin
     result := (gracz.y <= matka.y - 150) and
       (gra.iledzialek > 0) and
@@ -4530,7 +4537,7 @@ begin
               if (frmMain.PwrInp.KeyPressed[DIK_space]) or (frmMain.PwrInp.KeyPressed[DIK_RETURN]) then
               begin
                 winieta.corobi := 5;
-                winieta.kursor := 0;
+                winieta.kursor := 10;
               end;
             end;
           3:
@@ -4721,23 +4728,13 @@ begin
           Sfx.graj_dzwiek(16, 0, 0, 0, false);
         end;
         if winieta.kursor < 0 then
-          winieta.kursor := 7;
-        if winieta.kursor > 7 then
+          winieta.kursor := 11;
+        if winieta.kursor > 11 then
           winieta.kursor := 0;
 
         case winieta.kursor of
 
           0:
-          begin
-            if (frmMain.PwrInp.KeyPressed[DIK_space]) or (frmMain.PwrInp.KeyPressed[DIK_RETURN]) then
-            begin
-              winieta.jest := false;
-              Sfx.muzyke_wylacz;
-              nowa_gra(-1, 3);
-            end;
-          end;
-
-          1:
           begin
             if frmMain.PwrInp.KeyPressed[DIK_RIGHT] then
             begin
@@ -4769,7 +4766,7 @@ begin
             end;
           end;
 
-          2:
+          1:
           begin
             if frmMain.PwrInp.KeyPressed[DIK_RIGHT] then
             begin
@@ -4787,12 +4784,164 @@ begin
             end;
           end;
 
+          2:
+          begin
+            if frmMain.PwrInp.KeyPressed[DIK_RIGHT] then
+            begin
+              inc(winieta.sandboxSettings.terrainHeight);
+              if winieta.sandboxSettings.terrainHeight > 4 then
+                winieta.sandboxSettings.terrainHeight := 0;
+              Sfx.graj_dzwiek(16, 0, 0, 0, false);
+            end;
+            if frmMain.PwrInp.KeyPressed[DIK_LEFT] then
+            begin
+              dec(winieta.sandboxSettings.terrainHeight);
+              if winieta.sandboxSettings.terrainHeight < 0 then
+                winieta.sandboxSettings.terrainHeight := 4;
+              Sfx.graj_dzwiek(16, 0, 0, 0, false);
+            end;
+          end;
+
+          3:
+          begin
+            if frmMain.PwrInp.KeyPressed[DIK_RIGHT] then
+            begin
+              inc(winieta.sandboxSettings.windStrength);
+              if winieta.sandboxSettings.windStrength > 3 then
+                winieta.sandboxSettings.windStrength := 0;
+              Sfx.graj_dzwiek(16, 0, 0, 0, false);
+            end;
+            if frmMain.PwrInp.KeyPressed[DIK_LEFT] then
+            begin
+              dec(winieta.sandboxSettings.windStrength);
+              if winieta.sandboxSettings.windStrength < 0 then
+                winieta.sandboxSettings.windStrength := 3;
+              Sfx.graj_dzwiek(16, 0, 0, 0, false);
+            end;
+          end;
+
+          4:
+          begin
+            if frmMain.PwrInp.KeyPressed[DIK_RIGHT] then
+            begin
+              inc(winieta.sandboxSettings.gravity);
+              if winieta.sandboxSettings.gravity > 3 then
+                winieta.sandboxSettings.gravity := 0;
+              Sfx.graj_dzwiek(16, 0, 0, 0, false);
+            end;
+            if frmMain.PwrInp.KeyPressed[DIK_LEFT] then
+            begin
+              dec(winieta.sandboxSettings.gravity);
+              if winieta.sandboxSettings.gravity < 0 then
+                winieta.sandboxSettings.gravity := 3;
+              Sfx.graj_dzwiek(16, 0, 0, 0, false);
+            end;
+          end;
+
+          5:
+          begin
+            if frmMain.PwrInp.KeyPressed[DIK_RIGHT] then
+            begin
+              inc(winieta.sandboxSettings.airDensity);
+              if winieta.sandboxSettings.airDensity > 3 then
+                winieta.sandboxSettings.airDensity := 0;
+              Sfx.graj_dzwiek(16, 0, 0, 0, false);
+            end;
+            if frmMain.PwrInp.KeyPressed[DIK_LEFT] then
+            begin
+              dec(winieta.sandboxSettings.airDensity);
+              if winieta.sandboxSettings.airDensity < 0 then
+                winieta.sandboxSettings.airDensity := 3;
+              Sfx.graj_dzwiek(16, 0, 0, 0, false);
+            end;
+          end;
+
+          6:
+          begin
+            if frmMain.PwrInp.KeyPressed[DIK_RIGHT] then
+            begin
+              inc(winieta.sandboxSettings.landfieldsCount);
+              if winieta.sandboxSettings.landfieldsCount > 3 then
+                winieta.sandboxSettings.landfieldsCount := 0;
+              Sfx.graj_dzwiek(16, 0, 0, 0, false);
+            end;
+            if frmMain.PwrInp.KeyPressed[DIK_LEFT] then
+            begin
+              dec(winieta.sandboxSettings.landfieldsCount);
+              if winieta.sandboxSettings.landfieldsCount < 0 then
+                winieta.sandboxSettings.landfieldsCount := 3;
+              Sfx.graj_dzwiek(16, 0, 0, 0, false);
+            end;
+          end;
+
+          7:
+          begin
+            if frmMain.PwrInp.KeyPressed[DIK_RIGHT] then
+            begin
+              inc(winieta.sandboxSettings.survivorsCount);
+              if winieta.sandboxSettings.survivorsCount > 3 then
+                winieta.sandboxSettings.survivorsCount := 0;
+              Sfx.graj_dzwiek(16, 0, 0, 0, false);
+            end;
+            if frmMain.PwrInp.KeyPressed[DIK_LEFT] then
+            begin
+              dec(winieta.sandboxSettings.survivorsCount);
+              if winieta.sandboxSettings.survivorsCount < 0 then
+                winieta.sandboxSettings.survivorsCount := 3;
+              Sfx.graj_dzwiek(16, 0, 0, 0, false);
+            end;
+          end;
+
+          8:
+          begin
+            if frmMain.PwrInp.KeyPressed[DIK_RIGHT] then
+            begin
+              inc(winieta.sandboxSettings.turretsCount);
+              if winieta.sandboxSettings.turretsCount > 3 then
+                winieta.sandboxSettings.turretsCount := 0;
+              Sfx.graj_dzwiek(16, 0, 0, 0, false);
+            end;
+            if frmMain.PwrInp.KeyPressed[DIK_LEFT] then
+            begin
+              dec(winieta.sandboxSettings.turretsCount);
+              if winieta.sandboxSettings.turretsCount < 0 then
+                winieta.sandboxSettings.turretsCount := 3;
+              Sfx.graj_dzwiek(16, 0, 0, 0, false);
+            end;
+          end;
+
+          9:
+          begin
+            if frmMain.PwrInp.KeyPressed[DIK_RIGHT] then
+            begin
+              inc(winieta.sandboxSettings.fightersCount);
+              if winieta.sandboxSettings.fightersCount > 3 then
+                winieta.sandboxSettings.fightersCount := 0;
+              Sfx.graj_dzwiek(16, 0, 0, 0, false);
+            end;
+            if frmMain.PwrInp.KeyPressed[DIK_LEFT] then
+            begin
+              dec(winieta.sandboxSettings.fightersCount);
+              if winieta.sandboxSettings.fightersCount < 0 then
+                winieta.sandboxSettings.fightersCount := 3;
+              Sfx.graj_dzwiek(16, 0, 0, 0, false);
+            end;
+          end;
+
+          10:
+          begin
+            if (frmMain.PwrInp.KeyPressed[DIK_space]) or (frmMain.PwrInp.KeyPressed[DIK_RETURN]) then
+            begin
+              winieta.jest := false;
+              Sfx.muzyke_wylacz;
+              nowa_gra(-1, 3);
+            end;
+          end;
+
         end;
 
-
         if frmMain.PwrInp.KeyPressed[DIK_ESCAPE] or (
-            (frmMain.PwrInp.KeyPressed[DIK_space] or frmMain.PwrInp.KeyPressed[DIK_RETURN]) and
-            (winieta.kursor = 7)
+            (frmMain.PwrInp.KeyPressed[DIK_space] or frmMain.PwrInp.KeyPressed[DIK_RETURN]) and (winieta.kursor = 11)
         ) then
         begin
           winieta.corobi := 0;
@@ -5055,7 +5204,7 @@ begin
       f.readBuffer(bt, sizeof(bt));
       f.readBuffer(bt2, sizeof(bt2));
       gra.planeta := bt + random(bt2) - 1;
-      setDifficultyLevel;
+      gra.difficultyLevel := gra.planeta; //bez mno¿enia po wczytaniu z pliku
       // grawitacja
       f.readBuffer(r, sizeof(r));
       f.readBuffer(r2, sizeof(r2));
@@ -5334,7 +5483,7 @@ begin
   end
   else
   begin
-    ziemia.wx := 105 + (winieta.sandboxSettings.mapSize * 7) * 7;
+    ziemia.wx := 105 + (winieta.sandboxSettings.mapSize * 7) * 10;
     ziemia.wz := ziemia.wx;
     ziemia.wlk := 30 + winieta.sandboxSettings.mapSize;
   end;
@@ -5349,17 +5498,31 @@ begin
 
   rodzaj_gor := 1;//random(2); nie ma ju¿ innego algorytmu ni¿ 1
 
-  a := round(20 + (random * 2 - 0.6) * ((10 + gra.planeta) / 4.5)); // 25
-  ziemia.grawitacja := a / 10000;
+  if not gra.sandboxMode then
+  begin
+    a := round(20 + (random * 2 - 0.6) * ((10 + gra.planeta) / 4.5)); // 18.53 .. 30.88
+    ziemia.grawitacja := a / 10000;
 
-  a := round(20 + (random * 1.7 - 0.6) * ((10 + gra.planeta) / 4.5)); // 17
-  ziemia.gestoscpowietrza := (1000 - a) / 1000;
+    a := round(20 + (random * 1.7 - 0.6) * ((10 + gra.planeta) / 4.5)); // 18.53 .. 28.55
+    ziemia.gestoscpowietrza := (1000 - a) / 1000;
 
-  { ziemia.gestoscpowietrza:=0.980;//0.9995-random/21;
-    ziemia.grawitacja:=0.002;//0.002+(random/1000)*4; }
+    wiatr.sila := 0.001 + (random / 1000) * 3; // 0 .. 0.004
+  end
+  else
+  begin
+    a := round(6 + winieta.sandboxSettings.gravity * 8 + random * 3);
+    ziemia.grawitacja := a / 10000;
+
+    a := round(12 + winieta.sandboxSettings.airDensity * 5 + random * 3);
+    ziemia.gestoscpowietrza := (1000 - a) / 1000;
+
+    if winieta.sandboxSettings.windStrength = 0 then
+      wiatr.sila := 0
+    else
+      wiatr.sila := winieta.sandboxSettings.windStrength * 0.001 + (random / 1000); // 0 .. 0.004
+  end;
+
   matka.y := 900;
-
-  wiatr.sila := 0.001 + (random / 1000) * 3; // 0.003
 
   // ustawienie rozmiaru ziemi: przy wczytywaniu jest to w funkcji wczytujacej
   setlength(ziemia.pk, ziemia.wx);
@@ -5551,7 +5714,15 @@ begin
     end;
 
   // ladowiska
-  setlength(ladowiska, 1 + random(5));
+  if not gra.sandboxMode then //#
+    setlength(ladowiska, 1 + random(5))
+  else
+  begin
+    if winieta.sandboxSettings.landfieldsCount > 0 then
+      setlength(ladowiska, winieta.sandboxSettings.landfieldsCount * 5 + random(2))
+    else
+      setlength(ladowiska, 0)
+  end;
   for n := 0 to high(ladowiska) do
   begin
     // rozmiar ladowiska
@@ -5593,7 +5764,17 @@ begin
   end;
 
   // dzialka
-  setlength(dzialko, random(10) + (ord(gra.rodzajmisji = 1) * 3) + gra.difficultyLevel div 2);
+  if not gra.sandboxMode then
+    a := random(10) + (ord(gra.rodzajmisji = 1) * 3) + gra.difficultyLevel div 2
+  else
+  begin
+    if winieta.sandboxSettings.turretsCount = 0 then
+      a := 0
+    else
+      a := 4 + sqr(winieta.sandboxSettings.turretsCount) * 13 + random(10); //13 | 52 | 117
+  end;
+  setlength(dzialko, a);
+
   for a := 0 to high(dzialko) do
     with dzialko[a] do
     begin
@@ -5651,9 +5832,22 @@ begin
     end;
   end;
 
-  a := 4 + random(20) + gra.difficultyLevel div 2;
-  if a > 50 then
-    a := 50;
+  if not gra.sandboxMode then
+  begin
+    a := 4 + random(20) + gra.difficultyLevel div 2;
+    if a > 50 then
+      a := 50;
+  end
+  else
+  begin
+    if winieta.sandboxSettings.survivorsCount = 0 then
+      a := 0
+    else
+      a := 5 + sqr(winieta.sandboxSettings.survivorsCount) * 15 + random(10); //20 | 60 | 135
+  end;
+
+  if length(ladowiska) = 0 then
+    a := 0;
   setlength(pilot, a);
 
   for a := 0 to high(pilot) do
@@ -5968,10 +6162,16 @@ begin
     end;
   end;
 
-  if gra.rodzajmisji <> 2 then
-    fightersCount := (gra.difficultyLevel + 5) div 14
+  if not gra.sandboxMode then //#
+  begin
+    if gra.rodzajmisji <> 2 then
+      fightersCount := (gra.difficultyLevel + 5) div 14
+    else
+      fightersCount := 2 + (gra.difficultyLevel + 5) div 17;
+  end
   else
     fightersCount := 2 + (gra.difficultyLevel + 5) div 17;
+
   setlength(mysliwiec, fightersCount);
 
 
@@ -6294,7 +6494,7 @@ begin
     2:
       gra.planeta := winieta.epizodmisja - 1;
     3:
-      gra.planeta := winieta.sandboxSettings.difficultyLevel;
+      gra.planeta := winieta.sandboxSettings.difficultyLevel - 1;
   end;
   gra.koniecgry := false;
   gra.zycia := 5;
@@ -6734,6 +6934,18 @@ begin
   kamera := 2;
 
   glowneintro.jest := true;
+
+  winieta.sandboxSettings.mapSize := 2;
+  winieta.sandboxSettings.terrainHeight := 2;
+  winieta.sandboxSettings.difficultyLevel := 5;
+  winieta.sandboxSettings.windStrength := 1;
+  winieta.sandboxSettings.gravity := 1;
+  winieta.sandboxSettings.airDensity := 1;
+  winieta.sandboxSettings.fightersCount := 1;
+  winieta.sandboxSettings.landfieldsCount := 1;
+  winieta.sandboxSettings.survivorsCount := 2;
+  winieta.sandboxSettings.turretsCount := 1;
+
 
   FormStart.progres.StepIt;
 
