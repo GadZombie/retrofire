@@ -13,7 +13,7 @@ uses
 const
   ConfigHeader = 'Retrofire configuration file. (C) gadz.pl';
 
-  GAME_CONTROL_COUNT = 18;
+  GAME_CONTROL_COUNT = 19;
   ControlNames: array [0 .. GAME_CONTROL_COUNT - 1] of string = (
     'Turn left (right nozzle)',
     'Turn right (left nozzle)',
@@ -32,6 +32,7 @@ const
     'Camera 6 (from top, look down)',
     'Camera 7 (from the nearest landfield)',
     'Camera 8 (cockpit, from inside)',
+    'Camera 9 (watching you)',
     'Drop off a survivor'
   );
 
@@ -183,7 +184,8 @@ begin
   GameController.Control(14).SetKey(DIK_6);
   GameController.Control(15).SetKey(DIK_7);
   GameController.Control(16).SetKey(DIK_8);
-  GameController.Control(17).SetKey(DIK_r);
+  GameController.Control(17).SetKey(DIK_9);
+  GameController.Control(18).SetKey(DIK_r);
 end;
 
 procedure TConfig.SetDefaults;

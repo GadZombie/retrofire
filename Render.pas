@@ -2219,65 +2219,6 @@ begin
   end;
 
   glPopMatrix;
-
-  { glPushMatrix;
-    glTranslatef(0,100,0);
-    glEnable(GL_BLEND);
-    for a:=0 to 3 do
-    for x:=0 to 3 do begin
-    pisz_liczbe(round( ttt[a*4+x]*1000), 0+x*13,130-a*8,0, 1, right,up);
-    end;
-    glDisable(GL_BLEND);
-    glPopMatrix;
-  }
-  // glPushMatrix;
-  { glEnable(GL_BLEND);
-    pisz_liczbe(round((gracz.x-ziemia.px)/ziemia.wlk), gracz.x,gracz.y+10,gracz.z,2, right,up);
-    glDisable(GL_BLEND); }
-  // glPopMatrix;
-
-//  DrawShadowsBegin;
-//  DrawShadow(gracz.x, gracz.y, gracz.z, SHADOW_SIZE, SHADOW_SIZE_ADD, 400, 0.8);
-//  DrawShadowsEnd;
-(*
-  j := (gracz.y - gracz.cieny) / 400;
-  if j > 0 then
-  begin
-    if j > 1 then
-      j := 1;
-
-    glDepthMask(GL_FALSE);
-//      glDepthFunc(GL_LEQUAL);
-    glDisable(GL_DEPTH_TEST);
-
-    glPushMatrix;
-    // glTranslatef(gracz.x,gracz.cieny,gracz.z);
-    // gluSphere(dupa,1,4,4);
-    glTranslatef(gracz.x, 0, gracz.z);
-    // glRotatef(gracz.kier,0,-1,0);
-    wlacz_teksture(4);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    glEnable(GL_BLEND);
-    glEnable(GL_COLOR_MATERIAL);
-    glColor4f(1, 1, 1, 0.8 - j * 0.8);
-    glBegin(GL_QUADS);
-    glTexCoord2f(0, 1);
-    glVertex3f(-SHADOW_SIZE - SHADOW_SIZE_ADD * j, gdzie_y(gracz.x - SHADOW_SIZE - SHADOW_SIZE_ADD * j, gracz.z + SHADOW_SIZE + SHADOW_SIZE_ADD * j, gracz.y) + 0.2, +SHADOW_SIZE + SHADOW_SIZE_ADD * j);
-    glTexCoord2f(1, 1);
-    glVertex3f(+SHADOW_SIZE + SHADOW_SIZE_ADD * j, gdzie_y(gracz.x + SHADOW_SIZE + SHADOW_SIZE_ADD * j, gracz.z + SHADOW_SIZE + SHADOW_SIZE_ADD * j, gracz.y) + 0.2, +SHADOW_SIZE + SHADOW_SIZE_ADD * j);
-    glTexCoord2f(1, 0);
-    glVertex3f(+SHADOW_SIZE + SHADOW_SIZE_ADD * j, gdzie_y(gracz.x + SHADOW_SIZE + SHADOW_SIZE_ADD * j, gracz.z - SHADOW_SIZE - SHADOW_SIZE_ADD * j, gracz.y) + 0.2, -SHADOW_SIZE - SHADOW_SIZE_ADD * j);
-    glTexCoord2f(0, 0);
-    glVertex3f(-SHADOW_SIZE - SHADOW_SIZE_ADD * j, gdzie_y(gracz.x - SHADOW_SIZE - SHADOW_SIZE_ADD * j, gracz.z - SHADOW_SIZE - SHADOW_SIZE_ADD * j, gracz.y) + 0.2, -SHADOW_SIZE - SHADOW_SIZE_ADD * j);
-    glEnd;
-    glDisable(GL_BLEND);
-    wylacz_teksture;
-    glPopMatrix;
-
-    glDepthMask(GL_TRUE);
-    glEnable(GL_DEPTH_TEST);
-    glDepthFunc(GL_LEQUAL);
-  end;   *)
 end;
 
 
@@ -3486,7 +3427,7 @@ begin
       if ziemia.showStars then
         glColor3f(1, 1, 1)
       else
-        glcolor4f(1, 1, 1, KeepValBetween((gracz.y - (matka.y - 100)) / 100, 0, 1) );
+        glcolor4f(1, 1, 1, KeepValBetween((gra.jestkamera[0, 1] - (matka.y - 100)) / 100, 0, 1) );
 
 {    end
     else
@@ -4487,7 +4428,7 @@ begin
   kol[0] := ziemia.jestkoltla[0] * 1;
   kol[1] := ziemia.jestkoltla[1] * 1;
   kol[2] := ziemia.jestkoltla[2] * 1;
-  kol[3] := KeepValBetween((wb - gracz.y) / 300, 0, 1);
+  kol[3] := KeepValBetween((wb - gra.jestkamera[0, 1]) / 300, 0, 1);
 //  glFogfv(GL_FOG_COLOR, @kol);
 //  glFogf(GL_FOG_START, 2000.0);
 //  glFogf(GL_FOG_END, 9000.0);
@@ -4501,7 +4442,7 @@ begin
   colSky[0] := KeepValBetween(ziemia.jestkoltla[0] * ziemia.skyBrightness, 0, 1);
   colSky[1] := KeepValBetween(ziemia.jestkoltla[1] * ziemia.skyBrightness, 0, 1);
   colSky[2] := KeepValBetween(ziemia.jestkoltla[2] * ziemia.skyBrightness, 0, 1);
-  colSky[3] := KeepValBetween((wb - gracz.y) / 250, 0, 1);
+  colSky[3] := KeepValBetween((wb - gra.jestkamera[0, 1]) / 250, 0, 1);
 
   glDisable(GL_DEPTH_TEST);
 
@@ -4553,7 +4494,7 @@ begin
   kol[0] := 0.6;
   kol[1] := 0.6;
   kol[2] := 0.6;
-  kol[3] := KeepValBetween((w - gracz.y) / 300, 0, 0.7);
+  kol[3] := KeepValBetween((w - gra.jestkamera[0, 1]) / 300, 0, 0.7);
 
 //  glFogf(GL_FOG_START, 100.0);
 //  glFogf(GL_FOG_END, 4800.0);
@@ -4590,7 +4531,7 @@ begin
   kol[0] := 0.8;
   kol[1] := 0.8;
   kol[2] := 0.8;
-  kol[3] := KeepValBetween((w - gracz.y) / 250, 0, 0.6);
+  kol[3] := KeepValBetween((w - gra.jestkamera[0, 1]) / 250, 0, 0.6);
 
   if ziemia.showClouds then
   begin

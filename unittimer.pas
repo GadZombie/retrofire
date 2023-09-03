@@ -428,7 +428,7 @@ end;
 function IsPointOverMothership(x, y, z: extended): boolean;
 begin
   result :=
-    (y >= matka.y - 45) and (x >= matka.x - 530) and (x <= matka.x + 410) and
+    (y >= matka.y - 60) and (x >= matka.x - 530) and (x <= matka.x + 410) and
     (z >= matka.z - (x + matka.x + 530) / 2.52) and (z <= matka.z + (x + matka.x + 530) / 2.52);
 end;
 
@@ -783,7 +783,7 @@ var
   dzwiekognia: boolean;
   rodzpoc: byte;
   newDelta, oldDelta: TVec3D;
-
+  underGround: boolean;
 begin
   gracz.grlot := -1;
 
@@ -824,6 +824,12 @@ begin
       end;
     end;
 
+    underGround :=
+      (gracz.y < gdzie_y(gracz.x, gracz.z, gracz.y) + 4.99) and
+      ((gracz.y < matka.y - 70) or //tylko na ziemi
+       (gracz.y > matka.y - 10)); //tylko na matce, ale nie pod matk¹
+
+
     gracz.x := gracz.x + gracz.dx;
     gracz.y := gracz.y + gracz.dy;
     gracz.z := gracz.z + gracz.dz;
@@ -831,13 +837,8 @@ begin
     if gracz.nacisk <> 0 then
     begin
       gracz.nacisk := gracz.nacisk * 0.96;
-      // if gracz.nacisk<0 then gracz.nacisk:=0;
     end;
-    { if gracz.nacisk<0 then begin
-      gracz.nacisk:=gracz.nacisk+0.03;
-      if gracz.nacisk>0 then gracz.nacisk:=0;
-      end;
-    }
+
     if gracz.x < ziemia.px then
     begin
       gracz.x := abs(ziemia.px);
@@ -1166,7 +1167,7 @@ begin
     if gracz.wykrecsila > 2 then
       gracz.wykrecsila := 2;
 
-    gracz.namatce := (gracz.y <= gdzie_y(gracz.x, gracz.z, gracz.y) + 5) and (gracz.y > matka.y - 75);
+    gracz.namatce := (gracz.y <= gdzie_y(gracz.x, gracz.z, gracz.y) + 5) and (gracz.y > matka.y - 60);
     if gracz.namatce then
     begin
       if gracz.mothershipTime < 1000 then
@@ -1190,10 +1191,10 @@ begin
 {        gracz.y := gracz.y + 0.001;
         gracz.dy := gracz.dy * 0.8;}
 
-        newDelta := Bounce(TVec3D.ToVec(gracz.x, gracz.y, gracz.z), TVec3D.ToVec(gracz.dx, gracz.dy, gracz.dz));
-        gracz.x := gracz.x - gracz.dx;
-        gracz.y := gracz.y - gracz.dy;
-        gracz.z := gracz.z - gracz.dz;
+        newDelta := Bounce(TVec3D.ToVec(gracz.x, gracz.y, gracz.z), TVec3D.ToVec(oldDelta.x, oldDelta.y, oldDelta.z));//        TVec3D.ToVec(gracz.dx, gracz.dy, gracz.dz));
+        gracz.x := gracz.x - oldDelta.x;
+        gracz.y := gracz.y - oldDelta.y;
+        gracz.z := gracz.z - oldDelta.z;
         gracz.dx := newDelta.x * 0.6;
         gracz.dy := newDelta.y * 0.6;
         gracz.dz := newDelta.z * 0.6;
@@ -1226,6 +1227,14 @@ begin
 //        s := (sqrt2(sqr(oldDelta.x) + sqr(oldDelta.z)) / 3 + abs(oldDelta.y) / 2 + abs(gracz.szybkier) / 10);
         s := (sqrt2(sqr(oldDelta.x) + sqr(oldDelta.z) + sqr(oldDelta.y)) / 2 + abs(gracz.szybkier) / 10);
 
+        //odbicie siê od matki w dó³
+        if (gracz.namatce and (gracz.y < matka.y - 20)) then
+        begin
+          gracz.dy := -abs(gracz.dy) - 0.1;;
+          gracz.y := matka.y - 60.5;
+          s := s * 2 + 0.2;
+        end;
+
         if ((nx >= 0) and (nz >= 0) and (nx < ziemia.wx) and (nz < ziemia.wz)) and (ziemia.pk[nx, nz].rodzaj <> 1) then
         begin
           s := s * 2;
@@ -1235,9 +1244,6 @@ begin
         gracz.sila := gracz.sila - s;
 
         uszkodz(true, s * 2);
-
-        if (gracz.namatce and (gracz.y < matka.y - 10)) then
-          gracz.dy := -abs(gracz.dy);
 
       end
       else
@@ -1585,7 +1591,7 @@ begin
     // wysokosc gracza:       round(gracz.y-gdzie_y(gracz.x,gracz.z,gracz.y)-5);
 
     // wyrzucanie pilotow z ladownika
-    if not gracz.namatce and (GameController.Control(17).Pressed) and (gracz.pilotow > 0) then
+    if not gracz.namatce and (GameController.Control(18).Pressed) and (gracz.pilotow > 0) then
     begin
 
 {      dec(gra.kasa, 10);
@@ -1616,6 +1622,9 @@ begin
 
       Sfx.graj_dzwiek(13, gracz.x, gracz.y, gracz.z);
     end;
+
+    if underGround then
+      gracz.y := gdzie_y(gracz.x, gracz.z, gracz.y) + 4.99;
 
   end; // gracz
 
@@ -3449,9 +3458,9 @@ var
 begin
   for a := 0 to 2 do
   begin
-    if gracz.y > matka.y - 350 then
+    if gra.jestkamera[0, 1] > matka.y - 350 then
     begin
-      ziemia.jestkoltla[a] := ziemia.koltla[a] * ((matka.y - 100 - gracz.y) / 250);
+      ziemia.jestkoltla[a] := ziemia.koltla[a] * ((matka.y - 100 - gra.jestkamera[0, 1]) / 250);
     end
     else
       ziemia.jestkoltla[a] := ziemia.koltla[a];
@@ -3885,6 +3894,46 @@ begin
         gra.kamera[2, 2] := kz;
 
       end;
+    8: //watching
+      begin
+        c := Distance3D(gracz.x, gracz.y, gracz.z, gra.kamera[0, 0], gra.kamera[0, 1], gra.kamera[0, 2]);
+
+        if c < 30 then
+        begin
+          if c = 0 then
+            c := 0.1;
+          gra.kamera[0, 0] := gracz.x + ((-gracz.x + gra.kamera[0, 0]) / c) * 30;
+          gra.kamera[0, 1] := gracz.y + ((-gracz.y + gra.kamera[0, 1]) / c) * 30;
+          gra.kamera[0, 2] := gracz.z + ((-gracz.z + gra.kamera[0, 2]) / c) * 30;
+        end
+        else
+        if c > 400 then
+        begin
+          c := gracz.kier + (random - 0.5) * 60;
+          c1 := 400 - random(100);
+
+          gra.kamera[0, 0] := gracz.x + sin(c * pi180) * c1;
+          gra.kamera[0, 1] := gracz.y + (random - 0.5) * 70;
+          gra.kamera[0, 2] := gracz.z - cos(c * pi180) * c1;
+          kx := gdzie_y(gra.kamera[0, 0], gra.kamera[0, 1], gra.kamera[0, 2]);
+          if gra.kamera[0, 1] < kx + 20 then
+            gra.kamera[0, 1] := kx + 20 + random(30);
+        end
+        else
+          if c > 100 then
+          begin
+            gra.kamera[0, 0] := AnimateTo(gra.kamera[0, 0], gracz.x, 500);
+            gra.kamera[0, 1] := AnimateTo(gra.kamera[0, 1], gracz.y, 500);
+            gra.kamera[0, 2] := AnimateTo(gra.kamera[0, 2], gracz.z, 500);
+          end;
+
+        gra.kamera[1, 0] := gracz.x;
+        gra.kamera[1, 1] := gracz.y;
+        gra.kamera[1, 2] := gracz.z;
+        gra.kamera[2, 0] := 0;
+        gra.kamera[2, 1] := 1;
+        gra.kamera[2, 2] := 0;
+      end;
   end;
   c := gdzie_y(gra.kamera[0, 0], gra.kamera[0, 2], gra.kamera[0, 1]) + 3;
   if gra.kamera[0, 1] < c then
@@ -3929,6 +3978,8 @@ begin
   if GameController.Control(15).Pressed then
     kamera := 6;
   if GameController.Control(16).Pressed then
+    kamera := 7;
+  if GameController.Control(17).Pressed then
     kamera := 8;
 
   sprawdzaj_cheat_codes;
@@ -3937,9 +3988,9 @@ begin
 
   ustaw_kolor_tla;
 
-  if gracz.y > matka.y - 350 then
+  if gra.jestkamera[0, 1] > matka.y - 350 then
   begin
-    ziemia.widac := KeepValBetween((matka.y - 100 - gracz.y) / 250, 0, 1);
+    ziemia.widac := KeepValBetween((matka.y - 100 - gra.jestkamera[0, 1]) / 250, 0, 1);
   end
   else
     ziemia.widac := 1;
@@ -3947,7 +3998,7 @@ begin
   if ziemia.showStars then
     matka.widac := 1
   else
-    matka.widac := KeepValBetween(1 - (matka.y - 100 - gracz.y) / 400, 0, 1);
+    matka.widac := KeepValBetween(1 - (matka.y - 100 - gra.jestkamera[0, 1]) / 400, 0, 1);
 
   ziemia.chmuryx := ziemia.chmuryx - sin(wiatr.kier * pi180) * (wiatr.sila / 20) + gracz.dx * 0.0001;
   ziemia.chmuryz := ziemia.chmuryz - cos(wiatr.kier * pi180) * (wiatr.sila / 20) - gracz.dz * 0.0001;
