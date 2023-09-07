@@ -67,6 +67,10 @@ type
     odlegloscnamierzonegodzialka: real;
 
     zlywsrodku: boolean;
+    alienSteerDirection: integer;
+    alienSteerForward: boolean;
+    alienSteerTime: integer;
+
     elementy: array of TGraczElement;
 
     uszkodzenia: array [0 .. 0] of boolean; // 0=latarka
@@ -169,7 +173,7 @@ type
     x, y, z, dy, dx, dz: real;
     kier: real;
     nalotnisku: integer;
-    palisie: boolean;
+    palisie, sleeps: boolean;
     sila: real;
 
     zly: boolean;

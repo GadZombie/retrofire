@@ -776,14 +776,14 @@ end;
 procedure ruch_gracza;
 var
   ilegrzeje: integer;
-  s, moc: real;
+  s, moc, kickStrength: real;
   a, nx, nz, b: integer;
 
   k, k1, gx1, gz1, szybstrz: real;
   dzwiekognia: boolean;
   rodzpoc: byte;
   newDelta, oldDelta: TVec3D;
-  underGround: boolean;
+  underGround, alien: boolean;
 begin
   gracz.grlot := -1;
 
@@ -813,15 +813,34 @@ begin
 
     if gracz.zlywsrodku then
     begin
-      if random(3) = 0 then
-        gracz.sila := gracz.sila - 0.016;
-      if gracz.y >= gdzie_y(gracz.x, gracz.z, gracz.y) + 8 then
+//      if random(3) = 0 then
+//        gracz.sila := gracz.sila - 0.016;
+      if random(40) = 0 then
+      begin
+        kickStrength := 0.5 + random * 0.5;
+        uszkodz(false, 5 * kickStrength);
+        gracz.sila := gracz.sila - 0.2 * kickStrength;
+        gracz.dx := gracz.dx + (random - 0.5) * 2 * kickStrength;
+        gracz.dz := gracz.dz + (random - 0.5) * 2 * kickStrength;
+        gracz.dy := gracz.dy + (random - 0.5) * 0.8 * kickStrength;
+      end;
+
+      if (gracz.alienSteerTime <= 0) then
+      begin
+        gracz.alienSteerDirection := random(3) - 1;
+        gracz.alienSteerTime := 3 + random(80);
+        gracz.alienSteerForward := boolean(random(2));
+      end
+      else
+        dec(gracz.alienSteerTime);
+
+{      if gracz.y >= gdzie_y(gracz.x, gracz.z, gracz.y) + 8 then
       begin
         gracz.dx := gracz.dx + (random - 0.5) * 0.3;
         gracz.dz := gracz.dz + (random - 0.5) * 0.3;
         // gracz.dy:=gracz.dy+(random-0.1)*0.2;
         gracz.szybkier := gracz.szybkier + (random - 0.5) * 2.5;
-      end;
+      end;}
     end;
 
     underGround :=
@@ -1001,7 +1020,7 @@ begin
 
     // dopalacz do przodu
     if (gracz.paliwo > 0) and ((GameController.Control(5).Active) or ((GameController.Control(0).Active) and
-      (GameController.Control(1).Active))) then
+      ((gracz.zlywsrodku and (gracz.alienSteerForward)) or GameController.Control(1).Active))) then
     begin
       Sfx.graj_dzwiek(2, gracz.x, gracz.y, gracz.z);
       dzwiekognia := true;
@@ -1059,7 +1078,7 @@ begin
     end;
 
     // dopalacz w lewo
-    if (gracz.paliwo > 0) and (GameController.Control(0).Active) then
+    if (gracz.paliwo > 0) and ((gracz.zlywsrodku and (gracz.alienSteerDirection = -1)) or GameController.Control(0).Active) then
     begin
       Sfx.graj_dzwiek(2, gracz.x, gracz.y, gracz.z);
       dzwiekognia := true;
@@ -1095,7 +1114,7 @@ begin
       end;
     end;
     // dopalacz w prawo
-    if (gracz.paliwo > 0) and (GameController.Control(1).Active) then
+    if (gracz.paliwo > 0) and ((gracz.zlywsrodku and (gracz.alienSteerDirection = 1)) or GameController.Control(1).Active) then
     begin
       Sfx.graj_dzwiek(2, gracz.x, gracz.y, gracz.z);
       dzwiekognia := true;
@@ -1243,7 +1262,7 @@ begin
         end;
         gracz.sila := gracz.sila - s;
 
-        uszkodz(true, s * 2);
+        uszkodz(true, s * 4);
 
       end
       else
@@ -1382,7 +1401,7 @@ begin
         gracz.sila := gracz.sila - s;
         if abs(s) > 0.5 then
           Sfx.graj_dzwiek(4, gracz.x, gracz.y, gracz.z);
-        uszkodz(false, s * 2);
+        uszkodz(false, s * 4);
 
         gracz.dx := -gracz.dx * 0.5;
         gracz.dy := gracz.dy * 0.5;
@@ -1591,13 +1610,22 @@ begin
     // wysokosc gracza:       round(gracz.y-gdzie_y(gracz.x,gracz.z,gracz.y)-5);
 
     // wyrzucanie pilotow z ladownika
-    if not gracz.namatce and (GameController.Control(18).Pressed) and (gracz.pilotow > 0) then
+    if not gracz.namatce and (GameController.Control(18).Pressed) and
+      ((gracz.pilotow > 0) or (gracz.zlychpilotow > 0)) then
     begin
 
-{      dec(gra.kasa, 10);
-      dec(gra.pkt, 110); // trzeba dawac tyle samo kasy i punktow!!!!!
-      }
-      dec(gracz.pilotow);
+      if gracz.pilotow = 0 then
+      begin
+        alien := true;
+        dec(gracz.zlychpilotow);
+        if gracz.zlychpilotow <= 0 then
+          gracz.zlywsrodku := false;
+      end
+      else
+      begin
+        alien := false;
+        dec(gracz.pilotow);
+      end;
 
       if (gracz.grlot >= 0) then
       begin // zywy
@@ -1605,6 +1633,7 @@ begin
         if a >= 0 then
         begin
           pilot[a].rescued := true;
+          pilot[a].zly := alien;
         end;
       end
       else
@@ -1612,9 +1641,10 @@ begin
         a := nowy_pilot(gracz.x, gracz.y, gracz.z, false, 0);
         if a >= 0 then
         begin
-          Sfx.graj_dzwiek((22 + ord(pilot[a].zly) * 4 + random(4)), pilot[a].x, pilot[a].y, pilot[a].z);
+          pilot[a].zly := alien;
           pilot[a].dy := -0.3 - random / 2;
           pilot[a].palisie := false;
+          Sfx.graj_dzwiek((22 + ord(pilot[a].zly) * 4 + random(4)), pilot[a].x, pilot[a].y, pilot[a].z);
           if pilot[a].zawszewidac and not pilot[a].zly then
             inc(gra.zginelo);
         end;
@@ -2143,7 +2173,7 @@ begin
             begin
               zaiskrz;
               gracz.sila := gracz.sila - ((10 - s) / 4) / dzielsile;
-              uszkodz(false, (((10 - s) / 4) / dzielsile) * 4);
+              uszkodz(false, (((10 - s) / 4) / dzielsile) * 8);
               gracz.oslonablysk := maxoslonablysk;
               if gracz.sila < 0 then
                 gracz.sila := 0;
@@ -2665,6 +2695,17 @@ begin
 end;
 
 // ---------------------------------------------------------------------------
+function pilotAwake(pilotId: integer): boolean;
+begin
+  if not pilot[pilotId].sleeps then
+    exit(true);
+
+  if random(80) = 0 then
+    pilot[pilotId].sleeps := false;
+
+  result := not pilot[pilotId].sleeps;
+end;
+
 procedure ruch_pilotow;
 var
   a, nx, nz, k1, nk1: integer;
@@ -2695,32 +2736,34 @@ begin
         y := y + dy;
         dx := dx * ziemia.gestoscpowietrza;
         dz := dz * ziemia.gestoscpowietrza;
-        if y > gdzie_y(x, z, y) then
-        begin
-          if sila > 0 then
-            dy := dy - ziemia.grawitacja * 3
-          else
-            dy := dy - ziemia.grawitacja;
-        end;
-        if (y < gdzie_y(x, z, y)) and (dy < 0) then
-        begin
-          if sila > 0 then
-            dy := abs(dy / 2)
-          else
-          begin
-            if abs(dy) > 0.1 then
-              Sfx.graj_dzwiek(8, x, y, z);
+//        if y > gdzie_y(x, z, y) then
+//        begin
+//          if sila > 0 then
+//            dy := dy - 0.015 - ziemia.grawitacja * 2
+//          else
+//            dy := dy - 0.01 - ziemia.grawitacja;
+//        end;
+//        if (y < gdzie_y(x, z, y)) and (dy < 0) then
+//        begin
+//          if sila > 0 then
+//            dy := abs(dy / 2)
+//          else
+//          begin
+//            if abs(dy) > 0.1 then
+//              Sfx.graj_dzwiek(8, x, y, z);
+//
+//            dy := abs(dy / 4);
+//          end;
+//        end;
 
-            dy := abs(dy / 4);
-          end;
-        end;
+        if palisie then
+          sleeps := false;
 
         if uciekaodgracza > 0 then
           dec(uciekaodgracza);
 
         if palisie and (random(2) = 0) then
         begin
-          // nowy_dym(x,y+1+random*2,z,
           nowy_dym(x + sin(kier * pi180) * sin(przewroc * pi180) * (1 + random * 1.5),
             y + cos(przewroc * pi180) * (1 + random * 1.5), z - cos(kier * pi180) * sin(przewroc * pi180) *
             (1 + random * 1.5), (random - 0.5) / 8, 0.1 + random / 6, (random - 0.5) / 8, 0.4 + random / 2, 0, 0.05);
@@ -2741,6 +2784,8 @@ begin
           end
           else
           begin
+            if random(30) = 0 then
+              sleeps := true;
             s := sqrt2(sqr(gracz.x - x) + sqr(gracz.y - y) + sqr(gracz.z - z));
             if (s >= 100) and (s <= 300) then
             begin
@@ -2787,62 +2832,97 @@ begin
 
         if not palisie and (sila > 0) then
         begin
+          if not gracz.stoi then
+          begin
+            //uderzenie w gracza
+            s := sqrt2(sqr(gracz.x - x) + sqr(gracz.y - y) + sqr(gracz.z - z));
+            if s < 8 then
+            begin
+              if s <= 0 then
+                s := 0.01;
+  //            dy := 1;//test
+              k := Distance3D(0, 0, 0, gracz.dx, gracz.dy, gracz.dz);
+              if k > 2 then
+                k := 2;
+              x := gracz.x + ((x - gracz.x) / s) * 8;
+              y := gracz.y + ((y - gracz.y) / s) * 8;
+              z := gracz.z + ((z - gracz.z) / s) * 8;
+              dy := dy + ((y - gracz.y) / 80)  + gracz.dy;
+              dx := dx + ((x - gracz.x) / 30)  + gracz.dx;
+              dz := dz + ((z - gracz.z) / 30)  + gracz.dz;
+
+              //mocniejsze uderzenie, gdy pilot jest pod l¹downikiem
+              s := sqrt2(sqr(gracz.x - x) + sqr(gracz.z - z));
+              if (s <= 5) and (y < gracz.y - 1) then
+                k := k * 10;
+              if k > 0.1 then
+              begin
+                sila := sila - k / 2;
+              end;
+            end;
+          end;
+
           if nalotnisku >= 0 then
           begin // na ziemi
             s := sqrt2(sqr(gracz.x - x) + sqr(gracz.y - y) + sqr(gracz.z - z));
+///s := 300;//test
             if ((not gracz.stoi) or (uciekaodgracza > 0) or ((gracz.pilotow >= gracz.ladownosc) and (not zly))) and
               (s < 100) then
             begin // uciekaja
-              if s < 93 then
-                k := (180 + jaki_to_kat(gracz.x - x, gracz.z - z))
-              else
-                k := (jaki_to_kat(gracz.x - x, gracz.z - z));
-              if k > 360 then
-                k := k - 360;
-
-              if (k <> kier) then
+              if pilotAwake(a) then
               begin
-                k1 := (round(kier - k) + 360) mod 360;
-                if (k1 <= 180) then
+                if s < 93 then
+                  k := (180 + jaki_to_kat(gracz.x - x, gracz.z - z))
+                else
+                  k := (jaki_to_kat(gracz.x - x, gracz.z - z));
+                if k > 360 then
+                  k := k - 360;
+
+                if (k <> kier) then
                 begin
-                  kier := kier - 2;
-                  nk1 := (round(kier - k) + 360) mod 360;
-                  if (nk1 > 180) then
-                    kier := k;
+                  k1 := (round(kier - k) + 360) mod 360;
+                  if (k1 <= 180) then
+                  begin
+                    kier := kier - 2;
+                    nk1 := (round(kier - k) + 360) mod 360;
+                    if (nk1 > 180) then
+                      kier := k;
+                  end
+                  else
+                  begin
+                    if (k1 > 180) then
+                      kier := kier + 2;
+                    nk1 := (round(kier - k) + 360) mod 360;
+                    if (nk1 <= 180) then
+                      kier := k;
+                  end;
+                end;
+
+                if (kier >= 360) then
+                  kier := kier - 360
+                else if (kier < 0) then
+                  kier := kier + 360;
+
+                if s < 93 then
+                begin
+                  if gdzie_y(x + sin(kier * pi180) / 3, z - cos(kier * pi180) / 3, y) < gdzie_y(x, z, y) + 0.25 then
+                  begin
+                    x := x + sin(kier * pi180) / (2 + random * 3);
+                    z := z - cos(kier * pi180) / (2 + random * 3);
+                    stoi := false;
+                  end;
                 end
                 else
                 begin
-                  if (k1 > 180) then
-                    kier := kier + 2;
-                  nk1 := (round(kier - k) + 360) mod 360;
-                  if (nk1 <= 180) then
-                    kier := k;
+                  ani := ani + 1;
+                  rodzani := 1;
                 end;
-              end;
-
-              if (kier >= 360) then
-                kier := kier - 360
-              else if (kier < 0) then
-                kier := kier + 360;
-
-              if s < 93 then
-              begin
-                if gdzie_y(x + sin(kier * pi180) / 3, z - cos(kier * pi180) / 3, y) < gdzie_y(x, z, y) + 0.25 then
+                if y <= gdzie_y(x, z, y) then
                 begin
-                  x := x + sin(kier * pi180) / (2 + random * 3);
-                  z := z - cos(kier * pi180) / (2 + random * 3);
-                  stoi := false;
+                  if abs(sin(ani * pi180)) < 0.2 then
+                    dy := 0.2;
+                  y := gdzie_y(x, z, y);
                 end;
-              end
-              else
-              begin
-                ani := ani + 1;
-                rodzani := 1;
-              end;
-              if y <= gdzie_y(x, z, y) then
-              begin
-                dy := 0.1 + random * 0.04;//0.13
-                y := gdzie_y(x, z, y);
               end;
             end;
 
@@ -2850,64 +2930,69 @@ begin
             if gracz.stoi and (gracz.grlot = nalotnisku) and ((gracz.pilotow < gracz.ladownosc) or (zly)) and
               (uciekaodgracza <= 0) then
             begin // biegna do gracza
-              if (gracz.zyje) and (s < 7) then
+              if pilotAwake(a) then
               begin
-                jest := false;
-                if not zly then
+                if (gracz.zyje) and (s < 7) then
                 begin
-                  inc(gracz.pilotow);
-                  if not rescued then
+                  jest := false;
+                  if not zly then
                   begin
-                    rescued := true;
-                    inc(gra.kasa, 10);
-                    // uwaga! jesli by to sie zmienilo, to przy wyrzucaniu pilotow
-                    inc(gra.pkt, 110);
-                    // trzeba bedzie odbierac tyle samo kasy i punktow!!!!!
-                    gracz.paliwo := gracz.paliwo + 8;
-                    if gracz.paliwo > gracz.maxpaliwa then
-                      gracz.paliwo := gracz.maxpaliwa;
-                  end;
-                end
-                else
-                  inc(gracz.zlychpilotow);
-                if zly then
-                  gracz.zlywsrodku := true;
-                Sfx.graj_dzwiek(13, x, y, z);
-              end;
-              k := (jaki_to_kat(gracz.x - x, gracz.z - z));
-
-              if (k <> kier) then
-              begin
-                k1 := (round(kier - k) + 360) mod 360;
-                if (k1 <= 180) then
-                begin
-                  kier := kier - 2;
-                  nk1 := (round(kier - k) + 360) mod 360;
-                  if (nk1 > 180) then
-                    kier := k;
-                end
-                else
-                begin
-                  if (k1 > 180) then
-                    kier := kier + 2;
-                  nk1 := (round(kier - k) + 360) mod 360;
-                  if (nk1 <= 180) then
-                    kier := k;
+                    inc(gracz.pilotow);
+                    if not rescued then
+                    begin
+                      rescued := true;
+                      inc(gra.kasa, 10);
+                      // uwaga! jesli by to sie zmienilo, to przy wyrzucaniu pilotow
+                      inc(gra.pkt, 110);
+                      // trzeba bedzie odbierac tyle samo kasy i punktow!!!!!
+                      gracz.paliwo := gracz.paliwo + 8;
+                      if gracz.paliwo > gracz.maxpaliwa then
+                        gracz.paliwo := gracz.maxpaliwa;
+                    end;
+                  end
+                  else
+                    inc(gracz.zlychpilotow);
+                  if zly then
+                    gracz.zlywsrodku := true;
+                  Sfx.graj_dzwiek(13, x, y, z);
                 end;
-              end;
+                k := (jaki_to_kat(gracz.x - x, gracz.z - z));
 
-              if (kier >= 360) then
-                kier := kier - 360
-              else if (kier < 0) then
-                kier := kier + 360;
+                if (k <> kier) then
+                begin
+                  k1 := (round(kier - k) + 360) mod 360;
+                  if (k1 <= 180) then
+                  begin
+                    kier := kier - 2;
+                    nk1 := (round(kier - k) + 360) mod 360;
+                    if (nk1 > 180) then
+                      kier := k;
+                  end
+                  else
+                  begin
+                    if (k1 > 180) then
+                      kier := kier + 2;
+                    nk1 := (round(kier - k) + 360) mod 360;
+                    if (nk1 <= 180) then
+                      kier := k;
+                  end;
+                end;
 
-              x := x + sin(kier * pi180) / (2 + random * 3);
-              z := z - cos(kier * pi180) / (2 + random * 3);
-              stoi := false;
-              if y <= gdzie_y(x, z, y) then
-              begin
-                dy := 0.11 + random * 0.04;
-                y := gdzie_y(x, z, y);
+                if (kier >= 360) then
+                  kier := kier - 360
+                else if (kier < 0) then
+                  kier := kier + 360;
+
+                stoi := false;
+                x := x + sin(kier * pi180) / (2 + random * 3);
+                z := z - cos(kier * pi180) / (2 + random * 3);
+                if y <= gdzie_y(x, z, y) then
+                begin
+                  if abs(sin(ani * pi180)) < 0.2 then
+                    dy := 0.2;
+                  y := gdzie_y(x, z, y);
+                end;
+
               end;
             end;
           end
@@ -2948,7 +3033,8 @@ begin
             z := z - cos(kier * pi180) / (2 + random * 3);
             if y <= gdzie_y(x, z, y) then
             begin
-              dy := 0.13;
+              if abs(sin(ani * pi180)) < 0.2 then
+                dy := 0.2;
               y := gdzie_y(x, z, y);
             end;
 
@@ -2966,6 +3052,7 @@ begin
         else
         begin // palisie lub umiera (sila<0)
           stoi := false;
+          sleeps := false;
           if (przewroc = 0) and ((random(250) = 0) or (sila <= 0)) then
             przewroc := 1;
           if (przewroc > 0) and (przewroc < 90) then
@@ -3029,6 +3116,26 @@ begin
                 end;
               end;
             end;
+          end;
+        end;
+
+        if y > gdzie_y(x, z, y) then
+        begin
+          if sila > 0 then
+            dy := dy - 0.015 - ziemia.grawitacja * 2
+          else
+            dy := dy - 0.01 - ziemia.grawitacja;
+        end;
+        if (y < gdzie_y(x, z, y)) and (dy < 0) then
+        begin
+          if sila > 0 then
+            dy := abs(dy / 2)
+          else
+          begin
+            if abs(dy) > 0.1 then
+              Sfx.graj_dzwiek(8, x, y, z);
+
+            dy := abs(dy / 4);
           end;
         end;
 
@@ -4482,8 +4589,18 @@ begin
   winieta.planetapocz := 20;
   winieta.poziomtrudnosci := 20;
   winieta.jest := false;
+  winieta.sandboxSettings.mapSize := 0;
+  winieta.sandboxSettings.terrainHeight := 0;
+  winieta.sandboxSettings.difficultyLevel := 5;
+  winieta.sandboxSettings.windStrength := 0;
+  winieta.sandboxSettings.gravity := 2;
+  winieta.sandboxSettings.airDensity := 1;
+  winieta.sandboxSettings.fightersCount := 0;
+  winieta.sandboxSettings.landfieldsCount := 1;
+  winieta.sandboxSettings.survivorsCount := 3;
+  winieta.sandboxSettings.turretsCount := 0;
   Sfx.muzyke_wylacz;
-  nowa_gra(-1, 1);
+  nowa_gra(-1, 3);
 {$ENDIF}
 
   case winieta.corobi of
@@ -5178,7 +5295,10 @@ begin
   gracz.ladownosc := round(upgrade[5, gra.poziomupgrade[5]].ile);
   gracz.zlywsrodku := false;
   gracz.oslonablysk := 0;
-
+  gracz.alienSteerTime := 0;
+  gracz.alienSteerDirection := 0;
+  gracz.alienSteerForward := false;
+  
   for a := 0 to high(gracz.elementy) do
   begin
     gracz.elementy[a].obrx := 0;
@@ -6221,7 +6341,7 @@ begin
       fightersCount := 2 + (gra.difficultyLevel + 5) div 17;
   end
   else
-    fightersCount := 2 + (gra.difficultyLevel + 5) div 17;
+    fightersCount := round(winieta.sandboxSettings.fightersCount * 3.5);
 
   setlength(mysliwiec, fightersCount);
 
