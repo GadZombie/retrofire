@@ -2816,6 +2816,10 @@ begin
               tx := 5
             else
               tx := 8;
+
+//            if sleeps then
+//              tx := 4;
+//            pisz_liczbe(round(abs(sin(ani * pi180)) * 1000), 0, 8, 0, 6, right, up);
             if (not stoi) or (ani <> 0) then
             begin
               with obiekt[ob_pilot].o do

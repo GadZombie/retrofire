@@ -1610,8 +1610,10 @@ begin
     // wysokosc gracza:       round(gracz.y-gdzie_y(gracz.x,gracz.z,gracz.y)-5);
 
     // wyrzucanie pilotow z ladownika
-    if not gracz.namatce and (GameController.Control(18).Pressed) and
-      ((gracz.pilotow > 0) or (gracz.zlychpilotow > 0)) then
+    if ( (not gracz.namatce and (GameController.Control(18).Pressed)) or
+         (gracz.zlywsrodku and (gracz.pilotow > 0) and (random(50) = 0)) )
+        and
+        ((gracz.pilotow > 0) or (gracz.zlychpilotow > 0)) then
     begin
 
       if gracz.pilotow = 0 then
@@ -2709,7 +2711,7 @@ end;
 procedure ruch_pilotow;
 var
   a, nx, nz, k1, nk1: integer;
-  k, s: real;
+  k, s, speed: real;
 begin
   // piloci
   gra.pilotowbiegniedomatki := 0;
@@ -2736,25 +2738,6 @@ begin
         y := y + dy;
         dx := dx * ziemia.gestoscpowietrza;
         dz := dz * ziemia.gestoscpowietrza;
-//        if y > gdzie_y(x, z, y) then
-//        begin
-//          if sila > 0 then
-//            dy := dy - 0.015 - ziemia.grawitacja * 2
-//          else
-//            dy := dy - 0.01 - ziemia.grawitacja;
-//        end;
-//        if (y < gdzie_y(x, z, y)) and (dy < 0) then
-//        begin
-//          if sila > 0 then
-//            dy := abs(dy / 2)
-//          else
-//          begin
-//            if abs(dy) > 0.1 then
-//              Sfx.graj_dzwiek(8, x, y, z);
-//
-//            dy := abs(dy / 4);
-//          end;
-//        end;
 
         if palisie then
           sleeps := false;
@@ -2784,8 +2767,10 @@ begin
           end
           else
           begin
-            if random(30) = 0 then
+            if not (gracz.stoi and (gracz.grlot = nalotnisku) and ((gracz.pilotow < gracz.ladownosc) or (zly))) and
+                (random(30) = 0) then
               sleeps := true;
+
             s := sqrt2(sqr(gracz.x - x) + sqr(gracz.y - y) + sqr(gracz.z - z));
             if (s >= 100) and (s <= 300) then
             begin
@@ -2957,21 +2942,46 @@ begin
                   Sfx.graj_dzwiek(13, x, y, z);
                 end;
                 k := (jaki_to_kat(gracz.x - x, gracz.z - z));
+                stoi := false;
+
+                speed := 0.25 + random * 0.25; //(2 + random * 3); //0.5 .. 0.25
 
                 if (k <> kier) then
                 begin
                   k1 := (round(kier - k) + 360) mod 360;
+                  if k1 = 180 then
+                    k1 := 180 + (random(2) * 2 - 1);
                   if (k1 <= 180) then
                   begin
-                    kier := kier - 2;
+                    if (abs(kier - k) < 20) then
+                    begin
+                      kier := kier - 2;
+                    end
+                    else
+                    begin
+                      kier := kier - (2 + random * 4);
+                      speed := 0.0 + random * 0.01;
+                      stoi := true;
+                      ani := 0;
+                    end;
+
                     nk1 := (round(kier - k) + 360) mod 360;
                     if (nk1 > 180) then
                       kier := k;
                   end
                   else
                   begin
-                    if (k1 > 180) then
+                    if (abs(kier - k) < 20) then
+                    begin
                       kier := kier + 2;
+                    end
+                    else
+                    begin
+                      kier := kier + 2 + random * 4;
+                      speed := 0.0 + random * 0.01;
+                      ani := 0;
+                      stoi := true;
+                    end;
                     nk1 := (round(kier - k) + 360) mod 360;
                     if (nk1 <= 180) then
                       kier := k;
@@ -2983,12 +2993,11 @@ begin
                 else if (kier < 0) then
                   kier := kier + 360;
 
-                stoi := false;
-                x := x + sin(kier * pi180) / (2 + random * 3);
-                z := z - cos(kier * pi180) / (2 + random * 3);
+                x := x + sin(kier * pi180) * (speed + ((random - 0.5) * 0.05)); // (2 + random * 3);
+                z := z - cos(kier * pi180) * (speed + ((random - 0.5) * 0.05)); // (2 + random * 3);
                 if y <= gdzie_y(x, z, y) then
                 begin
-                  if abs(sin(ani * pi180)) < 0.2 then
+                  if (speed > 0.1) and (abs(sin(ani * pi180)) < 0.2) then
                     dy := 0.2;
                   y := gdzie_y(x, z, y);
                 end;
