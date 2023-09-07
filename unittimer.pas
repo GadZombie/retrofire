@@ -2708,6 +2708,50 @@ begin
   result := not pilot[pilotId].sleeps;
 end;
 
+procedure separateSurvivors;
+const
+  minDist = 4;
+var
+  a, b: integer;
+  dist: extended;
+  middle: TVec3D;
+begin
+  for a := 0 to high(pilot) do
+  begin
+    if pilot[a].jest then
+    begin
+      for b := 0 to high(pilot) do
+      begin
+        if (a <> b) and (pilot[b].jest) and (pilot[a].nalotnisku = pilot[b].nalotnisku) then
+        begin
+          dist := Distance3D(pilot[a].x, pilot[a].y, pilot[a].z, pilot[b].x, pilot[b].y, pilot[b].z);
+          if dist = 0 then
+            dist := 0.01;
+          if dist < minDist then
+          begin
+            middle := TVec3D.ToVec(
+              (pilot[a].x + pilot[b].x) / 2,
+              (pilot[a].y + pilot[b].y) / 2,
+              (pilot[a].z + pilot[b].z) / 2);
+
+            dist := dist / 2;
+            if dist = 0 then
+              dist := 0.01;
+            pilot[a].x := middle.x + ((pilot[a].x - middle.x) / dist) * (minDist / 2);
+            pilot[a].y := middle.y + ((pilot[a].y - middle.y) / dist) * (minDist / 2);
+            pilot[a].z := middle.z + ((pilot[a].z - middle.z) / dist) * (minDist / 2);
+
+            pilot[b].x := middle.x + ((pilot[b].x - middle.x) / dist) * (minDist / 2);
+            pilot[b].y := middle.y + ((pilot[b].y - middle.y) / dist) * (minDist / 2);
+            pilot[b].z := middle.z + ((pilot[b].z - middle.z) / dist) * (minDist / 2);
+          end;
+        end;
+      end;
+
+    end;
+  end;
+end;
+
 procedure ruch_pilotow;
 var
   a, nx, nz, k1, nk1: integer;
@@ -3150,6 +3194,8 @@ begin
 
       end;
     end;
+
+  separateSurvivors;
 end;
 
 // ---------------------------------------------------------------------------
