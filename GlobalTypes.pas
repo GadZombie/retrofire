@@ -189,6 +189,9 @@ type
     // pozycja w drzwiach statku-matki, do ktorej sie celuje, kiedy do niej biegnie; jesli =0 to wylosuj nowa pozycje
 
     przewroc: real; { kat, pod jakim stoi/lezy ;) 0-90 }
+    headUpAngle,              // > 0 w przód/dó³, <0 w ty³/górê          MIN=-70 MAX=30
+    headSideAngle: extended; //MIN=-90 MAX=90
+    headUpAngleDest, headSideAngleDest: extended;
   end;
 
   TLandfield = record

@@ -2766,6 +2766,34 @@ begin
 end;
 
 // ---------------------------------------------------------------------------
+procedure drawSurvivorsHead(id: integer);
+const
+  HEAD_TRANS_Y = 0.7;
+  HEAD_TRANS_Z = -0.1;
+var
+  g, tx: integer;
+//  headUpAngle, headSideAngle: extended;
+begin
+  if not pilot[id].zly then
+    tx := 5
+  else
+    tx := 8;
+
+  glPushMatrix;
+//    headUpAngle := -20 + sin(licz * 4 * pi180) * 50; // > 0 w przód/dó³, <0 w ty³/górê          MIN=-70 MAX=30
+//    headSideAngle := sin(licz * 5 * pi180) * 90; //MIN=-90 MAX=90
+
+    glTranslatef(0, HEAD_TRANS_Y, HEAD_TRANS_Z);
+    glRotatef(pilot[id].headSideAngle, 0, 1, 0);
+    glRotatef(pilot[id].headUpAngle, 1, 0, 0);
+    glTranslatef(0, -HEAD_TRANS_Y, -HEAD_TRANS_Z);
+
+    pokaz_element_obiekt(obiekt[ob_pilot], 2, false, tx);
+    pokaz_element_obiekt(obiekt[ob_pilot], 14, false, tx);
+  glPopMatrix;
+
+end;
+
 procedure rysuj_pilotow;
 
 var
@@ -2827,13 +2855,15 @@ begin
                 case rodzani of
                   0:
                     begin // biegnie
+                      drawSurvivorsHead(a);
                       for g := 0 to High(Groups) do
                       begin
                         with Groups[g] do
                         begin
                           case g of
-                            0 .. 2, 13, 14:
-                              pokaz_element_obiekt(obiekt[ob_pilot], g, false, tx);
+                            2, 14: //glowa
+                            begin
+                            end;
                             3 { rl-g } :
                               begin
                                 glPushMatrix;
@@ -2911,6 +2941,8 @@ begin
                                 pokaz_element_obiekt(obiekt[ob_pilot], g, false, tx);
                                 glPopMatrix;
                               end;
+                            else
+                              pokaz_element_obiekt(obiekt[ob_pilot], g, false, tx);
                           end;
                         end;
                       end;
@@ -2918,13 +2950,15 @@ begin
 
                   1:
                     begin // macha
+                      drawSurvivorsHead(a);
                       for g := 0 to High(Groups) do
                       begin
                         with Groups[g] do
                         begin
                           case g of
-                            0 .. 2, 7 .. 14:
-                              pokaz_element_obiekt(obiekt[ob_pilot], g, false, tx);
+                            2, 14: //glowa
+                            begin
+                            end;
                             3 { rl-g } :
                               begin
                                 glPushMatrix;
@@ -2967,6 +3001,8 @@ begin
                                 pokaz_element_obiekt(obiekt[ob_pilot], g, false, tx);
                                 glPopMatrix;
                               end;
+                            else
+                              pokaz_element_obiekt(obiekt[ob_pilot], g, false, tx);
 
                           end;
                         end;
@@ -2978,7 +3014,29 @@ begin
             end
             else
             begin
-              pokaz_obiekt(obiekt[ob_pilot], tx);
+              //stoi
+
+//              pokaz_obiekt(obiekt[ob_pilot], tx);
+
+              with obiekt[ob_pilot].o do
+              begin
+                drawSurvivorsHead(a);
+                for g := 0 to High(Groups) do
+                begin
+                  with Groups[g] do
+                  begin
+                    case g of
+                      2, 14: //glowa
+                      begin
+                      end;
+                      else
+                        pokaz_element_obiekt(obiekt[ob_pilot], g, false, tx);
+
+                    end;
+                  end;
+                end;
+              end;
+
             end;
 
             glPopMatrix;

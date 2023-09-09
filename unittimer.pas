@@ -41,6 +41,10 @@ var
 
   licz: integer;
 
+{$IFDEF DEBUG_AUTO_START}
+  headTransY, headTransZ: extended;
+{$Endif}
+
 function jaki_to_kat(dx, dy: real): real;
 FUNCTION l2t(liczba: int64; ilosc_lit: byte): string;
 function sqrt2(v: real): real;
@@ -422,6 +426,8 @@ begin
           nalotnisku := lotniskopocz;
       end;
 
+      headUpAngle := 0;
+      headSideAngle := 0;
     end;
 end;
 
@@ -2713,13 +2719,17 @@ const
   minDist = 4;
 var
   a, b: integer;
-  dist: extended;
+  dist, playerDest: extended;
   middle: TVec3D;
 begin
   for a := 0 to high(pilot) do
   begin
     if pilot[a].jest then
     begin
+      playerDest := Distance3D(pilot[a].x, pilot[a].y, pilot[a].z, gracz.x, gracz.y, gracz.z);
+      if playerDest > 200 then
+        continue;
+
       for b := 0 to high(pilot) do
       begin
         if (a <> b) and (pilot[b].jest) and (pilot[a].nalotnisku = pilot[b].nalotnisku) then
@@ -2738,11 +2748,11 @@ begin
             if dist = 0 then
               dist := 0.01;
             pilot[a].x := middle.x + ((pilot[a].x - middle.x) / dist) * (minDist / 2);
-            pilot[a].y := middle.y + ((pilot[a].y - middle.y) / dist) * (minDist / 2);
+//            pilot[a].y := middle.y + ((pilot[a].y - middle.y) / dist) * (minDist / 2);
             pilot[a].z := middle.z + ((pilot[a].z - middle.z) / dist) * (minDist / 2);
 
             pilot[b].x := middle.x + ((pilot[b].x - middle.x) / dist) * (minDist / 2);
-            pilot[b].y := middle.y + ((pilot[b].y - middle.y) / dist) * (minDist / 2);
+//            pilot[b].y := middle.y + ((pilot[b].y - middle.y) / dist) * (minDist / 2);
             pilot[b].z := middle.z + ((pilot[b].z - middle.z) / dist) * (minDist / 2);
           end;
         end;
@@ -2756,6 +2766,7 @@ procedure ruch_pilotow;
 var
   a, nx, nz, k1, nk1: integer;
   k, s, speed: real;
+  playerDest: extended;
 begin
   // piloci
   gra.pilotowbiegniedomatki := 0;
@@ -2789,6 +2800,8 @@ begin
         if uciekaodgracza > 0 then
           dec(uciekaodgracza);
 
+        playerDest := Distance3D(pilot[a].x, pilot[a].y, pilot[a].z, gracz.x, gracz.y, gracz.z);
+
         if palisie and (random(2) = 0) then
         begin
           nowy_dym(x + sin(kier * pi180) * sin(przewroc * pi180) * (1 + random * 1.5),
@@ -2797,7 +2810,11 @@ begin
 
           sila := sila - 0.008;
           if sila < 0 then
+          begin
             sila := 0;
+            headUpAngle := -70 + random(100);
+            headSideAngle := -90 + random(180);
+          end;
         end;
 
         if (sila > 0) and (przewroc = 0) then
@@ -2815,7 +2832,7 @@ begin
                 (random(30) = 0) then
               sleeps := true;
 
-            s := sqrt2(sqr(gracz.x - x) + sqr(gracz.y - y) + sqr(gracz.z - z));
+            s := playerDest;
             if (s >= 100) and (s <= 300) then
             begin
               if rodzani = 1 then
@@ -2861,10 +2878,38 @@ begin
 
         if not palisie and (sila > 0) then
         begin
+          //glowa
+          s := playerDest;
+          if s <= 120 then
+          begin
+            k := kier + 180 - jaki_to_kat(x - gracz.x, z - gracz.z);
+            if abs(k) > 90 then
+              k := 0;
+            k := KeepValBetween(k, -90, 90);
+            headSideAngleDest := k;
+
+            k := 90 - jaki_to_kat(
+              sqrt2(sqr(gracz.x - x) + sqr(gracz.z - z)),
+              (gracz.y + 2 - y)
+            );
+            k := KeepValBetween(k, -70, 30);
+            headUpAngleDest := k;
+          end
+          else
+          begin
+            if random(50) = 0 then
+              headUpAngleDest := -50 + random(60);
+            if random(50) = 0 then
+              headSideAngleDest := -70 + random(140);
+          end;
+
+          headSideAngle := AnimateTo(headSideAngle, headSideAngleDest, 5);
+          headUpAngle := AnimateTo(headUpAngle, headUpAngleDest, 5);
+
           if not gracz.stoi then
           begin
             //uderzenie w gracza
-            s := sqrt2(sqr(gracz.x - x) + sqr(gracz.y - y) + sqr(gracz.z - z));
+            s := playerDest;
             if s < 8 then
             begin
               if s <= 0 then
@@ -2893,7 +2938,7 @@ begin
 
           if nalotnisku >= 0 then
           begin // na ziemi
-            s := sqrt2(sqr(gracz.x - x) + sqr(gracz.y - y) + sqr(gracz.z - z));
+            s := playerDest;
 ///s := 300;//test
             if ((not gracz.stoi) or (uciekaodgracza > 0) or ((gracz.pilotow >= gracz.ladownosc) and (not zly))) and
               (s < 100) then
@@ -3116,6 +3161,9 @@ begin
           end;
           if sila > 0 then
           begin // zywy
+            headUpAngle := -35 + sin((licz + a * 50) * 5 * pi180) * 35; // > 0 w przód/dó³, <0 w ty³/górê          MIN=-70 MAX=30
+            headSideAngle := sin((licz + a * 50) * 8 * pi180) * 50; //MIN=-90 MAX=90
+
             if przewroc = 0 then
             begin
               kier := kier - 10 + random * 20;
@@ -5226,6 +5274,17 @@ end;
 procedure FrameMath;
 begin
   frmMain.PwrInp.Update;
+
+{$IFDEF DEBUG_AUTO_START}
+{  if frmMain.PwrInp.KeyPressed[DIK_I] then
+    headTransY := headTransY + 0.05;
+  if frmMain.PwrInp.KeyPressed[DIK_K] then
+    headTransY := headTransY - 0.05;
+  if frmMain.PwrInp.KeyPressed[DIK_J] then
+    headTransZ := headTransZ - 0.05;
+  if frmMain.PwrInp.KeyPressed[DIK_L] then
+    headTransZ := headTransZ + 0.05;}
+{$ENDIF}
 
   if not glowneintro.jest then
   begin
