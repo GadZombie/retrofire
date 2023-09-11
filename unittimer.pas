@@ -783,7 +783,7 @@ procedure ruch_gracza;
 var
   ilegrzeje: integer;
   s, moc, kickStrength: real;
-  a, nx, nz, b: integer;
+  a, nx, nz, b, c: integer;
 
   k, k1, gx1, gz1, szybstrz: real;
   dzwiekognia: boolean;
@@ -905,10 +905,11 @@ begin
         gracz.dz := gracz.dz - cos(wiatr.kier * pi180) * wiatr.sila;
       end;
 
+      c := Min(gracz.pilotow, 30);
       if gracz.y < gdzie_y(gracz.x, gracz.z, gracz.y) + 5 then
-        moc := - ziemia.grawitacja / 2 - gracz.pilotow * 0.0001
+        moc := - ziemia.grawitacja / 2 - c * 0.0001
       else
-        moc := - ziemia.grawitacja - gracz.pilotow * 0.0004;
+        moc := - ziemia.grawitacja - c * 0.0004;
       gracz.dy := gracz.dy + moc;
     end;
 
@@ -1637,7 +1638,7 @@ begin
 
       if (gracz.grlot >= 0) then
       begin // zywy
-        a := nowy_pilot(gracz.x, gracz.y, gracz.z, false, 1, gracz.grlot, 250);
+        a := nowy_pilot(gracz.x - 1 + random * 2, gracz.y, gracz.z - 1 + random * 2, false, 1, gracz.grlot, 250);
         if a >= 0 then
         begin
           pilot[a].rescued := true;
@@ -1646,7 +1647,7 @@ begin
       end
       else
       begin // martwy
-        a := nowy_pilot(gracz.x, gracz.y, gracz.z, false, 0);
+        a := nowy_pilot(gracz.x - 1 + random * 2, gracz.y, gracz.z - 1 + random * 2, false, 0);
         if a >= 0 then
         begin
           pilot[a].zly := alien;
@@ -2730,9 +2731,9 @@ begin
       if playerDest > 200 then
         continue;
 
-      for b := 0 to high(pilot) do
+      for b := a + 1 to high(pilot) do
       begin
-        if (a <> b) and (pilot[b].jest) and (pilot[a].nalotnisku = pilot[b].nalotnisku) then
+        if {(a <> b) and }(pilot[b].jest) and (pilot[a].nalotnisku = pilot[b].nalotnisku) then
         begin
           dist := Distance3D(pilot[a].x, pilot[a].y, pilot[a].z, pilot[b].x, pilot[b].y, pilot[b].z);
           if dist = 0 then
@@ -2763,6 +2764,9 @@ begin
 end;
 
 procedure ruch_pilotow;
+const
+  RUNAWAY_FROM_LANDER_DIST = 70;
+  RUNAWAY_FROM_LANDER_STOP_DIST = 60;
 var
   a, nx, nz, k1, nk1: integer;
   k, s, speed: real;
@@ -2882,10 +2886,22 @@ begin
           s := playerDest;
           if s <= 120 then
           begin
+            if random(40) = 0 then
+              watchingLander := true;
+          end
+          else
+          begin
+            if random(60) = 0 then
+              watchingLander := false;
+          end;
+
+
+          if watchingLander then
+          begin
             k := kier + 180 - jaki_to_kat(x - gracz.x, z - gracz.z);
             if abs(k) > 90 then
               k := 0;
-            k := KeepValBetween(k, -90, 90);
+            k := KeepValBetween(k, -120, 120);
             headSideAngleDest := k;
 
             k := 90 - jaki_to_kat(
@@ -2914,7 +2930,6 @@ begin
             begin
               if s <= 0 then
                 s := 0.01;
-  //            dy := 1;//test
               k := Distance3D(0, 0, 0, gracz.dx, gracz.dy, gracz.dz);
               if k > 2 then
                 k := 2;
@@ -2939,45 +2954,32 @@ begin
           if nalotnisku >= 0 then
           begin // na ziemi
             s := playerDest;
-///s := 300;//test
-            if ((not gracz.stoi) or (uciekaodgracza > 0) or ((gracz.pilotow >= gracz.ladownosc) and (not zly))) and
-              (s < 100) then
+            if ((not gracz.stoi) or (abs(gracz.nacisk) >= 0.05) or (uciekaodgracza > 0) or ((gracz.pilotow >= gracz.ladownosc) and (not zly))) and
+              (s < RUNAWAY_FROM_LANDER_DIST) then
             begin // uciekaja
               if pilotAwake(a) then
               begin
-                if s < 93 then
-                  k := (180 + jaki_to_kat(gracz.x - x, gracz.z - z))
-                else
-                  k := (jaki_to_kat(gracz.x - x, gracz.z - z));
-                if k > 360 then
-                  k := k - 360;
-
-                if (k <> kier) then
+                if s < RUNAWAY_FROM_LANDER_STOP_DIST then
                 begin
-                  k1 := (round(kier - k) + 360) mod 360;
-                  if (k1 <= 180) then
+                  if not runAway then
                   begin
-                    kier := kier - 2;
-                    nk1 := (round(kier - k) + 360) mod 360;
-                    if (nk1 > 180) then
-                      kier := k;
-                  end
-                  else
-                  begin
-                    if (k1 > 180) then
-                      kier := kier + 2;
-                    nk1 := (round(kier - k) + 360) mod 360;
-                    if (nk1 <= 180) then
-                      kier := k;
+                    runAway := true;
+                    runAwayDirection := (180 + jaki_to_kat(gracz.x - x, gracz.z - z)) - 60 + random(120)
                   end;
+                  k := runAwayDirection;
+                end
+                else //jak s¹ dalej, to obarcaj¹ siê przodem
+                begin
+                  k := (jaki_to_kat(gracz.x - x, gracz.z - z));
+                  runAway := false;
+                  watchingLander := true;
                 end;
 
-                if (kier >= 360) then
-                  kier := kier - 360
-                else if (kier < 0) then
-                  kier := kier + 360;
+                k := keepValueInBounds(k, 360);
 
-                if s < 93 then
+                ObrocSieNa(kier, k, 1.5 + random * 3);
+
+                if s < RUNAWAY_FROM_LANDER_STOP_DIST then
                 begin
                   if gdzie_y(x + sin(kier * pi180) / 3, z - cos(kier * pi180) / 3, y) < gdzie_y(x, z, y) + 0.25 then
                   begin
@@ -2998,10 +3000,14 @@ begin
                   y := gdzie_y(x, z, y);
                 end;
               end;
+            end
+            else
+            begin
+              runAway := false;
             end;
 
 
-            if gracz.stoi and (gracz.grlot = nalotnisku) and ((gracz.pilotow < gracz.ladownosc) or (zly)) and
+            if gracz.stoi and (gracz.grlot = nalotnisku) and (abs(gracz.nacisk) < 0.05) and ((gracz.pilotow < gracz.ladownosc) or (zly)) and
               (uciekaodgracza <= 0) then
             begin // biegna do gracza
               if pilotAwake(a) then
@@ -3033,6 +3039,7 @@ begin
                 k := (jaki_to_kat(gracz.x - x, gracz.z - z));
                 stoi := false;
 
+                watchingLander := true;
                 speed := 0.25 + random * 0.25; //(2 + random * 3); //0.5 .. 0.25
 
                 if (k <> kier) then
@@ -3048,7 +3055,7 @@ begin
                     end
                     else
                     begin
-                      kier := kier - (2 + random * 4);
+                      kier := kier - (1 + random * 6);
                       speed := 0.0 + random * 0.01;
                       stoi := true;
                       ani := 0;
@@ -3087,7 +3094,7 @@ begin
                 if y <= gdzie_y(x, z, y) then
                 begin
                   if (speed > 0.1) and (abs(sin(ani * pi180)) < 0.2) then
-                    dy := 0.2;
+                    dy := 0.18 + random * 0.03;
                   y := gdzie_y(x, z, y);
                 end;
 
