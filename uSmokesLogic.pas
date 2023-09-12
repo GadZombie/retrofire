@@ -35,7 +35,8 @@ procedure SmokesClear;
 implementation
 
 uses
-  unittimer, uSfx;
+  unittimer, uSfx,
+  uSurvivorsLogic;
 
 // ---------------------------------------------------------------------------
 procedure nowy_dym(sx, sy, sz, sdx, sdy, sdz: real; rozm: real; rodzaj: byte; szybprzezr_: real = 0.01;
@@ -226,15 +227,15 @@ begin
 
       if (rodz = 0) and (przezr > 0.4) and (random(20) = 0) then
       begin
-        for b := 0 to high(pilot) do
-          if pilot[b].jest and not pilot[b].palisie then
+        for b := 0 to SurvivorList.Count - 1 do
+          if SurvivorList[b].jest and not SurvivorList[b].palisie then
           begin
-            s := sqrt2(sqr(pilot[b].x - x) + sqr(pilot[b].y - y) + sqr(pilot[b].z - z));
+            s := sqrt2(sqr(SurvivorList[b].x - x) + sqr(SurvivorList[b].y - y) + sqr(SurvivorList[b].z - z));
             if s <= rozmiar then
             begin
-              if not pilot[b].palisie then
-                Sfx.graj_dzwiek((22 + ord(pilot[b].zly) * 4 + random(4)), pilot[b].x, pilot[b].y, pilot[b].z);
-              pilot[b].palisie := true;
+              if not SurvivorList[b].palisie then
+                Sfx.graj_dzwiek((22 + ord(SurvivorList[b].zly) * 4 + random(4)), SurvivorList[b].x, SurvivorList[b].y, SurvivorList[b].z);
+              SurvivorList[b].palisie := true;
             end;
           end;
       end;

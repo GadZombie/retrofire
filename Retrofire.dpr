@@ -47,7 +47,10 @@ uses
   TGAReader in 'Components\PowerDraw\Source\TGAReader.pas',
   VTDbUnit in 'Components\PowerDraw\Source\VTDbUnit.pas',
   ZGLTextures in 'Components\ZombiEGL\ZGLTextures.pas',
-  ZGLGraphProcs in 'Components\ZombiEGL\ZGLGraphProcs.pas';
+  ZGLGraphProcs in 'Components\ZombiEGL\ZGLGraphProcs.pas',
+  uSurvivorsLogic in 'uSurvivorsLogic.pas',
+  uSurvivorsRender in 'uSurvivorsRender.pas',
+  uRenderObjects in 'uRenderObjects.pas';
 
 {$R *.RES}
 

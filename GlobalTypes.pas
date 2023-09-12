@@ -168,35 +168,6 @@ type
     czas: integer;
   end;
 
-  TPilot = record
-    jest, zawszewidac: boolean;
-    x, y, z, dy, dx, dz: real;
-    kier: extended;
-    nalotnisku: integer;
-    palisie, sleeps: boolean;
-    sila: real;
-
-    zly: boolean;
-
-    stoi: boolean;
-    ani: integer;
-    rodzani: byte;
-    rescued: boolean;
-
-    uciekaodgracza: integer; // ile czasu jeszcze ucieka od gracza, zamiast wsiadac; potrzebne do wysadzania ich
-
-    miejscenamatce: real;
-    // pozycja w drzwiach statku-matki, do ktorej sie celuje, kiedy do niej biegnie; jesli =0 to wylosuj nowa pozycje
-
-    runAway: boolean;
-    runAwayDirection: extended;
-    przewroc: real; { kat, pod jakim stoi/lezy ;) 0-90 }
-    watchingLander: boolean;
-    headUpAngle,              // > 0 w przód/dó³, <0 w ty³/górê          MIN=-70 MAX=30
-    headSideAngle: extended; //MIN=-90 MAX=90
-    headUpAngleDest, headSideAngleDest: extended;
-  end;
-
   TLandfield = record
     x, z: integer; // pozycja w kratkach
     rx, rz: integer; // rozmiar

@@ -25,7 +25,6 @@ var
 
   kamera: integer;
 
-  pilot: array of TPilot;
   ladowiska: array of TLandfield;
   dzialko: array of TTurretGun;
   rakieta: array of TRocket;
@@ -73,7 +72,8 @@ implementation
 
 uses
   Render, Main, UnitStart, Language, uSfx, uConfig, uSaveGame,
-  uSmokesLogic, uRenderConst;
+  uSmokesLogic, uRenderConst,
+  uSurvivorsLogic;
 
 // ---------------------------------------------------------------------------
 FUNCTION l2t(liczba: int64; ilosc_lit: byte): string;
@@ -368,66 +368,6 @@ begin
 
       dzw_slychac := false;
 
-    end;
-end;
-
-// ---------------------------------------------------------------------------
-function nowy_pilot(sx, sy, sz: real; czyzly: boolean = false; silapocz: real = 1; lotniskopocz: integer = -2;
-  czasuciekaniaodgracza: integer = 0): integer;
-var
-  n: integer;
-begin
-  result := -1;
-  n := 0;
-  while (n <= high(pilot)) and (pilot[n].jest) do
-    inc(n);
-  if n <= high(pilot) then
-    with pilot[n] do
-    begin
-      result := n;
-
-      jest := true;
-
-      x := sx;
-      y := sy;
-      z := sz;
-      dy := 0;
-      kier := random * 360;
-      palisie := false;
-      sila := silapocz;
-      przewroc := 0;
-      ani := random(360);
-      rodzani := 0;
-      stoi := false;
-
-      uciekaodgracza := czasuciekaniaodgracza;
-      rescued := false;
-
-      miejscenamatce := -9999;
-
-      zly := czyzly;
-      if silapocz = 0 then
-      begin
-        dx := (random - 0.5 + gracz.dx);
-        dz := (random - 0.5 + gracz.dy);
-        dy := (random - 0.5 + gracz.dz);
-        zawszewidac := true;
-        nalotnisku := -2;
-        palisie := true;
-      end
-      else
-      begin
-        dx := 0;
-        dz := 0;
-        zawszewidac := false;
-        if lotniskopocz = -2 then
-          nalotnisku := -1
-        else
-          nalotnisku := lotniskopocz;
-      end;
-
-      headUpAngle := 0;
-      headSideAngle := 0;
     end;
 end;
 
@@ -1349,7 +1289,7 @@ begin
               if (random(2) = 0) then
               begin
                 dec(gracz.pilotow);
-                nowy_pilot(gracz.x, gracz.y, gracz.z);
+                CreateSurvivor(gracz.x, gracz.y, gracz.z);
 
                 Sfx.graj_dzwiek(13, gracz.x, gracz.y, gracz.z);
               end;
@@ -1584,12 +1524,12 @@ begin
       if gracz.pilotow > 0 then
       begin
         for a := 1 to gracz.pilotow do
-          nowy_pilot(gracz.x, gracz.y, gracz.z, false, 0);
+          CreateSurvivor(gracz.x, gracz.y, gracz.z, false, 0);
       end;
       if gracz.zlychpilotow > 0 then
       begin
         for a := 1 to gracz.zlychpilotow do
-          nowy_pilot(gracz.x, gracz.y, gracz.z, true, 0);
+          CreateSurvivor(gracz.x, gracz.y, gracz.z, true, 0);
       end;
 
       gracz.zyje := false;
@@ -1638,23 +1578,23 @@ begin
 
       if (gracz.grlot >= 0) then
       begin // zywy
-        a := nowy_pilot(gracz.x - 1 + random * 2, gracz.y, gracz.z - 1 + random * 2, false, 1, gracz.grlot, 250);
+        a := CreateSurvivor(gracz.x - 1 + random * 2, gracz.y, gracz.z - 1 + random * 2, false, 1, gracz.grlot, 250);
         if a >= 0 then
         begin
-          pilot[a].rescued := true;
-          pilot[a].zly := alien;
+          SurvivorList[a].rescued := true;
+          SurvivorList[a].zly := alien;
         end;
       end
       else
       begin // martwy
-        a := nowy_pilot(gracz.x - 1 + random * 2, gracz.y, gracz.z - 1 + random * 2, false, 0);
+        a := CreateSurvivor(gracz.x - 1 + random * 2, gracz.y, gracz.z - 1 + random * 2, false, 0);
         if a >= 0 then
         begin
-          pilot[a].zly := alien;
-          pilot[a].dy := -0.3 - random / 2;
-          pilot[a].palisie := false;
-          Sfx.graj_dzwiek((22 + ord(pilot[a].zly) * 4 + random(4)), pilot[a].x, pilot[a].y, pilot[a].z);
-          if pilot[a].zawszewidac and not pilot[a].zly then
+          SurvivorList[a].zly := alien;
+          SurvivorList[a].dy := -0.3 - random / 2;
+          SurvivorList[a].palisie := false;
+          Sfx.graj_dzwiek((22 + ord(SurvivorList[a].zly) * 4 + random(4)), SurvivorList[a].x, SurvivorList[a].y, SurvivorList[a].z);
+          if SurvivorList[a].zawszewidac and not SurvivorList[a].zly then
             inc(gra.zginelo);
         end;
       end;
@@ -2142,34 +2082,34 @@ begin
             end;
           end;
 
-          for b := 0 to high(pilot) do
+          for b := 0 to SurvivorList.Count - 1 do
           begin
-            if pilot[b].jest then
+            if SurvivorList[b].jest then
             begin
-              s := sqrt2(sqr(pilot[b].x - x) + sqr(pilot[b].y - y) + sqr(pilot[b].z - z));
+              s := sqrt2(sqr(SurvivorList[b].x - x) + sqr(SurvivorList[b].y - y) + sqr(SurvivorList[b].z - z));
               if s <= 30 / ((dzielsile + 9) / 10) then
               begin
 
                 if rodzaj = 0 then
                 begin
-                  pilot[b].sila := pilot[b].sila - ((30 - s) / 3);
-                  pilot[b].dy := pilot[b].dy + ((30 - s) / 40);
-                  pilot[b].dx := pilot[b].dx + (pilot[b].x - x) / 25;
-                  pilot[b].dz := pilot[b].dz + (pilot[b].z - z) / 25;
+                  SurvivorList[b].sila := SurvivorList[b].sila - ((30 - s) / 3);
+                  SurvivorList[b].dy := SurvivorList[b].dy + ((30 - s) / 40);
+                  SurvivorList[b].dx := SurvivorList[b].dx + (SurvivorList[b].x - x) / 25;
+                  SurvivorList[b].dz := SurvivorList[b].dz + (SurvivorList[b].z - z) / 25;
                 end
                 else
                 begin
-                  pilot[b].sila := pilot[b].sila - ((30 - s) / 3) / 5;
-                  pilot[b].dy := pilot[b].dy + ((30 - s) / 180);
-                  pilot[b].dx := pilot[b].dx + (pilot[b].x - x) / 60;
-                  pilot[b].dz := pilot[b].dz + (pilot[b].z - z) / 60;
+                  SurvivorList[b].sila := SurvivorList[b].sila - ((30 - s) / 3) / 5;
+                  SurvivorList[b].dy := SurvivorList[b].dy + ((30 - s) / 180);
+                  SurvivorList[b].dx := SurvivorList[b].dx + (SurvivorList[b].x - x) / 60;
+                  SurvivorList[b].dz := SurvivorList[b].dz + (SurvivorList[b].z - z) / 60;
                 end;
 
-                Sfx.graj_dzwiek((22 + ord(pilot[b].zly) * 4 + random(4)), pilot[b].x, pilot[b].y, pilot[b].z);
+                Sfx.graj_dzwiek((22 + ord(SurvivorList[b].zly) * 4 + random(4)), SurvivorList[b].x, SurvivorList[b].y, SurvivorList[b].z);
                 if rodzaj = 0 then
-                  pilot[b].palisie := true;
-                if pilot[b].sila < 0 then
-                  pilot[b].sila := 0;
+                  SurvivorList[b].palisie := true;
+                if SurvivorList[b].sila < 0 then
+                  SurvivorList[b].sila := 0;
               end;
             end;
           end;
@@ -2704,556 +2644,6 @@ begin
 end;
 
 // ---------------------------------------------------------------------------
-function pilotAwake(pilotId: integer): boolean;
-begin
-  if not pilot[pilotId].sleeps then
-    exit(true);
-
-  if random(80) = 0 then
-    pilot[pilotId].sleeps := false;
-
-  result := not pilot[pilotId].sleeps;
-end;
-
-procedure separateSurvivors;
-const
-  minDist = 4;
-var
-  a, b: integer;
-  dist, playerDest: extended;
-  middle: TVec3D;
-begin
-  for a := 0 to high(pilot) do
-  begin
-    if pilot[a].jest then
-    begin
-      playerDest := Distance3D(pilot[a].x, pilot[a].y, pilot[a].z, gracz.x, gracz.y, gracz.z);
-      if playerDest > 200 then
-        continue;
-
-      for b := a + 1 to high(pilot) do
-      begin
-        if {(a <> b) and }(pilot[b].jest) and (pilot[a].nalotnisku = pilot[b].nalotnisku) then
-        begin
-          dist := Distance3D(pilot[a].x, pilot[a].y, pilot[a].z, pilot[b].x, pilot[b].y, pilot[b].z);
-          if dist = 0 then
-            dist := 0.01;
-          if dist < minDist then
-          begin
-            middle := TVec3D.ToVec(
-              (pilot[a].x + pilot[b].x) / 2,
-              (pilot[a].y + pilot[b].y) / 2,
-              (pilot[a].z + pilot[b].z) / 2);
-
-            dist := dist / 2;
-            if dist = 0 then
-              dist := 0.01;
-            pilot[a].x := middle.x + ((pilot[a].x - middle.x) / dist) * (minDist / 2);
-//            pilot[a].y := middle.y + ((pilot[a].y - middle.y) / dist) * (minDist / 2);
-            pilot[a].z := middle.z + ((pilot[a].z - middle.z) / dist) * (minDist / 2);
-
-            pilot[b].x := middle.x + ((pilot[b].x - middle.x) / dist) * (minDist / 2);
-//            pilot[b].y := middle.y + ((pilot[b].y - middle.y) / dist) * (minDist / 2);
-            pilot[b].z := middle.z + ((pilot[b].z - middle.z) / dist) * (minDist / 2);
-          end;
-        end;
-      end;
-
-    end;
-  end;
-end;
-
-procedure ruch_pilotow;
-const
-  RUNAWAY_FROM_LANDER_DIST = 70;
-  RUNAWAY_FROM_LANDER_STOP_DIST = 60;
-var
-  a, nx, nz, k1, nk1: integer;
-  k, s, speed: real;
-  playerDest: extended;
-begin
-  // piloci
-  gra.pilotowbiegniedomatki := 0;
-
-  gra.ilepilotow := 0;
-  for a := 0 to high(pilot) do
-    with pilot[a] do
-    begin
-      if jest then
-      begin
-        if not zly and (sila > 0) then
-          inc(gra.ilepilotow);
-        if nalotnisku = -1 then
-          inc(gra.pilotowbiegniedomatki);
-
-        // krew
-        if (sila < 0.8) and (random(3 + round(sila * 10)) = 0) then
-          nowy_dym(x + sin(kier * pi180) * sin(przewroc * pi180) * (1 + random),
-            y + cos(przewroc * pi180) * (1 + random), z - cos(kier * pi180) * sin(przewroc * pi180) * (1 + random),
-            (random - 0.5) * 0.1, (random - 0.3) * 0.1, (random - 0.5) * 0.1, 0.2 + random * 0.5, 3);
-
-        x := x + dx;
-        z := z + dz;
-        y := y + dy;
-        dx := dx * ziemia.gestoscpowietrza;
-        dz := dz * ziemia.gestoscpowietrza;
-
-        if palisie then
-          sleeps := false;
-
-        if uciekaodgracza > 0 then
-          dec(uciekaodgracza);
-
-        playerDest := Distance3D(pilot[a].x, pilot[a].y, pilot[a].z, gracz.x, gracz.y, gracz.z);
-
-        if palisie and (random(2) = 0) then
-        begin
-          nowy_dym(x + sin(kier * pi180) * sin(przewroc * pi180) * (1 + random * 1.5),
-            y + cos(przewroc * pi180) * (1 + random * 1.5), z - cos(kier * pi180) * sin(przewroc * pi180) *
-            (1 + random * 1.5), (random - 0.5) / 8, 0.1 + random / 6, (random - 0.5) / 8, 0.4 + random / 2, 0, 0.05);
-
-          sila := sila - 0.008;
-          if sila < 0 then
-          begin
-            sila := 0;
-            headUpAngle := -70 + random(100);
-            headSideAngle := -90 + random(180);
-          end;
-        end;
-
-        if (sila > 0) and (przewroc = 0) then
-        begin
-          if not stoi then
-          begin
-            ani := ani + 6 + random(3);
-            if ani >= 360 then
-              dec(ani, 360);
-            rodzani := 0;
-          end
-          else
-          begin
-            if not (gracz.stoi and (gracz.grlot = nalotnisku) and ((gracz.pilotow < gracz.ladownosc) or (zly))) and
-                (random(30) = 0) then
-              sleeps := true;
-
-            s := playerDest;
-            if (s >= 100) and (s <= 300) then
-            begin
-              if rodzani = 1 then
-              begin
-                ani := ani + 6 + random(3);
-                if (random(20) = 0) and (y <= gdzie_y(x, z, y)) then
-                begin
-                  dy := 0.1 + random * 0.04;
-                  y := gdzie_y(x, z, y);
-                end;
-                if ani >= 360 then
-                begin
-                  if random(2) = 0 then
-                  begin
-                    ani := 0;
-                    rodzani := 0;
-                  end
-                  else
-                    dec(ani, 360);
-                end;
-              end
-              else
-              begin
-                ani := 0;
-                if random(50) = 0 then
-                  rodzani := 1;
-              end;
-            end
-            else
-            begin
-              if ani > 0 then
-              begin
-                ani := ani + 6 + random(3);
-                if ani >= 360 then
-                  ani := 0;
-                rodzani := 0;
-              end;
-            end;
-          end;
-        end; // else ani:=0;
-
-        stoi := true;
-
-        if not palisie and (sila > 0) then
-        begin
-          //glowa
-          s := playerDest;
-          if s <= 120 then
-          begin
-            if random(40) = 0 then
-              watchingLander := true;
-          end
-          else
-          begin
-            if random(60) = 0 then
-              watchingLander := false;
-          end;
-
-
-          if watchingLander then
-          begin
-            k := kier + 180 - jaki_to_kat(x - gracz.x, z - gracz.z);
-            if abs(k) > 90 then
-              k := 0;
-            k := KeepValBetween(k, -120, 120);
-            headSideAngleDest := k;
-
-            k := 90 - jaki_to_kat(
-              sqrt2(sqr(gracz.x - x) + sqr(gracz.z - z)),
-              (gracz.y + 2 - y)
-            );
-            k := KeepValBetween(k, -70, 30);
-            headUpAngleDest := k;
-          end
-          else
-          begin
-            if random(50) = 0 then
-              headUpAngleDest := -50 + random(60);
-            if random(50) = 0 then
-              headSideAngleDest := -70 + random(140);
-          end;
-
-          headSideAngle := AnimateTo(headSideAngle, headSideAngleDest, 5);
-          headUpAngle := AnimateTo(headUpAngle, headUpAngleDest, 5);
-
-          if not gracz.stoi then
-          begin
-            //uderzenie w gracza
-            s := playerDest;
-            if s < 8 then
-            begin
-              if s <= 0 then
-                s := 0.01;
-              k := Distance3D(0, 0, 0, gracz.dx, gracz.dy, gracz.dz);
-              if k > 2 then
-                k := 2;
-              x := gracz.x + ((x - gracz.x) / s) * 8;
-              y := gracz.y + ((y - gracz.y) / s) * 8;
-              z := gracz.z + ((z - gracz.z) / s) * 8;
-              dy := dy + ((y - gracz.y) / 80)  + gracz.dy;
-              dx := dx + ((x - gracz.x) / 30)  + gracz.dx;
-              dz := dz + ((z - gracz.z) / 30)  + gracz.dz;
-
-              //mocniejsze uderzenie, gdy pilot jest pod l¹downikiem
-              s := sqrt2(sqr(gracz.x - x) + sqr(gracz.z - z));
-              if (s <= 5) and (y < gracz.y - 1) then
-                k := k * 10;
-              if k > 0.1 then
-              begin
-                sila := sila - k / 2;
-              end;
-            end;
-          end;
-
-          if nalotnisku >= 0 then
-          begin // na ziemi
-            s := playerDest;
-            if ((not gracz.stoi) or (abs(gracz.nacisk) >= 0.05) or (uciekaodgracza > 0) or ((gracz.pilotow >= gracz.ladownosc) and (not zly))) and
-              (s < RUNAWAY_FROM_LANDER_DIST) then
-            begin // uciekaja
-              if pilotAwake(a) then
-              begin
-                if s < RUNAWAY_FROM_LANDER_STOP_DIST then
-                begin
-                  if not runAway then
-                  begin
-                    runAway := true;
-                    runAwayDirection := (180 + jaki_to_kat(gracz.x - x, gracz.z - z)) - 60 + random(120)
-                  end;
-                  k := runAwayDirection;
-                end
-                else //jak s¹ dalej, to obarcaj¹ siê przodem
-                begin
-                  k := (jaki_to_kat(gracz.x - x, gracz.z - z));
-                  runAway := false;
-                  watchingLander := true;
-                end;
-
-                k := keepValueInBounds(k, 360);
-
-                ObrocSieNa(kier, k, 1.5 + random * 3);
-
-                if s < RUNAWAY_FROM_LANDER_STOP_DIST then
-                begin
-                  if gdzie_y(x + sin(kier * pi180) / 3, z - cos(kier * pi180) / 3, y) < gdzie_y(x, z, y) + 0.25 then
-                  begin
-                    x := x + sin(kier * pi180) / (2 + random * 3);
-                    z := z - cos(kier * pi180) / (2 + random * 3);
-                    stoi := false;
-                  end;
-                end
-                else
-                begin
-                  ani := ani + 1;
-                  rodzani := 1;
-                end;
-                if y <= gdzie_y(x, z, y) then
-                begin
-                  if abs(sin(ani * pi180)) < 0.2 then
-                    dy := 0.2;
-                  y := gdzie_y(x, z, y);
-                end;
-              end;
-            end
-            else
-            begin
-              runAway := false;
-            end;
-
-
-            if gracz.stoi and (gracz.grlot = nalotnisku) and (abs(gracz.nacisk) < 0.05) and ((gracz.pilotow < gracz.ladownosc) or (zly)) and
-              (uciekaodgracza <= 0) then
-            begin // biegna do gracza
-              if pilotAwake(a) then
-              begin
-                if (gracz.zyje) and (s < 7) then
-                begin
-                  jest := false;
-                  if not zly then
-                  begin
-                    inc(gracz.pilotow);
-                    if not rescued then
-                    begin
-                      rescued := true;
-                      inc(gra.kasa, 10);
-                      // uwaga! jesli by to sie zmienilo, to przy wyrzucaniu pilotow
-                      inc(gra.pkt, 110);
-                      // trzeba bedzie odbierac tyle samo kasy i punktow!!!!!
-                      gracz.paliwo := gracz.paliwo + 8;
-                      if gracz.paliwo > gracz.maxpaliwa then
-                        gracz.paliwo := gracz.maxpaliwa;
-                    end;
-                  end
-                  else
-                    inc(gracz.zlychpilotow);
-                  if zly then
-                    gracz.zlywsrodku := true;
-                  Sfx.graj_dzwiek(13, x, y, z);
-                end;
-                k := (jaki_to_kat(gracz.x - x, gracz.z - z));
-                stoi := false;
-
-                watchingLander := true;
-                speed := 0.25 + random * 0.25; //(2 + random * 3); //0.5 .. 0.25
-
-                if (k <> kier) then
-                begin
-                  k1 := (round(kier - k) + 360) mod 360;
-                  if k1 = 180 then
-                    k1 := 180 + (random(2) * 2 - 1);
-                  if (k1 <= 180) then
-                  begin
-                    if (abs(kier - k) < 20) then
-                    begin
-                      kier := kier - 2;
-                    end
-                    else
-                    begin
-                      kier := kier - (1 + random * 6);
-                      speed := 0.0 + random * 0.01;
-                      stoi := true;
-                      ani := 0;
-                    end;
-
-                    nk1 := (round(kier - k) + 360) mod 360;
-                    if (nk1 > 180) then
-                      kier := k;
-                  end
-                  else
-                  begin
-                    if (abs(kier - k) < 20) then
-                    begin
-                      kier := kier + 2;
-                    end
-                    else
-                    begin
-                      kier := kier + 2 + random * 4;
-                      speed := 0.0 + random * 0.01;
-                      ani := 0;
-                      stoi := true;
-                    end;
-                    nk1 := (round(kier - k) + 360) mod 360;
-                    if (nk1 <= 180) then
-                      kier := k;
-                  end;
-                end;
-
-                if (kier >= 360) then
-                  kier := kier - 360
-                else if (kier < 0) then
-                  kier := kier + 360;
-
-                x := x + sin(kier * pi180) * (speed + ((random - 0.5) * 0.05)); // (2 + random * 3);
-                z := z - cos(kier * pi180) * (speed + ((random - 0.5) * 0.05)); // (2 + random * 3);
-                if y <= gdzie_y(x, z, y) then
-                begin
-                  if (speed > 0.1) and (abs(sin(ani * pi180)) < 0.2) then
-                    dy := 0.18 + random * 0.03;
-                  y := gdzie_y(x, z, y);
-                end;
-
-              end;
-            end;
-          end
-          else
-          begin // na matce
-            if miejscenamatce < -999 then
-              miejscenamatce := random * 40 - 20;
-
-            k := (jaki_to_kat(matka.cx - x, matka.cz - z + miejscenamatce));
-
-            if (k <> kier) then
-            begin
-              k1 := (round(kier - k) + 360) mod 360;
-              if (k1 <= 180) then
-              begin
-                kier := kier - 2;
-                nk1 := (round(kier - k) + 360) mod 360;
-                if (nk1 > 180) then
-                  kier := k;
-              end
-              else
-              begin
-                if (k1 > 180) then
-                  kier := kier + 2;
-                nk1 := (round(kier - k) + 360) mod 360;
-                if (nk1 <= 180) then
-                  kier := k;
-              end;
-            end;
-
-            if (kier >= 360) then
-              kier := kier - 360
-            else if (kier < 0) then
-              kier := kier + 360;
-
-            stoi := false;
-            x := x + sin(kier * pi180) / (2 + random * 3);
-            z := z - cos(kier * pi180) / (2 + random * 3);
-            if y <= gdzie_y(x, z, y) then
-            begin
-              if abs(sin(ani * pi180)) < 0.2 then
-                dy := 0.2;
-              y := gdzie_y(x, z, y);
-            end;
-
-            // wsiadaja do matki
-            if (sila > 0) and (sqrt2(sqr(matka.cx - x) + sqr(matka.y - y) + sqr(matka.cz - z + miejscenamatce)) < 10)
-            then
-            begin
-              jest := false;
-              inc(gra.zabranych);
-              inc(gra.kasa, 15);
-              inc(gra.pkt, 200);
-            end;
-          end;
-        end
-        else
-        begin // palisie lub umiera (sila<0)
-          stoi := false;
-          sleeps := false;
-          if (przewroc = 0) and ((random(250) = 0) or (sila <= 0)) then
-            przewroc := 1;
-          if (przewroc > 0) and (przewroc < 90) then
-          begin
-            przewroc := przewroc + 1 + random * 3;
-            if przewroc > 90 then
-              przewroc := 90;
-          end;
-          if sila > 0 then
-          begin // zywy
-            headUpAngle := -35 + sin((licz + a * 50) * 5 * pi180) * 35; // > 0 w przód/dó³, <0 w ty³/górê          MIN=-70 MAX=30
-            headSideAngle := sin((licz + a * 50) * 8 * pi180) * 50; //MIN=-90 MAX=90
-
-            if przewroc = 0 then
-            begin
-              kier := kier - 10 + random * 20;
-              if (kier >= 360) then
-                kier := kier - 360
-              else if (kier < 0) then
-                kier := kier + 360;
-            end;
-            if przewroc < 90 then
-            begin
-              x := x + sin(kier * pi180) / (3 + przewroc + random);
-              z := z - cos(kier * pi180) / (3 + przewroc + random);
-              stoi := false;
-            end;
-            if y <= gdzie_y(x, z, y) then
-            begin
-              if przewroc = 0 then
-                dy := 0.13;
-              if y > gdzie_y(x, z, y) - 15 then
-                y := gdzie_y(x, z, y);
-            end;
-          end
-          else
-          begin // martwy
-            if y > gdzie_y(x, z, y) then
-            begin // ponad ziemia
-              rodzani := 0;
-              ani := ani - round(5 * (0.5 + sqrt2(sqr(dx) + sqr(dy) + sqr(dz))));
-              if ani < 0 then
-                inc(ani, 360);
-              kier := kier + 2 * sqrt2(sqr(dx) + sqr(dy) + sqr(dz));
-              if kier >= 360 then
-                kier := kier - 360;
-            end
-            else
-            begin // pod ziemia lub na niej
-              if (abs(dy) < 0.005) and (abs(dx) < 0.005) and (abs(dz) < 0.005) and (przewroc >= 90) then
-              begin
-                dy := 0;
-                y := y - 0.07;
-                if y < gdzie_y(x, z, y) - 7 then
-                begin
-                  jest := false;
-                  if zly then
-                  begin
-                    inc(gra.kasa, 5);
-                    inc(gra.pkt, 25);
-                  end;
-                  if not zawszewidac and not zly then
-                    inc(gra.zginelo);
-                end;
-              end;
-            end;
-          end;
-        end;
-
-        if y > gdzie_y(x, z, y) then
-        begin
-          if sila > 0 then
-            dy := dy - 0.015 - ziemia.grawitacja * 2
-          else
-            dy := dy - 0.01 - ziemia.grawitacja;
-        end;
-        if (y < gdzie_y(x, z, y)) and (dy < 0) then
-        begin
-          if sila > 0 then
-            dy := abs(dy / 2)
-          else
-          begin
-            if abs(dy) > 0.1 then
-              Sfx.graj_dzwiek(8, x, y, z);
-
-            dy := abs(dy / 4);
-          end;
-        end;
-
-      end;
-    end;
-
-  separateSurvivors;
-end;
-
-// ---------------------------------------------------------------------------
 procedure ruch_dzialek;
 const
   ciemno: array [0 .. 4] of record x, z: integer end = ((x: 0; z: 0), (x: 1; z: 0), (x: 0; z: 1), (x: - 1; z: 0),
@@ -3705,16 +3095,16 @@ var
   a, b: integer;
   x1, z1, c, c1, gx1, gz1: real;
 begin
-  if (length(ladowiska) = 0) or (length(pilot) = 0) or (not gracz.zyje) or (gracz.y >= matka.y) then
+  if (length(ladowiska) = 0) or (SurvivorList.Count = 0) or (not gracz.zyje) or (gracz.y >= matka.y) then
     exit;
 
   for a := 0 to high(ladowiska) do
   begin
     b := 0;
-    while (b <= high(pilot)) and ((not pilot[b].jest) or (pilot[b].zly) or (pilot[b].nalotnisku <> a)) do
+    while (b <= SurvivorList.Count - 1) and ((not SurvivorList[b].jest) or (SurvivorList[b].zly) or (SurvivorList[b].nalotnisku <> a)) do
       inc(b);
 
-    if b <= high(pilot) then
+    if b <= SurvivorList.Count - 1 then
     begin
 
       x1 := ladowiska[a].x * ziemia.wlk + ziemia.px;
@@ -5317,7 +4707,7 @@ begin
               ruch_w_czasie_gry;
               ruch_swiatel;
               ruch_gracza;
-              ruch_pilotow;
+              UpdateSurvivors;
               ruch_dzialek;
               ruch_dymow;
               ruch_iskier;
@@ -5567,7 +4957,7 @@ begin
         dzialko[a].rodzaj := bt;
       end;
 
-      setlength(pilot, 0);
+      SurvivorList.Clear;
       f.readBuffer(b, sizeof(b));
       setlength(ladowiska, b);
       for a := 0 to high(ladowiska) do
@@ -5599,9 +4989,13 @@ begin
 
         if ladowiska[a].pilotow > 0 then
         begin
-          setlength(pilot, length(pilot) + ladowiska[a].pilotow);
-          for b := high(pilot) downto high(pilot) - ladowiska[a].pilotow + 1 do
-            pilot[b].nalotnisku := a;
+//          setlength(pilot, length(pilot) + ladowiska[a].pilotow);
+//          for b := high(pilot) downto high(pilot) - ladowiska[a].pilotow + 1 do
+//            pilot[b].nalotnisku := a;
+          for b := 0 to ladowiska[a].pilotow - 1 do
+          begin
+            CreateSurvivor(0, 0, 0, false, 1, a);
+          end;
         end;
       end;
 
@@ -6140,10 +5534,12 @@ begin
 
   if length(ladowiska) = 0 then
     a := 0;
-  setlength(pilot, a);
+  SurvivorList.Clear;
+  for b := 0 to a - 1 do
+    CreateSurvivor(0, 0, 0);
 
-  for a := 0 to high(pilot) do
-    pilot[a].nalotnisku := random(length(ladowiska));
+  for a := 0 to SurvivorList.Count - 1 do
+    SurvivorList[a].nalotnisku := random(length(ladowiska));
 
   ziemia.showStars := random(12) = 0;
   ziemia.showClouds := random(12) > 0;
@@ -6341,7 +5737,7 @@ begin
     RandSeed := gra.planeta + 9000
   else
     randomize;
-  setlength(pilot, 0);
+  SurvivorList.Clear;
   matka.x := 0;
   matka.z := 0;
 
@@ -6433,9 +5829,9 @@ begin
 
   // piloci
   gra.ilepilotow := 0;
-  for a := 0 to high(pilot) do
+  for a := 0 to SurvivorList.Count - 1 do
   begin
-    with pilot[a] do
+    with SurvivorList[a] do
     begin
       jest := true;
       // nalotnisku:=random(length(ladowiska));
@@ -6480,8 +5876,8 @@ begin
         begin
           gra.minimum := round(gra.ilepilotow * (0.5 + (gra.difficultyLevel / 200))
             { 0.7 } ); // = 70%
-          if gra.minimum > length(pilot) then
-            gra.minimum := length(pilot);
+          if gra.minimum > SurvivorList.Count then
+            gra.minimum := SurvivorList.Count;
           gra.dzialekminimum := 0;
         end;
       1:
@@ -7179,6 +6575,7 @@ begin
   setlength(swiatlo, 5);
 
   SmokesList := TObjectList<TSmoke>.Create; //  setlength(dym, 800);
+  SurvivorList := TSurvivorList.Create;
   setlength(iskry, 500);
   setlength(smiec, 250);
   setlength(rakieta, 400);
@@ -7209,6 +6606,7 @@ begin
   glLightModelfv(GL_LIGHT_MODEL_AMBIENT, @lmodel_ambient);
 
   tworz_obiekty;
+  InitRenderers;
 
   frmMain.PwrInp.Initialize;
 
