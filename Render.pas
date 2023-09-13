@@ -2,7 +2,11 @@ unit render;
 
 interface
 
-uses Windows, OpenGl, Gl, Glu, GLext, Api_Func, unitTimer, sysutils, obj,
+uses
+  System.SysUtils,
+  System.Math,
+  Windows,
+  OpenGl, Gl, Glu, GLext, Api_Func, unitTimer, obj,
   Language, GlobalConsts, ZGLMathProcs, uSimpleLetters;
 
 procedure RenderScene;
@@ -4368,28 +4372,6 @@ begin
     glNewList(l_sceneria[a], GL_COMPILE);
     glPushMatrix;
     pokaz_obiekt(obiekt[ob_sceneria1 + a], -1, true);
-    {
-      glPushAttrib(GL_ALL_ATTRIB_BITS);
-      glPushMatrix;
-      wlacz_teksture(4);
-      glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-      glEnable(GL_BLEND);
-      glColor4f(1,1,1,0.5);
-      glBegin(GL_QUADS);
-      glTexCoord2f(0,1);
-      glVertex3f(-4 -7, 0.2, +4 +7);
-      glTexCoord2f(1,1);
-      glVertex3f(+4 +7, 0.2, +4 +7);
-      glTexCoord2f(1,0);
-      glVertex3f(+4 +7, 0.2, -4 -7);
-      glTexCoord2f(0,0);
-      glVertex3f(-4 -7, 0.2, -4 -7);
-      glEnd;
-      glDisable(GL_BLEND);
-      wylacz_teksture;
-      glPopMatrix;
-      glPopAttrib;
-    }
     glPopMatrix;
     glEndList();
   end;
@@ -4454,6 +4436,19 @@ begin
   end;
 end;
 
+procedure stworz_survivors;
+var
+  a: integer;
+begin
+  for a := 0 to Min(High(obiekt[ob_pilot].o.Groups), High(l_survivors)) do
+  begin
+    l_survivors[a] := glGenLists(1);
+    glNewList(l_survivors[a], GL_COMPILE);
+    pokaz_element_obiekt(obiekt[ob_pilot], a, false, -2);
+    glEndList();
+  end;
+end;
+
 // ----------------------------------------------------------------------------
 procedure tworz_obiekty;
 begin
@@ -4463,6 +4458,7 @@ begin
   stworz_scenerie;
   stworz_cien;
   stworz_krzaki;
+  stworz_survivors;
 end;
 
 procedure InitRenderers;

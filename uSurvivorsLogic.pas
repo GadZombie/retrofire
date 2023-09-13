@@ -37,6 +37,8 @@ type
     headUpAngleDest, headSideAngleDest: extended;
   private
     procedure UpdateHead(ALanderDist: extended);
+    function CanFollowLander(ALanderDist: extended): boolean;
+    function MustRunFromLander(ALanderDist: extended): boolean;
 
   public
     constructor Create;
@@ -226,10 +228,10 @@ var
 begin
   if palisie and (sila > 0) then
   begin
-    headUpAngleDest := sin(licz / 10) * 35 - 25;
-    //-35 + sin((licz / 23.2 + 1{TODO a} * 50) * pi180) * 35;
-    headSideAngleDest := sin(licz / 13) * 50;
-    //sin((licz / 23 + 1{TODO a} * 50) * pi180) * 50;
+    if random(10) = 0 then
+      headUpAngleDest := -60 + random(70);
+    if random(10) = 0 then
+      headSideAngleDest := -50 + random(100);
   end
   else
   if (sila > 0) then
@@ -269,21 +271,23 @@ begin
     if watchingObject > 0 then
     begin
       if (watchingObject = 2) and (watchingSurvivor <> nil) then
-        watchPoint := TVec3D.ToVec(watchingSurvivor.x, watchingSurvivor.y, watchingSurvivor.z)
+        watchPoint := TVec3D.ToVec(watchingSurvivor.x, watchingSurvivor.y + 2, watchingSurvivor.z)
       else
         watchPoint := TVec3D.ToVec(gracz.x, gracz.y + 2, gracz.z);
 
-      k := kier + 180 - jaki_to_kat(x - watchPoint.x, z - watchPoint.z);
-//      if abs(k) > 90 then
-//        k := 0;
-//      k := KeepValBetween(k, -120, 120);
+      k := - jaki_to_kat(x - watchPoint.x, z - watchPoint.z) + kier ;
+      k := keepValueInBounds(k, 360) - 180;
+      if ((watchingObject = 1) and (abs(k) > 165)) or
+         ((nalotnisku = -1) and (watchingObject = 1) and (abs(k) > 100)) then
+        k := 0;
+      k := KeepValBetween(k, -120, 120);
       headSideAngleDest := k;
 
       k := 90 - jaki_to_kat(
         sqrt2(sqr(watchPoint.x - x) + sqr(watchPoint.z - z)),
         (watchPoint.y - y)
       );
-      k := KeepValBetween(k, -70, 30);
+      k := KeepValBetween(k, -80, 30);
       headUpAngleDest := k;
     end
     else
@@ -299,9 +303,49 @@ begin
   headUpAngle := AnimateTo(headUpAngle, headUpAngleDest, 5);
 end;
 
+function TSurvivor.CanFollowLander(ALanderDist: extended): boolean;
+const
+  ALIEN_FOLLOWS_LANDER_DIST = 500;
+begin
+  result :=
+    (uciekaodgracza <= 0) and
+    gracz.stoi and
+    ((gracz.grlot = nalotnisku) or (zly and (ALanderDist <= ALIEN_FOLLOWS_LANDER_DIST)) ) and
+    (((abs(gracz.nacisk) < 0.05) and (gracz.pilotow < gracz.ladownosc)) or zly);
+
+{       if gracz.stoi and (gracz.grlot = nalotnisku) and (abs(gracz.nacisk) < 0.05) and ((gracz.pilotow < gracz.ladownosc) or (zly)) and
+          (uciekaodgracza <= 0) then
+        begin // biegna do gracza
+
+        }
+end;
+
+function TSurvivor.MustRunFromLander(ALanderDist: extended): boolean;
+const
+  ALIEN_FOLLOWS_LANDER_DIST = 500;
+  RUNAWAY_FROM_LANDER_DIST = 70;
+begin
+  result :=
+//        if (s < RUNAWAY_FROM_LANDER_DIST) and not CanFollowLander(landerDist, true{zly and (landerDist <= 500{ALIEN_FOLLOWS_LANDER_DIST)} ) then
+//    gracz.stoi and
+//    (((gracz.grlot = nalotnisku) or AIgnoreLandfield) {or (zly and (ALanderDist <= ALIEN_FOLLOWS_LANDER_DIST))}) and
+//    (((abs(gracz.nacisk) < 0.05) and (gracz.pilotow < gracz.ladownosc)) or zly);
+
+    (ALanderDist < RUNAWAY_FROM_LANDER_DIST) and (
+      (uciekaodgracza > 0) or
+      not gracz.stoi or
+      ( ((abs(gracz.nacisk) >= 0.05) or (gracz.pilotow >= gracz.ladownosc)) and (not zly))
+    );
+
+{
+        s := landerDist;
+        if ((not gracz.stoi) or (abs(gracz.nacisk) >= 0.05) or (uciekaodgracza > 0) or ((gracz.pilotow >= gracz.ladownosc) and (not zly))) and
+          (s < RUNAWAY_FROM_LANDER_DIST) then
+ }
+end;
+
 procedure TSurvivor.Update;
 const
-  RUNAWAY_FROM_LANDER_DIST = 70;
   RUNAWAY_FROM_LANDER_STOP_DIST = 60;
 var
   nx, nz, k1, nk1: integer;
@@ -445,8 +489,9 @@ begin
       if nalotnisku >= 0 then
       begin // na ziemi
         s := landerDist;
-        if ((not gracz.stoi) or (abs(gracz.nacisk) >= 0.05) or (uciekaodgracza > 0) or ((gracz.pilotow >= gracz.ladownosc) and (not zly))) and
-          (s < RUNAWAY_FROM_LANDER_DIST) then
+
+        if MustRunFromLander(landerDist) then
+//        if (s < RUNAWAY_FROM_LANDER_DIST) and not CanFollowLander(landerDist, true{zly and (landerDist <= 500{ALIEN_FOLLOWS_LANDER_DIST)} ) then
         begin // uciekaja
           if Self.Awake then
           begin
@@ -499,8 +544,7 @@ begin
         end;
 
 
-        if gracz.stoi and (gracz.grlot = nalotnisku) and (abs(gracz.nacisk) < 0.05) and ((gracz.pilotow < gracz.ladownosc) or (zly)) and
-          (uciekaodgracza <= 0) then
+        if (CanFollowLander(landerDist)) then
         begin // biegna do gracza
           if Self.Awake then
           begin

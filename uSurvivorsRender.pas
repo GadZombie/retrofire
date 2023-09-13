@@ -3,6 +3,7 @@ unit uSurvivorsRender;
 interface
 
 uses
+  GL,
   uSurvivorsLogic;
 
 type
@@ -12,22 +13,30 @@ type
 
     procedure DrawSurvivorsHead(ASurvivor: TSurvivor);
     procedure RenderSurvivor(ASurvivor: TSurvivor);
+    procedure RenderObject(AId, ATexture: integer);
   public
     procedure RenderSurvivors;
   end;
 
 var
   SurvivorsRenderer: TSurvivorsRenderer;
+  l_survivors: array [0 .. 14] of GLUint;
 
 implementation
 
 uses
-  OpenGl, Gl, Glu, GLext,
+  OpenGl, Glu, GLext,
   uRenderObjects,
   uRenderConst,
   ZGLTextures,
   unittimer,
   GlobalConsts;
+
+procedure TSurvivorsRenderer.RenderObject(AId: integer; ATexture: integer);
+begin
+  wlacz_teksture(ATexture);
+  glCallList(l_survivors[AId]);
+end;
 
 // ---------------------------------------------------------------------------
 procedure TSurvivorsRenderer.DrawSurvivorsHead(ASurvivor: TSurvivor);
@@ -43,16 +52,19 @@ begin
     tx := 8;
 
   glPushMatrix;
+{large heads
   glTranslatef(0, -1.5, 0);
   glScalef(4, 4, 4);
-
+}
+  glTranslatef(0, -0.5, 0);
+  glScalef(2, 2, 2);
   glTranslatef(0, HEAD_TRANS_Y, HEAD_TRANS_Z);
   glRotatef(ASurvivor.headSideAngle, 0, 1, 0);
   glRotatef(ASurvivor.headUpAngle, 1, 0, 0);
   glTranslatef(0, -HEAD_TRANS_Y, -HEAD_TRANS_Z);
 
-  pokaz_element_obiekt(obiekt[ob_pilot], 2, false, tx);
-  pokaz_element_obiekt(obiekt[ob_pilot], 14, false, tx);
+  RenderObject(2, tx);
+  RenderObject(14, tx);
   glPopMatrix;
 
 end;
@@ -84,30 +96,25 @@ begin
     if (x1 >= xod) and (x1 <= xdo) and (z1 >= zod) and (z1 <= zdo) then
     begin
 
-      if watchingObject = 2 then
+{debug      if watchingObject = 2 then
       begin
         glColor4f(1, 0.2, 0.2, 1);
         glBegin(GL_LINES);
         glVertex3f(x1, y, z1);
         glVertex3f(watchingSurvivor.x, watchingSurvivor.y, watchingSurvivor.z);
         glEnd;
-      end;
+      end;}
 
       glPushMatrix;
       glTranslatef(x1, y + 2, z1);
 
-      // if watchingObject = 1 then
-      // a1 := 1
-      // else
-      // if watchingPilot <> nil then
-      // a1 := 2
-      // else
-      a1 := watchingObject;
-
+      { debug only
       glEnable(GL_BLEND);
       glColor4f(1, 1, 1, 1);
-      pisz_liczbe(a1, 0, 10, 0, 1, right, up);
+      pisz_liczbe(round(headSideAngle), 0, 10, 0, 1, right, up);
+      pisz_liczbe(round(kier), 0, 8, 0, 1, right, up);
       glDisable(GL_BLEND);
+      }
 
       glRotatef(kier, 0, -1, 0);
       glRotatef(180, 0, 1, 0);
@@ -143,7 +150,7 @@ begin
                           glTranslatef(0, 0.48, 0);
                           glRotatef(sin(ani * pi180) * 30, 1, 0, 0);
                           glTranslatef(0, -0.48, 0);
-                          pokaz_element_obiekt(obiekt[ob_pilot], g, false, tx);
+                          RenderObject(g, tx);
                           glPopMatrix;
                         end;
                       4 { rl-d } :
@@ -154,7 +161,7 @@ begin
                           glTranslatef(0, -0.48 - 0.2, 0);
                           glRotatef(-50 + sin(ani * pi180) * 40, 1, 0, 0);
                           glTranslatef(0, 0.2, 0);
-                          pokaz_element_obiekt(obiekt[ob_pilot], g, false, tx);
+                          RenderObject(g, tx);
                           glPopMatrix;
                         end;
 
@@ -164,7 +171,7 @@ begin
                           glTranslatef(0, 0.48, 0);
                           glRotatef(sin((180 + ani) * pi180) * 30, 1, 0, 0);
                           glTranslatef(0, -0.48, 0);
-                          pokaz_element_obiekt(obiekt[ob_pilot], g, false, tx);
+                          RenderObject(g, tx);
                           glPopMatrix;
                         end;
                       5 { rp-d } :
@@ -175,7 +182,7 @@ begin
                           glTranslatef(0, -0.48 - 0.2, 0);
                           glRotatef(-50 + sin((180 + ani) * pi180) * 40, 1, 0, 0);
                           glTranslatef(0, 0.2, 0);
-                          pokaz_element_obiekt(obiekt[ob_pilot], g, false, tx);
+                          RenderObject(g, tx);
                           glPopMatrix;
                         end;
 
@@ -183,7 +190,7 @@ begin
                         begin
                           glPushMatrix;
                           glRotatef(-20 + sin(ani * pi180) * 40, 1, 0, 0);
-                          pokaz_element_obiekt(obiekt[ob_pilot], g, false, tx);
+                          RenderObject(g, tx);
                           glPopMatrix;
                         end;
                       8, 9 { nl-d } :
@@ -193,7 +200,7 @@ begin
                           glTranslatef(0, -1.4, 0);
                           glRotatef(50 + cos((180 + ani) * pi180) * 40, 1, 0, 0);
                           glTranslatef(0, 1.4, 0);
-                          pokaz_element_obiekt(obiekt[ob_pilot], g, false, tx);
+                          RenderObject(g, tx);
                           glPopMatrix;
                         end;
 
@@ -201,7 +208,7 @@ begin
                         begin
                           glPushMatrix;
                           glRotatef(-20 + sin((180 + ani) * pi180) * 40, 1, 0, 0);
-                          pokaz_element_obiekt(obiekt[ob_pilot], g, false, tx);
+                          RenderObject(g, tx);
                           glPopMatrix;
                         end;
                       10, 11 { np-d } :
@@ -211,11 +218,11 @@ begin
                           glTranslatef(0, -1.4, 0);
                           glRotatef(50 + cos(ani * pi180) * 40, 1, 0, 0);
                           glTranslatef(0, 1.4, 0);
-                          pokaz_element_obiekt(obiekt[ob_pilot], g, false, tx);
+                          RenderObject(g, tx);
                           glPopMatrix;
                         end;
                     else
-                      pokaz_element_obiekt(obiekt[ob_pilot], g, false, tx);
+                      RenderObject(g, tx);
                     end;
                   end;
                 end;
@@ -238,7 +245,7 @@ begin
                           glTranslatef(-0.64, 0.56, 0);
                           glRotatef(210 + sin((ani) * pi180) * 40, 0, 0, 1);
                           glTranslatef(0.64, -0.56, 0);
-                          pokaz_element_obiekt(obiekt[ob_pilot], g, false, tx);
+                          RenderObject(g, tx);
                           glPopMatrix;
                         end;
                       4 { rl-d } :
@@ -249,7 +256,7 @@ begin
                           glTranslatef(0, -0.8, 0);
                           glRotatef(-20 + sin((ani) * pi180) * 30, 0, 0, 1);
                           glTranslatef(0.64, -0.56 + 0.8, 0);
-                          pokaz_element_obiekt(obiekt[ob_pilot], g, false, tx);
+                          RenderObject(g, tx);
                           glPopMatrix;
                         end;
 
@@ -259,7 +266,7 @@ begin
                           glTranslatef(0.64, 0.56, 0);
                           glRotatef(150 + sin((180 + ani) * pi180) * 40, 0, 0, 1);
                           glTranslatef(-0.64, -0.56, 0);
-                          pokaz_element_obiekt(obiekt[ob_pilot], g, false, tx);
+                          RenderObject(g, tx);
                           glPopMatrix;
                         end;
                       5 { rp-d } :
@@ -271,11 +278,11 @@ begin
                           glRotatef(20 + sin((180 + ani) * pi180) * 30, 0, 0, 1);
                           glTranslatef(-0.64, -0.56 + 0.8, 0);
 
-                          pokaz_element_obiekt(obiekt[ob_pilot], g, false, tx);
+                          RenderObject(g, tx);
                           glPopMatrix;
                         end;
                     else
-                      pokaz_element_obiekt(obiekt[ob_pilot], g, false, tx);
+                      RenderObject(g, tx);
 
                     end;
                   end;
@@ -303,7 +310,7 @@ begin
                   begin
                   end;
               else
-                pokaz_element_obiekt(obiekt[ob_pilot], g, false, tx);
+                RenderObject(g, tx);
 
               end;
             end;

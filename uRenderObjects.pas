@@ -130,7 +130,8 @@ begin
     if innatekstura = -1 then
       wlacz_teksture(ob.tex)
     else
-      wlacz_teksture(innatekstura);
+      if innatekstura <> -2 then
+        wlacz_teksture(innatekstura);
 
     glDisable(GL_COLOR_MATERIAL);
   end;
@@ -220,7 +221,12 @@ begin
   glPushMatrix;
   for a := 1 to length(s) do
   begin
-    rysuj_litere(ord(s[a]) - 48, sx, sy, sz, sr, right, up);
+    case s[a] of
+      '0'..'9':
+        rysuj_litere(ord(s[a]) - 48, sx, sy, sz, sr, right, up);
+      '-':
+        rysuj_litere(50, sx, sy, sz, sr, right, up);
+    end;
     glTranslatef(right[0] * sr * 2, right[1] * sr * 2, right[2] * sr * 2);
   end;
   glPopMatrix;
