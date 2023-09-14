@@ -39,6 +39,7 @@ type
     procedure UpdateHead(ALanderDist: extended);
     function CanFollowLander(ALanderDist: extended): boolean;
     function MustRunFromLander(ALanderDist: extended): boolean;
+    procedure StartWatchingSurvivor(AOtherSurvivor: TSurvivor; ATime: integer);
 
   public
     constructor Create;
@@ -48,8 +49,10 @@ type
   end;
 
   TSurvivorList = class(TObjectList<TSurvivor>)
+  private
+    procedure separateSurvivor(ASurvivor1, ASurvivor2: TSurvivor; dist: extended);
   public
-    procedure separateSurvivors;
+    procedure survivorsInteraction;
   end;
 
 var
@@ -153,33 +156,68 @@ begin
   result := not Self.sleeps;
 end;
 
+procedure TSurvivor.StartWatchingSurvivor(AOtherSurvivor: TSurvivor; ATime: integer);
+begin
+  Self.watchingSurvivor := AOtherSurvivor;
+  Self.watchingSurvivorTime := ATime;
+  Self.watchingObject := 2;
+end;
+
 procedure TSurvivor.WatchOtherSurvivor(AOtherSurvivor: TSurvivor);
 begin
   if ((Self.watchingObject <> 2) or (Self.watchingSurvivorTime <= 0)) and
     (random(5) = 0) and
     ((AOtherSurvivor.sila <= 0.1) or (AOtherSurvivor.przewroc > 1) or (AOtherSurvivor.palisie) {or (random(200) = 0)}) then
   begin
-    Self.watchingSurvivor := AOtherSurvivor;
-    Self.watchingSurvivorTime := 100;
-    Self.watchingObject := 2;
+    StartWatchingSurvivor(AOtherSurvivor, 100 + random(10));
   end;
 end;
 
-procedure TSurvivorList.separateSurvivors;
+procedure TSurvivorList.separateSurvivor(ASurvivor1, ASurvivor2: TSurvivor; dist: extended);
 const
   minDist = 4;
 var
+  middle: TVec3D;
+begin
+  if dist < minDist then
+  begin
+    middle := TVec3D.ToVec(
+      (ASurvivor1.x + ASurvivor2.x) / 2,
+      (ASurvivor1.y + ASurvivor2.y) / 2,
+      (ASurvivor1.z + ASurvivor2.z) / 2);
+
+    dist := dist / 2;
+    if dist = 0 then
+      dist := 0.01;
+    ASurvivor1.x := middle.x + ((ASurvivor1.x - middle.x) / dist) * (minDist / 2);
+//            ASurvivor1.y := middle.y + ((ASurvivor1.y - middle.y) / dist) * (minDist / 2);
+    ASurvivor1.z := middle.z + ((ASurvivor1.z - middle.z) / dist) * (minDist / 2);
+
+    ASurvivor2.x := middle.x + ((ASurvivor2.x - middle.x) / dist) * (minDist / 2);
+//            ASurvivor2.y := middle.y + ((ASurvivor2.y - middle.y) / dist) * (minDist / 2);
+    ASurvivor2.z := middle.z + ((ASurvivor2.z - middle.z) / dist) * (minDist / 2);
+
+    if (random(10) = 0) then
+    begin
+      ASurvivor1.StartWatchingSurvivor(ASurvivor2, 10 + random(40));
+      ASurvivor2.StartWatchingSurvivor(ASurvivor1, 10 + random(40));
+    end;
+
+  end;
+end;
+
+procedure TSurvivorList.survivorsInteraction;
+var
   a, b: integer;
   dist, playerDest: extended;
-  middle: TVec3D;
 begin
   for a := 0 to self.Count - 1 do
   begin
     if Items[a].jest then
     begin
       playerDest := Distance3D(Items[a].x, Items[a].y, Items[a].z, gracz.x, gracz.y, gracz.z);
-//      if playerDest > 200 then
-//        continue;
+      if playerDest > 600 then
+        continue;
 
       for b := a + 1 to self.Count - 1 do
       begin
@@ -188,30 +226,13 @@ begin
           dist := Distance3D(Items[a].x, Items[a].y, Items[a].z, Items[b].x, Items[b].y, Items[b].z);
           if dist = 0 then
             dist := 0.01;
-          if dist < minDist then
-          begin
-            middle := TVec3D.ToVec(
-              (Items[a].x + Items[b].x) / 2,
-              (Items[a].y + Items[b].y) / 2,
-              (Items[a].z + Items[b].z) / 2);
 
-            dist := dist / 2;
-            if dist = 0 then
-              dist := 0.01;
-            Items[a].x := middle.x + ((Items[a].x - middle.x) / dist) * (minDist / 2);
-//            Items[a].y := middle.y + ((Items[a].y - middle.y) / dist) * (minDist / 2);
-            Items[a].z := middle.z + ((Items[a].z - middle.z) / dist) * (minDist / 2);
-
-            Items[b].x := middle.x + ((Items[b].x - middle.x) / dist) * (minDist / 2);
-//            Items[b].y := middle.y + ((Items[b].y - middle.y) / dist) * (minDist / 2);
-            Items[b].z := middle.z + ((Items[b].z - middle.z) / dist) * (minDist / 2);
-          end;
+          separateSurvivor(Items[a], Items[b], dist);
 
           if dist < 100 then
           begin
             Items[b].WatchOtherSurvivor(Items[a]);
             Items[a].WatchOtherSurvivor(Items[b]);
-
           end;
 
         end;
@@ -236,7 +257,7 @@ begin
   else
   if (sila > 0) then
   begin
-    if ALanderDist <= 120 then
+    if (ALanderDist <= 120) and (gracz.zyje) then
     begin
       if (random(40) = 0) and (watchingObject = 0) then
         watchingObject := 1;
@@ -312,12 +333,6 @@ begin
     gracz.stoi and
     ((gracz.grlot = nalotnisku) or (zly and (ALanderDist <= ALIEN_FOLLOWS_LANDER_DIST)) ) and
     (((abs(gracz.nacisk) < 0.05) and (gracz.pilotow < gracz.ladownosc)) or zly);
-
-{       if gracz.stoi and (gracz.grlot = nalotnisku) and (abs(gracz.nacisk) < 0.05) and ((gracz.pilotow < gracz.ladownosc) or (zly)) and
-          (uciekaodgracza <= 0) then
-        begin // biegna do gracza
-
-        }
 end;
 
 function TSurvivor.MustRunFromLander(ALanderDist: extended): boolean;
@@ -326,22 +341,11 @@ const
   RUNAWAY_FROM_LANDER_DIST = 70;
 begin
   result :=
-//        if (s < RUNAWAY_FROM_LANDER_DIST) and not CanFollowLander(landerDist, true{zly and (landerDist <= 500{ALIEN_FOLLOWS_LANDER_DIST)} ) then
-//    gracz.stoi and
-//    (((gracz.grlot = nalotnisku) or AIgnoreLandfield) {or (zly and (ALanderDist <= ALIEN_FOLLOWS_LANDER_DIST))}) and
-//    (((abs(gracz.nacisk) < 0.05) and (gracz.pilotow < gracz.ladownosc)) or zly);
-
     (ALanderDist < RUNAWAY_FROM_LANDER_DIST) and (
       (uciekaodgracza > 0) or
       not gracz.stoi or
       ( ((abs(gracz.nacisk) >= 0.05) or (gracz.pilotow >= gracz.ladownosc)) and (not zly))
     );
-
-{
-        s := landerDist;
-        if ((not gracz.stoi) or (abs(gracz.nacisk) >= 0.05) or (uciekaodgracza > 0) or ((gracz.pilotow >= gracz.ladownosc) and (not zly))) and
-          (s < RUNAWAY_FROM_LANDER_DIST) then
- }
 end;
 
 procedure TSurvivor.Update;
@@ -820,7 +824,7 @@ begin
     else
       RemoveSurvivor(SurvivorList[a]);
   end;
-  SurvivorList.separateSurvivors;
+  SurvivorList.survivorsInteraction;
 end;
 
 end.

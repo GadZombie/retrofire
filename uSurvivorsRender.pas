@@ -11,9 +11,11 @@ type
   private
     xod, xdo, zod, zdo: extended;
 
-    procedure DrawSurvivorsHead(ASurvivor: TSurvivor);
+    procedure RenderHead(ASurvivor: TSurvivor);
     procedure RenderSurvivor(ASurvivor: TSurvivor);
     procedure RenderObject(AId, ATexture: integer);
+    procedure RenderBody(ASurvivor: TSurvivor);
+    procedure RotateBody(ASurvivor: TSurvivor);
   public
     procedure RenderSurvivors;
   end;
@@ -39,12 +41,12 @@ begin
 end;
 
 // ---------------------------------------------------------------------------
-procedure TSurvivorsRenderer.DrawSurvivorsHead(ASurvivor: TSurvivor);
+procedure TSurvivorsRenderer.RenderHead(ASurvivor: TSurvivor);
 const
   HEAD_TRANS_Y = 0.7;
   HEAD_TRANS_Z = -0.1;
 var
-  g, tx: integer;
+  tx: integer;
 begin
   if not ASurvivor.zly then
     tx := 5
@@ -56,8 +58,10 @@ begin
   glTranslatef(0, -1.5, 0);
   glScalef(4, 4, 4);
 }
-  glTranslatef(0, -0.5, 0);
-  glScalef(2, 2, 2);
+
+  glTranslatef(0, -0.15, 0);
+  glScalef(1.5, 1.5, 1.5);
+
   glTranslatef(0, HEAD_TRANS_Y, HEAD_TRANS_Z);
   glRotatef(ASurvivor.headSideAngle, 0, 1, 0);
   glRotatef(ASurvivor.headUpAngle, 1, 0, 0);
@@ -67,6 +71,39 @@ begin
   RenderObject(14, tx);
   glPopMatrix;
 
+end;
+
+procedure TSurvivorsRenderer.RotateBody(ASurvivor: TSurvivor);
+var
+  angle: extended;
+begin
+  if abs(ASurvivor.headSideAngle) > 40 then
+  begin
+    if ASurvivor.headSideAngle > 0 then
+      angle := (ASurvivor.headSideAngle - 40) / 1.5
+    else
+      angle := (ASurvivor.headSideAngle + 40) / 1.5;
+  end
+    else
+      angle := 0;
+  glRotatef(angle, 0, 1, 0);
+end;
+
+procedure TSurvivorsRenderer.RenderBody(ASurvivor: TSurvivor);
+var
+  tx: integer;
+begin
+  if not ASurvivor.zly then
+    tx := 5
+  else
+    tx := 8;
+
+  glPushMatrix;
+  RotateBody(ASurvivor);
+  RenderObject(0, tx);
+  RenderObject(1, tx);
+  RenderObject(13, tx);
+  glPopMatrix;
 end;
 
 procedure TSurvivorsRenderer.RenderSurvivor(ASurvivor: TSurvivor);
@@ -135,18 +172,22 @@ begin
           case rodzani of
             0:
               begin // biegnie
-                DrawSurvivorsHead(ASurvivor);
+                RenderHead(ASurvivor);
+                RenderBody(ASurvivor);
                 for g := 0 to High(Groups) do
                 begin
                   with Groups[g] do
                   begin
                     case g of
+                      0, 1, 13: begin
+                      end;
                       2, 14: // glowa
                         begin
                         end;
                       3 { rl-g } :
                         begin
                           glPushMatrix;
+                          RotateBody(ASurvivor);
                           glTranslatef(0, 0.48, 0);
                           glRotatef(sin(ani * pi180) * 30, 1, 0, 0);
                           glTranslatef(0, -0.48, 0);
@@ -156,6 +197,7 @@ begin
                       4 { rl-d } :
                         begin
                           glPushMatrix;
+                          RotateBody(ASurvivor);
                           glTranslatef(0, 0.48, 0);
                           glRotatef(sin(ani * pi180) * 30, 1, 0, 0);
                           glTranslatef(0, -0.48 - 0.2, 0);
@@ -168,6 +210,7 @@ begin
                       6 { rp-g } :
                         begin
                           glPushMatrix;
+                          RotateBody(ASurvivor);
                           glTranslatef(0, 0.48, 0);
                           glRotatef(sin((180 + ani) * pi180) * 30, 1, 0, 0);
                           glTranslatef(0, -0.48, 0);
@@ -177,6 +220,7 @@ begin
                       5 { rp-d } :
                         begin
                           glPushMatrix;
+                          RotateBody(ASurvivor);
                           glTranslatef(0, 0.48, 0);
                           glRotatef(sin((180 + ani) * pi180) * 30, 1, 0, 0);
                           glTranslatef(0, -0.48 - 0.2, 0);
@@ -230,18 +274,22 @@ begin
 
             1:
               begin // macha
-                DrawSurvivorsHead(ASurvivor);
+                RenderHead(ASurvivor);
+                RenderBody(ASurvivor);
                 for g := 0 to High(Groups) do
                 begin
                   with Groups[g] do
                   begin
                     case g of
+                      0, 1, 13: begin
+                      end;
                       2, 14: // glowa
                         begin
                         end;
                       3 { rl-g } :
                         begin
                           glPushMatrix;
+                          RotateBody(ASurvivor);
                           glTranslatef(-0.64, 0.56, 0);
                           glRotatef(210 + sin((ani) * pi180) * 40, 0, 0, 1);
                           glTranslatef(0.64, -0.56, 0);
@@ -251,6 +299,7 @@ begin
                       4 { rl-d } :
                         begin
                           glPushMatrix;
+                          RotateBody(ASurvivor);
                           glTranslatef(-0.64, 0.56, 0);
                           glRotatef(210 + sin((ani) * pi180) * 40, 0, 0, 1);
                           glTranslatef(0, -0.8, 0);
@@ -263,6 +312,7 @@ begin
                       6 { rp-g } :
                         begin
                           glPushMatrix;
+                          RotateBody(ASurvivor);
                           glTranslatef(0.64, 0.56, 0);
                           glRotatef(150 + sin((180 + ani) * pi180) * 40, 0, 0, 1);
                           glTranslatef(-0.64, -0.56, 0);
@@ -272,6 +322,7 @@ begin
                       5 { rp-d } :
                         begin
                           glPushMatrix;
+                          RotateBody(ASurvivor);
                           glTranslatef(0.64, 0.56, 0);
                           glRotatef(150 + sin((180 + ani) * pi180) * 40, 0, 0, 1);
                           glTranslatef(0, -0.8, 0);
@@ -300,12 +351,21 @@ begin
 
         with obiekt[ob_pilot].o do
         begin
-          DrawSurvivorsHead(ASurvivor);
+          RenderHead(ASurvivor);
+          RenderBody(ASurvivor);
           for g := 0 to High(Groups) do
           begin
             with Groups[g] do
             begin
               case g of
+                0, 1, 13: begin
+                end;
+                3, 4, 5, 6: begin
+                  glPushMatrix;
+                  RotateBody(ASurvivor);
+                  RenderObject(g, tx);
+                  glPopMatrix;
+                end;
                 2, 14: // glowa
                   begin
                   end;

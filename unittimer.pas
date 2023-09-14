@@ -5845,6 +5845,9 @@ begin
       sila := 1;
       przewroc := 0;
       zly := not ladowiska[nalotnisku].dobre; // random(2)=0;
+      if not zly and (gra.difficultyLevel >= 25) and (random(400) < gra.difficultyLevel) then
+        zly := not zly;
+
       if not zly then
         inc(gra.ilepilotow);
     end;
@@ -5876,8 +5879,6 @@ begin
         begin
           gra.minimum := round(gra.ilepilotow * (0.5 + (gra.difficultyLevel / 200))
             { 0.7 } ); // = 70%
-          if gra.minimum > SurvivorList.Count then
-            gra.minimum := SurvivorList.Count;
           gra.dzialekminimum := 0;
         end;
       1:
@@ -5893,6 +5894,9 @@ begin
           gra.fightersMinimum := round(3 + gra.difficultyLevel / 3);
         end;
     end;
+
+  if gra.minimum > gra.ilepilotow then
+    gra.minimum := gra.ilepilotow;
 
   if gra.sandboxMode then
   begin
