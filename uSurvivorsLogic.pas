@@ -29,9 +29,11 @@ type
     runAway: boolean;
     runAwayDirection: extended;
     przewroc: real; { kat, pod jakim stoi/lezy ;) 0-90 }
-    watchingObject: integer; //0: nothing, 1: lander, 2: survivor
+    watchingObject: integer; //0: nothing, 1: lander, 2: other survivor, 3: fighter
     watchingSurvivor: TSurvivor;
     watchingSurvivorTime: integer;
+    watchingFighterId: integer;
+
     headUpAngle,              // > 0 w przód/dó³, <0 w ty³/górê          MIN=-70 MAX=30
     headSideAngle: extended; //MIN=-90 MAX=90
     headUpAngleDest, headSideAngleDest: extended;
@@ -40,6 +42,7 @@ type
     function CanFollowLander(ALanderDist: extended): boolean;
     function MustRunFromLander(ALanderDist: extended): boolean;
     procedure StartWatchingSurvivor(AOtherSurvivor: TSurvivor; ATime: integer);
+    procedure WatchFighters;
 
   public
     constructor Create;
@@ -124,6 +127,9 @@ begin
     headSideAngle := 0;
     watchingSurvivor := nil;
     watchingObject := 0;
+    watchingSurvivorTime := 0;
+    watchingFighterId := -1;
+
   end;
   result := SurvivorList.Add(NewSurvivor);
 end;
@@ -242,10 +248,37 @@ begin
   end;
 end;
 
+procedure TSurvivor.WatchFighters;
+var
+  a: integer;
+  dist: extended;
+begin
+  if random(10) <> 0 then
+    exit;
+
+  if not ((watchingObject = 0) or (watchingObject = 1)) then
+    exit;
+
+
+  for a := 0 to high(mysliwiec) do
+  begin
+    if (mysliwiec[a].jest) then
+    begin
+      dist := Distance3D(x, y, z, mysliwiec[a].x, mysliwiec[a].y, mysliwiec[a].z);
+      if dist <= 500 then
+      begin
+        watchingObject := 3;
+        watchingFighterId := a;
+        exit;
+      end;
+    end;
+  end;
+end;
+
 procedure TSurvivor.UpdateHead(ALanderDist: extended);
 var
   watchPoint: TVec3D;
-  k: extended;
+  k, dist: extended;
 begin
   if palisie and (sila > 0) then
   begin
@@ -257,6 +290,8 @@ begin
   else
   if (sila > 0) then
   begin
+    WatchFighters;
+
     if (ALanderDist <= 120) and (gracz.zyje) then
     begin
       if (random(40) = 0) and (watchingObject = 0) then
@@ -289,10 +324,32 @@ begin
       end;
     end;
 
+    if watchingObject = 3 then
+    begin
+      if (watchingFighterId < 0) or (watchingFighterId > High(mysliwiec)) or not mysliwiec[watchingFighterId].jest then
+      begin
+        watchingObject := 0;
+        watchingFighterId := -1;
+      end
+      else
+      begin
+        dist := Distance3D(x, y, z, mysliwiec[watchingFighterId].x, mysliwiec[watchingFighterId].y, mysliwiec[watchingFighterId].z);
+        if (dist > 500) and (random(30) = 0) then
+        begin
+          watchingObject := 0;
+          watchingFighterId := -1;
+        end
+      end;
+
+    end;
+
     if watchingObject > 0 then
     begin
       if (watchingObject = 2) and (watchingSurvivor <> nil) then
         watchPoint := TVec3D.ToVec(watchingSurvivor.x, watchingSurvivor.y + 2, watchingSurvivor.z)
+      else
+      if (watchingObject = 3) and (watchingFighterId >= 0) then
+        watchPoint := TVec3D.ToVec(mysliwiec[watchingFighterId].x, mysliwiec[watchingFighterId].y, mysliwiec[watchingFighterId].z)
       else
         watchPoint := TVec3D.ToVec(gracz.x, gracz.y + 2, gracz.z);
 
