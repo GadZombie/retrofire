@@ -319,6 +319,8 @@ begin
     pisz2d(STR_CHEAT_LOAD, 10, height - 53, 3.2);
   if cheaty.time then
     pisz2d(STR_CHEAT_TIME, 10, height - 59, 3.2);
+  if cheaty.bigHeads then
+    pisz2d(STR_CHEAT_BIGHEADS, 10, height - 65, 3.2);
 
   if gra.czas < 20 then
     glColor4f(1, 0.2, 0, 0.9)

@@ -54,13 +54,17 @@ begin
     tx := 8;
 
   glPushMatrix;
-{large heads
-  glTranslatef(0, -1.5, 0);
-  glScalef(4, 4, 4);
-}
 
-  glTranslatef(0, -0.15, 0);
-  glScalef(1.5, 1.5, 1.5);
+  if cheaty.bigHeads then
+  begin
+    glTranslatef(0, -1.5, 0);
+    glScalef(4, 4, 4)
+  end
+  else
+  begin
+    glTranslatef(0, -0.15, 0);
+    glScalef(1.5, 1.5, 1.5);
+  end;
 
   glTranslatef(0, HEAD_TRANS_Y, HEAD_TRANS_Z);
   glRotatef(ASurvivor.headSideAngle, 0, 1, 0);

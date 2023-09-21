@@ -34,6 +34,8 @@ type
     watchingSurvivorTime: integer;
     watchingFighterId: integer;
 
+    fallingHeightStart: extended;
+
     headUpAngle,              // > 0 w przód/dó³, <0 w ty³/górê          MIN=-70 MAX=30
     headSideAngle: extended; //MIN=-90 MAX=90
     headUpAngleDest, headSideAngleDest: extended;
@@ -43,6 +45,7 @@ type
     function MustRunFromLander(ALanderDist: extended): boolean;
     procedure StartWatchingSurvivor(AOtherSurvivor: TSurvivor; ATime: integer);
     procedure WatchFighters;
+    procedure LandOnGround;
 
   public
     constructor Create;
@@ -89,6 +92,7 @@ begin
     y := sy;
     z := sz;
     dy := 0;
+    fallingHeightStart := y;
     kier := random * 360;
     palisie := false;
     sila := silapocz;
@@ -405,6 +409,20 @@ begin
     );
 end;
 
+procedure TSurvivor.LandOnGround;
+const
+  MIN_HEIGHT_TO_INJURE = 20;
+var
+  hitValue: extended;
+begin
+  if self.y <= self.fallingHeightStart - MIN_HEIGHT_TO_INJURE then
+  begin
+    hitValue := ((self.fallingHeightStart - self.y - MIN_HEIGHT_TO_INJURE) * abs(dy)) / 30;
+    self.sila := self.sila - hitValue;
+  end;
+  self.fallingHeightStart := self.y;
+end;
+
 procedure TSurvivor.Update;
 const
   RUNAWAY_FROM_LANDER_STOP_DIST = 60;
@@ -478,6 +496,7 @@ begin
             ani := ani + 6 + random(3);
             if (random(20) = 0) and (y <= gdzie_y(x, z, y)) then
             begin
+              LandOnGround;
               dy := 0.1 + random * 0.04;
               y := gdzie_y(x, z, y);
             end;
@@ -593,6 +612,7 @@ begin
             end;
             if y <= gdzie_y(x, z, y) then
             begin
+              LandOnGround;
               if abs(sin(ani * pi180)) < 0.2 then
                 dy := 0.2;
               y := gdzie_y(x, z, y);
@@ -691,6 +711,7 @@ begin
             z := z - cos(kier * pi180) * (speed + ((random - 0.5) * 0.05)); // (2 + random * 3);
             if y <= gdzie_y(x, z, y) then
             begin
+              LandOnGround;
               if (speed > 0.1) and (abs(sin(ani * pi180)) < 0.2) then
                 dy := 0.18 + random * 0.03;
               y := gdzie_y(x, z, y);
@@ -736,6 +757,7 @@ begin
         z := z - cos(kier * pi180) / (2 + random * 3);
         if y <= gdzie_y(x, z, y) then
         begin
+          LandOnGround;
           if abs(sin(ani * pi180)) < 0.2 then
             dy := 0.2;
           y := gdzie_y(x, z, y);
@@ -785,6 +807,7 @@ begin
         end;
         if y <= gdzie_y(x, z, y) then
         begin
+          LandOnGround;
           if przewroc = 0 then
             dy := 0.13;
           if y > gdzie_y(x, z, y) - 15 then
@@ -805,6 +828,7 @@ begin
         end
         else
         begin // pod ziemia lub na niej
+          LandOnGround;
           if (abs(dy) < 0.005) and (abs(dx) < 0.005) and (abs(dz) < 0.005) and (przewroc >= 90) then
           begin
             dy := 0;
@@ -834,6 +858,7 @@ begin
     end;
     if (y < gdzie_y(x, z, y)) and (dy < 0) then
     begin
+      LandOnGround;
       if sila > 0 then
         dy := abs(dy / 2)
       else

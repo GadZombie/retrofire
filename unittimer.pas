@@ -1587,10 +1587,10 @@ begin
       end
       else
       begin // martwy
-        a := CreateSurvivor(gracz.x - 1 + random * 2, gracz.y, gracz.z - 1 + random * 2, false, 0);
+        a := CreateSurvivor(gracz.x - 1 + random * 2, gracz.y, gracz.z - 1 + random * 2, alien, 0{, 1, 0, 250});
         if a >= 0 then
         begin
-          SurvivorList[a].zly := alien;
+//          SurvivorList[a].rescued := true;
           SurvivorList[a].dy := -0.3 - random / 2;
           SurvivorList[a].palisie := false;
           Sfx.graj_dzwiek((22 + ord(SurvivorList[a].zly) * 4 + random(4)), SurvivorList[a].x, SurvivorList[a].y, SurvivorList[a].z);
@@ -3217,6 +3217,10 @@ begin
 
                 if gracz.y < gdzie_y(gracz.x, gracz.z, gracz.y) + 30 then
                   gracz.y := gdzie_y(gracz.x, gracz.z, gracz.y) + 30;
+              end;
+            10:
+              begin
+                cheaty.bigHeads := not cheaty.bigHeads;
               end;
           end;
 
@@ -5841,6 +5845,7 @@ begin
       z := random * ladowiska[nalotnisku].rz * 2 * ziemia.wlk + (ladowiska[nalotnisku].z - ladowiska[nalotnisku].rz) *
         ziemia.wlk + ziemia.pz; // random*ziemia.wz*ziemia.wlk+ziemia.pz;
       y := gdzie_y(x, z, 0);
+      fallingHeightStart := y;
       palisie := false;
       sila := 1;
       przewroc := 0;
@@ -6686,6 +6691,8 @@ begin
       end;
     end;
   end;
+
+  cheaty := Default(TCheatCodes);
 
   RenderInit;
 

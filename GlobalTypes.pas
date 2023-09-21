@@ -316,6 +316,7 @@ type
     lives: boolean; // max dodatkowych ladownikow
     load: boolean; // max ladownosci
     time: boolean; // max czasu
+    bigHeads: boolean;
 
     czas_od_ostatniej_litery: integer; // zmniejsza sie do 0 i jesli dojdzie, to staje, a wpisywana_litera sie zeruje
     wpisany_tekst: array of byte;
