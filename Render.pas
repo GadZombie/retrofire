@@ -2647,7 +2647,7 @@ var
   j: real;
 begin
   glPushMatrix;
-  glMaterialf(GL_FRONT, GL_SHININESS, 40);
+  glMaterialf(GL_FRONT, GL_SHININESS, 120);
   glMaterialfv(GL_FRONT, GL_AMBIENT, @mat_1a);
   glMaterialfv(GL_FRONT, GL_DIFFUSE, @mata);
   glMaterialfv(GL_FRONT, GL_SPECULAR, @mat);
@@ -2767,13 +2767,13 @@ begin
   glLoadIdentity();
   glScalef(2, 2, 2);
 
-  glMatrixMode(GL_MODELVIEW);
-  glTranslatef(gra.jestkamera[0, 0], gra.jestkamera[0, 1], gra.jestkamera[0, 2]);
-
   glDepthMask(GL_FALSE);
 
   if gra.etap = 1 then
   begin
+    glMatrixMode(GL_MODELVIEW);
+    glTranslatef(gra.jestkamera[0, 0], gra.jestkamera[0, 1], gra.jestkamera[0, 2]);
+
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
 
@@ -2804,13 +2804,18 @@ begin
     begin
       glDisable(GL_FOG);
     end;}
+  end
+  else
+  begin
+    glMatrixMode(GL_MODELVIEW);
+    glTranslatef(matka.x, matka.y, matka.z);
   end;
+
 
   gluQuadricTexture(dupa, GLU_TRUE);
   gluQuadricNormals(dupa, GLU_SMOOTH);
   gluQuadricOrientation(dupa, GLU_INSIDE);
 
-//  glTranslatef(matka.x, matka.y, matka.z);
 
   glRotatef(90, 1, 0, 0);
   if gra.etap <> 1 then
@@ -3527,16 +3532,16 @@ begin
           else
             glColor4f(0.1, 0.6, 0.1, 0.6);
           case a of
-            0: s := Format(STR_TITLE_SB_DIFFICULTY, [winieta.sandboxSettings.difficultyLevel]);
-            1: s := Format(STR_TITLE_SB_MAP_SIZE, [STR_TITLE_SB_MAP_SIZES[winieta.sandboxSettings.mapSize]]);
-            2: s := Format(STR_TITLE_SB_TERRAIN_HEIGHT, [STR_TITLE_SB_TERRAIN_HEIGHT_VALUES[winieta.sandboxSettings.terrainHeight]]);
-            3: s := Format(STR_TITLE_SB_WIND_STRENGTH, [STR_TITLE_SB_WIND_STRENGTH_VALUES[winieta.sandboxSettings.windStrength]]);
-            4: s := Format(STR_TITLE_SB_GRAVITY, [STR_TITLE_SB_GRAVITY_VALUES[winieta.sandboxSettings.gravity]]);
-            5: s := Format(STR_TITLE_SB_AIR_DENSITY, [STR_TITLE_SB_AIR_DENSITY_VALUES[winieta.sandboxSettings.airDensity]]);
-            6: s := Format(STR_TITLE_SB_LANDFIELDS_COUNT, [STR_TITLE_SB_LANDFIELDS_COUNT_VALUES[winieta.sandboxSettings.landfieldsCount]]);
-            7: s := Format(STR_TITLE_SB_SURVIVORS_COUNT, [STR_TITLE_SB_SURVIVORS_COUNT_VALUES[winieta.sandboxSettings.survivorsCount]]);
-            8: s := Format(STR_TITLE_SB_TURRETS_COUNT, [STR_TITLE_SB_TURRETS_COUNT_VALUES[winieta.sandboxSettings.turretsCount]]);
-            9: s := Format(STR_TITLE_SB_FIGHTERS_COUNT, [STR_TITLE_SB_FIGHTERS_COUNT_VALUES[winieta.sandboxSettings.fightersCount]]);
+            0: s := Format(STR_TITLE_SB_DIFFICULTY, [Config.SandboxSettings.difficultyLevel]);
+            1: s := Format(STR_TITLE_SB_MAP_SIZE, [STR_TITLE_SB_MAP_SIZES[Config.SandboxSettings.mapSize]]);
+            2: s := Format(STR_TITLE_SB_TERRAIN_HEIGHT, [STR_TITLE_SB_TERRAIN_HEIGHT_VALUES[Config.SandboxSettings.terrainHeight]]);
+            3: s := Format(STR_TITLE_SB_WIND_STRENGTH, [STR_TITLE_SB_WIND_STRENGTH_VALUES[Config.SandboxSettings.windStrength]]);
+            4: s := Format(STR_TITLE_SB_GRAVITY, [STR_TITLE_SB_GRAVITY_VALUES[Config.SandboxSettings.gravity]]);
+            5: s := Format(STR_TITLE_SB_AIR_DENSITY, [STR_TITLE_SB_AIR_DENSITY_VALUES[Config.SandboxSettings.airDensity]]);
+            6: s := Format(STR_TITLE_SB_LANDFIELDS_COUNT, [STR_TITLE_SB_LANDFIELDS_COUNT_VALUES[Config.SandboxSettings.landfieldsCount]]);
+            7: s := Format(STR_TITLE_SB_SURVIVORS_COUNT, [STR_TITLE_SB_SURVIVORS_COUNT_VALUES[Config.SandboxSettings.survivorsCount]]);
+            8: s := Format(STR_TITLE_SB_TURRETS_COUNT, [STR_TITLE_SB_TURRETS_COUNT_VALUES[Config.SandboxSettings.turretsCount]]);
+            9: s := Format(STR_TITLE_SB_FIGHTERS_COUNT, [STR_TITLE_SB_FIGHTERS_COUNT_VALUES[Config.SandboxSettings.fightersCount]]);
 
             10: s := STR_TITLE_SB_START_GAME;
             11: s := STR_TITLE_SB_RETURN;
@@ -4158,7 +4163,8 @@ begin
       glEnable(GL_CULL_FACE);
       glCullFace(GL_BACK);
 
-      rysuj_matke;
+      if gra.etap = 1 then
+        rysuj_matke;
 
       if (gra.etap = 1) and (ziemia.widac > 0) then
       begin
@@ -4172,6 +4178,9 @@ begin
         rysuj_krzaki;
       end;
 
+      if (gra.etap in [0, 2]) then
+        glDisable(GL_FOG);
+
       if (gra.etap = 2) and (intro.scena = 2) then
       begin
         if (intro.czas2 < 350) or (gra.rodzajmisji <> 0) then
@@ -4181,8 +4190,12 @@ begin
       end
       else if (gra.etap = 0) and (intro.scena = 0) then
         rysuj_planete(false, 0.3);
+      if (gra.etap in [0, 2]) then
+        glFogf(GL_FOG_DENSITY, 0.0005);
+//        glEnable(GL_FOG);
 
-//      rysuj_matke;
+      if (gra.etap in [0, 2]) then
+        rysuj_matke;
 
       if ((gra.etap = 0) and (intro.scena = 1)) or ((gra.etap = 1) and ((kamera <> 7) or gra.pauza) and gracz.zyje) then
         rysuj_gracza;
@@ -4200,8 +4213,12 @@ begin
         rysuj_kokpit;
 
       DrawObjectShadows;
+      if (gra.etap in [0, 2]) then
+        glDisable(GL_FOG);
       rysuj_dymy;
       rysuj_iskry;
+      if (gra.etap in [0, 2]) then
+        glEnable(GL_FOG);
 
       case gra.etap of
         0:

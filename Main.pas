@@ -264,6 +264,7 @@ begin
   begin
     DisableFullscreen(self, Config.Screen);
   end;
+  Config.SaveConfig;
 //  SFX.Cleanup;
 end;
 

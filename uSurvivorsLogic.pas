@@ -2,7 +2,8 @@ unit uSurvivorsLogic;
 
 interface
 uses
-  system.generics.collections;
+  system.generics.collections,
+  Math;
 
 type
 
@@ -387,7 +388,7 @@ end;
 
 function TSurvivor.CanFollowLander(ALanderDist: extended): boolean;
 const
-  ALIEN_FOLLOWS_LANDER_DIST = 500;
+  ALIEN_FOLLOWS_LANDER_DIST = 400;
 begin
   result :=
     (uciekaodgracza <= 0) and
@@ -398,7 +399,6 @@ end;
 
 function TSurvivor.MustRunFromLander(ALanderDist: extended): boolean;
 const
-  ALIEN_FOLLOWS_LANDER_DIST = 500;
   RUNAWAY_FROM_LANDER_DIST = 70;
 begin
   result :=
@@ -413,12 +413,29 @@ procedure TSurvivor.LandOnGround;
 const
   MIN_HEIGHT_TO_INJURE = 20;
 var
-  hitValue: extended;
+  hitValue, minY, splashStrength: extended;
+  a: integer;
 begin
   if self.y <= self.fallingHeightStart - MIN_HEIGHT_TO_INJURE then
   begin
     hitValue := ((self.fallingHeightStart - self.y - MIN_HEIGHT_TO_INJURE) * abs(dy)) / 30;
+    if hitValue > 2 then
+      hitValue := 2;
+
+    splashStrength := Min(hitValue / 8, 0.13);
     self.sila := self.sila - hitValue;
+
+    minY := gdzie_y(x, z, y) + 1;
+    for a := 0 to round(hitValue * 20) do
+      nowy_dym(
+        x + (-0.5 + random),
+        minY,
+        z + (-0.5 + random),
+        (random - 0.5) * (0.2 + splashStrength) + dx,
+        (random - 0.3) * (0.15 + splashStrength),
+        (random - 0.5) * (0.2 + splashStrength) + dz,
+        0.2 + random * 0.5, 3);
+
   end;
   self.fallingHeightStart := self.y;
 end;
@@ -598,7 +615,7 @@ begin
 
             if s < RUNAWAY_FROM_LANDER_STOP_DIST then
             begin
-              if gdzie_y(x + sin(kier * pi180) / 3, z - cos(kier * pi180) / 3, y) < gdzie_y(x, z, y) + 0.25 then
+              if abs(gdzie_y(x + sin(kier * pi180) / 3, z - cos(kier * pi180) / 3, y) - gdzie_y(x, z, y)) < 0.2 then
               begin
                 x := x + sin(kier * pi180) / (2 + random * 3);
                 z := z - cos(kier * pi180) / (2 + random * 3);
@@ -707,8 +724,12 @@ begin
             else if (kier < 0) then
               kier := kier + 360;
 
-            x := x + sin(kier * pi180) * (speed + ((random - 0.5) * 0.05)); // (2 + random * 3);
-            z := z - cos(kier * pi180) * (speed + ((random - 0.5) * 0.05)); // (2 + random * 3);
+            k := gdzie_y(x + sin(kier * pi180) / 3, z - cos(kier * pi180) / 3, y) - gdzie_y(x, z, y); //k>0: going up
+            if (k < 1) and (k > -1) then
+            begin
+              x := x + sin(kier * pi180) * (speed + ((random - 0.5) * 0.05)); // (2 + random * 3);
+              z := z - cos(kier * pi180) * (speed + ((random - 0.5) * 0.05)); // (2 + random * 3);
+            end;
             if y <= gdzie_y(x, z, y) then
             begin
               LandOnGround;

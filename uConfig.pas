@@ -73,6 +73,24 @@ type
     procedure SetDefaults;
   end;
 
+  TSandboxSettings = class
+  public
+    mapSize: integer; // 0 = small .. 3 = big
+    terrainHeight: integer; // 0 = flat .. 4 = high
+    difficultyLevel: integer; // 0 .. RANDOM_GAME_MAX_LEVELS (24)
+    windStrength: integer; // 0 = none .. 3 = strong
+    gravity: integer; // 0 = very low .. 3 = high
+    airDensity: integer;  // 0 = very low .. high
+    fightersCount: integer;  // 0 = none .. 3 = many
+    landfieldsCount: integer;  // 0 = none .. 3 = many
+    survivorsCount: integer;  // 0 = none .. 3 = many
+    turretsCount: integer;  // 0 = none .. 3 = many
+
+    function AsJson: TJSONObject;
+    procedure FromJson(sourceData: TJSONValue);
+    procedure SetDefaults;
+  end;
+
   TConfig = class(TConfigBase)
   private
   protected
@@ -83,6 +101,7 @@ type
     Sound: TSoundConfig;
     Display: TDisplayConfig;
     GameController: TGameController;
+    SandboxSettings: TSandboxSettings;
 
     constructor Create(fileName: string); override;
     destructor Destroy; override;
@@ -113,6 +132,7 @@ begin
   sound := TSoundConfig.Create;
   display := TDisplayConfig.Create;
   GameController := TGameController.Create;
+  SandboxSettings := TSandboxSettings.Create;
 end;
 
 destructor TConfig.Destroy;
@@ -121,6 +141,7 @@ begin
   sound.Free;
   display.Free;
   GameController.Free;
+  SandboxSettings.Free;
 
   inherited;
 end;
@@ -131,6 +152,14 @@ begin
   Sound.FromJson(data.GetValue('Sound'));
   Display.FromJson(data.GetValue('Display'));
   GameController.FromJson(data.GetValue('GameController'));
+  try
+    SandboxSettings.FromJson(data.GetValue('SandboxSettings'));
+  except
+    on e: EJSONException do
+    begin
+      //use default
+    end;
+  end;
 end;
 
 procedure TConfig.SaveData(data: TJSONObject);
@@ -139,6 +168,7 @@ begin
   data.AddPair('Sound', Sound.AsJson);
   data.AddPair('Display', Display.AsJson);
   data.AddPair('GameController', GameController.AsJson);
+  data.AddPair('SandboxSettings', SandboxSettings.AsJson);
 end;
 
 procedure TConfig.PrepareControls;
@@ -193,6 +223,7 @@ begin
   SetDefaultControls;
   Sound.SetDefaults;
   Display.SetDefaults;
+  SandboxSettings.SetDefaults;
 end;
 
 { TScreenConfig }
@@ -276,6 +307,51 @@ begin
   except
     result := DefaultValue;
   end;
+end;
+
+{ TSandboxSettings }
+
+function TSandboxSettings.AsJson: TJSONObject;
+begin
+  result := TJSONObject.Create;
+  result.AddPair('mapSize', TJSONNumber.Create(mapSize));
+  result.AddPair('terrainHeight', TJSONNumber.Create(terrainHeight));
+  result.AddPair('difficultyLevel', TJSONNumber.Create(difficultyLevel));
+  result.AddPair('windStrength', TJSONNumber.Create(windStrength));
+  result.AddPair('gravity', TJSONNumber.Create(gravity));
+  result.AddPair('airDensity', TJSONNumber.Create(airDensity));
+  result.AddPair('fightersCount', TJSONNumber.Create(fightersCount));
+  result.AddPair('landfieldsCount', TJSONNumber.Create(landfieldsCount));
+  result.AddPair('survivorsCount', TJSONNumber.Create(survivorsCount));
+  result.AddPair('turretsCount', TJSONNumber.Create(turretsCount));
+end;
+
+procedure TSandboxSettings.FromJson(sourceData: TJSONValue);
+begin
+  mapSize := sourceData.GetValue<Integer>('mapSize');
+  terrainHeight := sourceData.GetValue<Integer>('terrainHeight');
+  difficultyLevel := sourceData.GetValue<Integer>('difficultyLevel');
+  windStrength := sourceData.GetValue<Integer>('windStrength');
+  gravity := sourceData.GetValue<Integer>('gravity');
+  airDensity := sourceData.GetValue<Integer>('airDensity');
+  fightersCount := sourceData.GetValue<Integer>('fightersCount');
+  landfieldsCount := sourceData.GetValue<Integer>('landfieldsCount');
+  survivorsCount := sourceData.GetValue<Integer>('survivorsCount');
+  turretsCount := sourceData.GetValue<Integer>('turretsCount');
+end;
+
+procedure TSandboxSettings.SetDefaults;
+begin
+  mapSize := 2;
+  terrainHeight := 2;
+  difficultyLevel := 5;
+  windStrength := 1;
+  gravity := 1;
+  airDensity := 1;
+  fightersCount := 1;
+  landfieldsCount := 1;
+  survivorsCount := 2;
+  turretsCount := 1;
 end;
 
 end.

@@ -266,19 +266,6 @@ type
     nazwamp3: string;
   end;
 
-  TSandboxSettings = record
-    mapSize: integer; // 0 = small .. 3 = big
-    terrainHeight: integer; // 0 = flat .. 4 = high
-    difficultyLevel: integer; // 0 .. RANDOM_GAME_MAX_LEVELS (24)
-    windStrength: integer; // 0 = none .. 3 = strong
-    gravity: integer; // 0 = very low .. 3 = high
-    airDensity: integer;  // 0 = very low .. high
-    fightersCount: integer;  // 0 = none .. 3 = many
-    landfieldsCount: integer;  // 0 = none .. 3 = many
-    survivorsCount: integer;  // 0 = none .. 3 = many
-    turretsCount: integer;  // 0 = none .. 3 = many
-  end;
-
   TIntro = record
     czas, czas2, scena: integer;
   end;
@@ -300,7 +287,6 @@ type
     corobi: byte; { 0:winieta, 1:sklep, 2:zapis gry, 3:wczytanie gry, 4: wybór epizodu, 5: sandbox menu }
 
     skrol: integer;
-    sandboxSettings: TSandboxSettings;
   end;
 
   TEpisode = record
