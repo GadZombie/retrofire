@@ -4734,10 +4734,41 @@ begin
                 Sfx.graj_dzwiek(16, 0, 0, 0, false);
               end;
             end;
+          2:
+            begin
+              if frmMain.PwrInp.KeyPressed[DIK_RIGHT] then
+              begin
+                inc(Config.Display.Brightness, 1);
+                if Config.Display.Brightness > 10 then
+                  Config.Display.Brightness := 10;
+                Sfx.graj_dzwiek(16, 0, 0, 0, false);
+              end;
+              if frmMain.PwrInp.KeyPressed[DIK_LEFT] then
+              begin
+                dec(Config.Display.Brightness, 1);
+                if Config.Display.Brightness < 0 then
+                  Config.Display.Brightness := 0;
+                Sfx.graj_dzwiek(16, 0, 0, 0, false);
+              end;
+              if frmMain.PwrInp.KeyPressed[DIK_PGDN] then
+              begin
+                inc(Config.Display.Brightness, 5);
+                if Config.Display.Brightness > 10 then
+                  Config.Display.Brightness := 10;
+                Sfx.graj_dzwiek(16, 0, 0, 0, false);
+              end;
+              if frmMain.PwrInp.KeyPressed[DIK_PGUP] then
+              begin
+                dec(Config.Display.Brightness, 5);
+                if Config.Display.Brightness < 0 then
+                  Config.Display.Brightness := 0;
+                Sfx.graj_dzwiek(16, 0, 0, 0, false);
+              end;
+            end;
         end;
 
         if frmMain.PwrInp.KeyPressed[DIK_ESCAPE] or (
-            (frmMain.PwrInp.KeyPressed[DIK_space] or frmMain.PwrInp.KeyPressed[DIK_RETURN]) and (winieta.kursor = 2)
+            (frmMain.PwrInp.KeyPressed[DIK_space] or frmMain.PwrInp.KeyPressed[DIK_RETURN]) and (winieta.kursor = 3)
         ) then
         begin
           if gra.koniecgry then

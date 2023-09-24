@@ -3583,7 +3583,7 @@ begin
         glColor4f(0.1, 0.6, 0.1, 0.8);
         pisz2d(STR_TITLE_ST_SETTINGS, currentScreenParams.MenuCenter, height - 90, 12, 1);
 
-        for a := 0 to 2 do
+        for a := 0 to 3 do
         begin
           if winieta.kursor = a then
             glColor4f(0.2, 1.0, 0.2, 0.7)
@@ -3592,7 +3592,8 @@ begin
           case a of
             0: s := Format(STR_TITLE_ST_SFX_VOLUME, [trunc(Config.Sound.SoundVolume / 2.55)]);
             1: s := Format(STR_TITLE_ST_MUSIC_VOLUME, [trunc(Config.Sound.MusicVolume / 2.55)]);
-            2: begin
+            2: s := Format(STR_TITLE_ST_BRIGHTNESS, [trunc(Config.Display.Brightness * 10)]);
+            3: begin
               if gra.koniecgry then
                 s := STR_TITLE_ST_RETURN_TO_TITLE
               else
@@ -3602,7 +3603,7 @@ begin
 
           b3 := 85;
 
-          if a = 2 then
+          if a = 3 then
             b1 := 450
           else
             b1 := 270 + a * 20;
@@ -4276,10 +4277,9 @@ begin
     end
     else
     begin // winieta
-
-      lmodel_ambient[0] := 0.0;
-      lmodel_ambient[1] := 0.0;
-      lmodel_ambient[2] := 0.0;
+      lmodel_ambient[0] := Config.Display.Brightness / 10;
+      lmodel_ambient[1] := Config.Display.Brightness / 10;
+      lmodel_ambient[2] := Config.Display.Brightness / 10;
       lmodel_ambient[3] := 1.0;
       glLightModelfv(GL_LIGHT_MODEL_AMBIENT, @lmodel_ambient);
 
