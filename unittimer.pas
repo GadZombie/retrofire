@@ -3033,7 +3033,8 @@ end;
 // ---------------------------------------------------------------------------
 procedure ruch_matki;
 const
-  FIRE_SIZE = 50; // 20.1 + random * 10
+  FIRE_SIZE = 60; // 20.1 + random * 10
+  FIRE_FADE_OUT_SPEED = 0.01; //0.02
 begin
   // matka
   if gra.etap = 1 then
@@ -3054,9 +3055,9 @@ begin
   else
   begin
     nowy_dym(matka.x + 400, matka.y - 20, matka.z - 205, 10 + random * 4, (random - 0.5) / 20, (random - 0.5) / 20,
-      FIRE_SIZE + random * 10, 0, 0.02);
+      FIRE_SIZE + random * 10, 0, FIRE_FADE_OUT_SPEED);
     nowy_dym(matka.x + 400, matka.y - 20, matka.z + 205, 10 + random * 4, (random - 0.5) / 20, (random - 0.5) / 20,
-      FIRE_SIZE + random * 10, 0, 0.02);
+      FIRE_SIZE + random * 10, 0, FIRE_FADE_OUT_SPEED);
   end;
 end;
 
@@ -4133,8 +4134,8 @@ begin
           Sfx.graj_dzwiek(16, 0, 0, 0, false);
         end;
         if winieta.kursor < 0 then
-          winieta.kursor := 5;
-        if winieta.kursor > 5 then
+          winieta.kursor := 6;
+        if winieta.kursor > 6 then
           winieta.kursor := 0;
 
         case winieta.kursor of
@@ -4235,6 +4236,12 @@ begin
           5:
             if (frmMain.PwrInp.KeyPressed[DIK_space]) or (frmMain.PwrInp.KeyPressed[DIK_RETURN]) then
             begin
+              winieta.corobi := 6;
+              winieta.kursor := 0;
+            end;
+          6:
+            if (frmMain.PwrInp.KeyPressed[DIK_space]) or (frmMain.PwrInp.KeyPressed[DIK_RETURN]) then
+            begin
               frmMain.close;
             end;
         end;
@@ -4280,7 +4287,7 @@ begin
             (frmMain.PwrInp.KeyPressed[DIK_space] or frmMain.PwrInp.KeyPressed[DIK_RETURN]) and (winieta.kursor = 10)
         ) then
         begin
-          winieta.kursor := 0;
+          winieta.kursor := 4;
           if winieta.corobi = 1 then
             winieta.corobi := 2
           else
@@ -4397,6 +4404,7 @@ begin
         begin
           winieta.corobi := 0;
           winieta.skrol := 0;
+          winieta.kursor := 3;
         end;
 
       end;
@@ -4637,6 +4645,115 @@ begin
 
       end;
 
+
+    6:
+      begin // settings
+        if frmMain.PwrInp.KeyPressed[DIK_DOWN] then
+        begin
+          inc(winieta.kursor);
+          Sfx.graj_dzwiek(16, 0, 0, 0, false);
+        end;
+        if frmMain.PwrInp.KeyPressed[DIK_UP] then
+        begin
+          dec(winieta.kursor);
+          Sfx.graj_dzwiek(16, 0, 0, 0, false);
+        end;
+        if winieta.kursor < 0 then
+          winieta.kursor := 2;
+        if winieta.kursor > 2 then
+          winieta.kursor := 0;
+
+        case winieta.kursor of
+          0:
+            begin
+              if frmMain.PwrInp.KeyPressed[DIK_RIGHT] then
+              begin
+                inc(Config.Sound.SoundVolume, 10);
+                if Config.Sound.SoundVolume > 255 then
+                  Config.Sound.SoundVolume := 255;
+                FSOUND_SetSFXMasterVolume(Config.Sound.SoundVolume);
+                Sfx.graj_dzwiek(16, 0, 0, 0, false);
+              end;
+              if frmMain.PwrInp.KeyPressed[DIK_LEFT] then
+              begin
+                dec(Config.Sound.SoundVolume, 10);
+                if Config.Sound.SoundVolume < 0 then
+                  Config.Sound.SoundVolume := 0;
+                FSOUND_SetSFXMasterVolume(Config.Sound.SoundVolume);
+                Sfx.graj_dzwiek(16, 0, 0, 0, false);
+              end;
+              if frmMain.PwrInp.KeyPressed[DIK_PGDN] then
+              begin
+                inc(Config.Sound.SoundVolume, 100);
+                if Config.Sound.SoundVolume > 255 then
+                  Config.Sound.SoundVolume := 255;
+                FSOUND_SetSFXMasterVolume(Config.Sound.SoundVolume);
+                Sfx.graj_dzwiek(16, 0, 0, 0, false);
+              end;
+              if frmMain.PwrInp.KeyPressed[DIK_PGUP] then
+              begin
+                dec(Config.Sound.SoundVolume, 100);
+                if Config.Sound.SoundVolume < 0 then
+                  Config.Sound.SoundVolume := 0;
+                FSOUND_SetSFXMasterVolume(Config.Sound.SoundVolume);
+                Sfx.graj_dzwiek(16, 0, 0, 0, false);
+              end;
+            end;
+          1:
+            begin
+              if frmMain.PwrInp.KeyPressed[DIK_RIGHT] then
+              begin
+                inc(Config.Sound.MusicVolume, 10);
+                if Config.Sound.MusicVolume > 255 then
+                  Config.Sound.MusicVolume := 255;
+                FSOUND_SetVolumeAbsolute(muzchannel, Config.Sound.MusicVolume);
+                Sfx.graj_dzwiek(16, 0, 0, 0, false);
+              end;
+              if frmMain.PwrInp.KeyPressed[DIK_LEFT] then
+              begin
+                dec(Config.Sound.MusicVolume, 10);
+                if Config.Sound.MusicVolume < 0 then
+                  Config.Sound.MusicVolume := 0;
+                FSOUND_SetVolumeAbsolute(muzchannel, Config.Sound.MusicVolume);
+                Sfx.graj_dzwiek(16, 0, 0, 0, false);
+              end;
+              if frmMain.PwrInp.KeyPressed[DIK_PGDN] then
+              begin
+                inc(Config.Sound.MusicVolume, 100);
+                if Config.Sound.MusicVolume > 255 then
+                  Config.Sound.MusicVolume := 255;
+                FSOUND_SetVolumeAbsolute(muzchannel, Config.Sound.MusicVolume);
+                Sfx.graj_dzwiek(16, 0, 0, 0, false);
+              end;
+              if frmMain.PwrInp.KeyPressed[DIK_PGUP] then
+              begin
+                dec(Config.Sound.MusicVolume, 100);
+                if Config.Sound.MusicVolume < 0 then
+                  Config.Sound.MusicVolume := 0;
+                FSOUND_SetVolumeAbsolute(muzchannel, Config.Sound.MusicVolume);
+                Sfx.graj_dzwiek(16, 0, 0, 0, false);
+              end;
+            end;
+        end;
+
+        if frmMain.PwrInp.KeyPressed[DIK_ESCAPE] or (
+            (frmMain.PwrInp.KeyPressed[DIK_space] or frmMain.PwrInp.KeyPressed[DIK_RETURN]) and (winieta.kursor = 2)
+        ) then
+        begin
+          if gra.koniecgry then
+          begin
+            winieta.corobi := 0;
+            winieta.skrol := 0;
+            winieta.kursor := 5;
+          end
+          else
+          begin
+            winieta.jest := false;
+          end;
+        end;
+
+      end;
+
   end;
 
 end;
@@ -4763,7 +4880,12 @@ begin
                 else
                   winieta.corobi := 0;
                 winieta.skrol := 0;
-                // FSOUND_SetPaused(muzchannel, true);
+              end;
+              if (frmMain.PwrInp.KeyPressed[DIK_S]) then
+              begin
+                winieta.jest := true;
+                winieta.corobi := 6;
+                winieta.kursor := 0;
               end;
             end;
           end;
@@ -4775,8 +4897,6 @@ begin
           end;
       end;
 
-      // tymczasowo
-      // if frmMain.PwrInp.Keys[DIK_F1] then nowa_gra;
     end
     else
     begin

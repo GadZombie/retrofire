@@ -757,6 +757,7 @@ begin
     glColor4f(0.4, 0.8, 0.3, 0.8);
     pisz2d(Format(STR_PRESS_KEY_TO_CONTINUE_GAME, ['ESC']), width div 2, height div 2, 7, 1);
     pisz2d(Format(STR_PRESS_KEY_TO_QUIT, ['Q']), width div 2, height div 2 - 30, 7, 1);
+    pisz2d(Format(STR_PRESS_KEY_TO_SETTINGS, ['S']), width div 2, height div 2 - 60, 7, 1);
   end;
 
   { pisz2d('czas='+inttostr(cheaty.czas_od_ostatniej_litery), 50, height -50, 5);
@@ -2647,7 +2648,7 @@ var
   j: real;
 begin
   glPushMatrix;
-  glMaterialf(GL_FRONT, GL_SHININESS, 120);
+  glMaterialf(GL_FRONT, GL_SHININESS, 60);
   glMaterialfv(GL_FRONT, GL_AMBIENT, @mat_1a);
   glMaterialfv(GL_FRONT, GL_DIFFUSE, @mata);
   glMaterialfv(GL_FRONT, GL_SPECULAR, @mat);
@@ -3166,32 +3167,38 @@ begin
         else
           glColor4f(0.1, 0.6, 0.1, 0.6);
         pisz2d(Format(STR_TITLE_NEW_GAME_RANDOM, [winieta.poziomtrudnosci]), currentScreenParams.MenuCenter,
-          height - 280, 8 + ord(winieta.kursor = 1), 1);
+          height - 275, 8 + ord(winieta.kursor = 1), 1);
 
         if winieta.kursor = 2 then
           glColor4f(0.2, 1.0, 0.2, 0.7)
         else
           glColor4f(0.1, 0.6, 0.1, 0.6);
         pisz2d(STR_TITLE_SANDBOX_MODE, currentScreenParams.MenuCenter,
-          height - 310, 8 + ord(winieta.kursor = 2), 1);
+          height - 300, 8 + ord(winieta.kursor = 2), 1);
 
         if winieta.kursor = 3 then
           glColor4f(0.2, 1.0, 0.2, 0.7)
         else
           glColor4f(0.1, 0.6, 0.1, 0.6);
-        pisz2d(STR_TITLE_ADDITIONAL_MISSIONS, currentScreenParams.MenuCenter, height - 340, 8 + ord(winieta.kursor = 3), 1);
+        pisz2d(STR_TITLE_ADDITIONAL_MISSIONS, currentScreenParams.MenuCenter, height - 325, 8 + ord(winieta.kursor = 3), 1);
 
         if winieta.kursor = 4 then
           glColor4f(0.2, 1.0, 0.2, 0.7)
         else
           glColor4f(0.1, 0.6, 0.1, 0.6);
-        pisz2d(STR_TITLE_LOAD_GAME, currentScreenParams.MenuCenter, height - 370, 8 + ord(winieta.kursor = 4), 1);
+        pisz2d(STR_TITLE_LOAD_GAME, currentScreenParams.MenuCenter, height - 350, 8 + ord(winieta.kursor = 4), 1);
 
         if winieta.kursor = 5 then
           glColor4f(0.2, 1.0, 0.2, 0.7)
         else
           glColor4f(0.1, 0.6, 0.1, 0.6);
-        pisz2d(STR_TITLE_EXIT, currentScreenParams.MenuCenter, height - 400, 8 + ord(winieta.kursor = 5), 1);
+        pisz2d(STR_TITLE_SETTINGS, currentScreenParams.MenuCenter, height - 375, 8 + ord(winieta.kursor = 5), 1);
+
+        if winieta.kursor = 6 then
+          glColor4f(0.2, 1.0, 0.2, 0.7)
+        else
+          glColor4f(0.1, 0.6, 0.1, 0.6);
+        pisz2d(STR_TITLE_EXIT, currentScreenParams.MenuCenter, height - 400, 8 + ord(winieta.kursor = 6), 1);
 
         glColor4f(1.0, 0.2, 0.1, 0.6);
         pisz2d(STR_TITLE_VERSION + PROGRAM_VERSION, currentScreenParams.MenuCenter, 57, 4, 1);
@@ -3565,6 +3572,42 @@ begin
             b2 := 8;
             b3 := 85;
           end;
+
+          pisz2d(s, b3, height - b1, b2);
+        end;
+
+      end;
+
+    6:
+      begin // settings
+        glColor4f(0.1, 0.6, 0.1, 0.8);
+        pisz2d(STR_TITLE_ST_SETTINGS, currentScreenParams.MenuCenter, height - 90, 12, 1);
+
+        for a := 0 to 2 do
+        begin
+          if winieta.kursor = a then
+            glColor4f(0.2, 1.0, 0.2, 0.7)
+          else
+            glColor4f(0.1, 0.6, 0.1, 0.6);
+          case a of
+            0: s := Format(STR_TITLE_ST_SFX_VOLUME, [trunc(Config.Sound.SoundVolume / 2.55)]);
+            1: s := Format(STR_TITLE_ST_MUSIC_VOLUME, [trunc(Config.Sound.MusicVolume / 2.55)]);
+            2: begin
+              if gra.koniecgry then
+                s := STR_TITLE_ST_RETURN_TO_TITLE
+              else
+                s := STR_TITLE_ST_RETURN_TO_GAME;
+            end;
+          end;
+
+          b3 := 85;
+
+          if a = 2 then
+            b1 := 450
+          else
+            b1 := 270 + a * 20;
+
+          b2 := 8;
 
           pisz2d(s, b3, height - b1, b2);
         end;
