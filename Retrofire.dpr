@@ -50,7 +50,8 @@ uses
   ZGLGraphProcs in 'Components\ZombiEGL\ZGLGraphProcs.pas',
   uSurvivorsLogic in 'uSurvivorsLogic.pas',
   uSurvivorsRender in 'uSurvivorsRender.pas',
-  uRenderObjects in 'uRenderObjects.pas';
+  uRenderObjects in 'uRenderObjects.pas',
+  uGameMath in 'uGameMath.pas';
 
 {$R *.RES}
 

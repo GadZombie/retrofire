@@ -27,7 +27,8 @@ implementation
 
 uses
   uRenderConst, ZGLGraphProcs, Main, ZGLTextures, Forms, GlobalTypes, uConfig, uSaveGame,
-  uSmokesRender, uSurvivorsLogic, uSurvivorsRender, uRenderObjects;
+  uSmokesRender, uSurvivorsLogic, uSurvivorsRender, uRenderObjects,
+  uGameMath;
 
 var
   // listy:
@@ -759,6 +760,13 @@ begin
     pisz2d(Format(STR_PRESS_KEY_TO_QUIT, ['Q']), width div 2, height div 2 - 30, 7, 1);
     pisz2d(Format(STR_PRESS_KEY_TO_SETTINGS, ['S']), width div 2, height div 2 - 60, 7, 1);
   end;
+
+{
+  glColor4f(1.0, 1.0, 1.0, 1.0);
+  pisz2d(format('G X:%4.2f Z:%4.2f', [gracz.x, gracz.z]), 50, height - 320, 3, 0);
+  pisz2d(format('Z PX:%4.2f PZ:%4.2f', [ziemia.px, ziemia.pz]), 50, height - 330, 3, 0);
+  pisz2d(format('Z wX:%4d wZ:%4d WLK:%3d', [ziemia.wx, ziemia.wz, ziemia.wlk]), 50, height - 340, 3, 0);
+}
 
   { pisz2d('czas='+inttostr(cheaty.czas_od_ostatniej_litery), 50, height -50, 5);
     for a:=0 to high(cheaty.wpisany_tekst) do
@@ -2063,7 +2071,7 @@ end;
 procedure rysuj_smieci;
 var
   a: integer;
-  xod, xdo, zod, zdo, x1, z1: real;
+  xod, xdo, zod, zdo, x1, z1: extended;
 begin
 
   xod := gracz.x - widocznosc * ziemia.wlk;
@@ -2076,18 +2084,8 @@ begin
       with smiec[a] do
       begin
 
-        if x < xod then
-          x1 := x - ziemia.px * 2
-        else if x > xdo then
-          x1 := x + ziemia.px * 2
-        else
-          x1 := x;
-        if z < zod then
-          z1 := z - ziemia.pz * 2
-        else if z > zdo then
-          z1 := z + ziemia.pz * 2
-        else
-          z1 := z;
+        x1 := TGameMath.ToScreenX(x);
+        z1 := TGameMath.ToScreenZ(z);
 
         if (x1 >= xod) and (x1 <= xdo) and (z1 >= zod) and (z1 <= zdo) then
         begin
@@ -2125,7 +2123,7 @@ procedure rysuj_iskry;
 
 var
   a: integer;
-  xod, xdo, zod, zdo, x1, z1: real;
+  xod, xdo, zod, zdo, x1, z1: extended;
 begin
   glEnable(GL_COLOR_MATERIAL);
   glEnable(GL_BLEND);
@@ -2137,7 +2135,9 @@ begin
       with iskry[a] do
       begin
         glPushMatrix;
-        glTranslatef(x, y, z);
+        x1 := TGameMath.ToScreenX(x);
+        z1 := TGameMath.ToScreenZ(z);
+        glTranslatef(x1, y, z1);
 
         { glRotatef(kier-90,0,-1,0);
           glRotatef(kierdol,0,0,-1);
@@ -2380,7 +2380,7 @@ procedure rysuj_dzialka;
 
 var
   a: integer;
-  xod, xdo, zod, zdo, x1, z1: real;
+  xod, xdo, zod, zdo, x1, z1: extended;
 begin
   if ziemia.widac <= 0 then
     exit;
@@ -2395,18 +2395,8 @@ begin
       with dzialko[a] do
       begin
 
-        if x < xod then
-          x1 := x - ziemia.px * 2
-        else if x > xdo then
-          x1 := x + ziemia.px * 2
-        else
-          x1 := x;
-        if z < zod then
-          z1 := z - ziemia.pz * 2
-        else if z > zdo then
-          z1 := z + ziemia.pz * 2
-        else
-          z1 := z;
+        x1 := TGameMath.ToScreenX(x);
+        z1 := TGameMath.ToScreenZ(z);
 
         if (x1 >= xod) and (x1 <= xdo) and (z1 >= zod) and (z1 <= zdo) then
         begin
@@ -2486,6 +2476,7 @@ procedure rysuj_rakiety;
 
 var
   a, b: integer;
+  x1, z1: extended;
 begin
   glDisable(GL_COLOR_MATERIAL);
 
@@ -2495,7 +2486,9 @@ begin
       begin
 
         glPushMatrix;
-        glTranslatef(x, y, z);
+        x1 := TGameMath.ToScreenX(x);
+        z1 := TGameMath.ToScreenZ(z);
+        glTranslatef(x1, y, z1);
 
         glRotatef(kier - 90, 0, -1, 0);
         glRotatef(kierdol, 0, 0, -1);
@@ -2541,7 +2534,7 @@ procedure rysuj_mysliwce;
 
 var
   a: integer;
-  xod, xdo, zod, zdo, x1, z1: real;
+  xod, xdo, zod, zdo, x1, z1: extended;
 begin
   xod := gracz.x - widocznosc * ziemia.wlk;
   xdo := gracz.x + widocznosc * ziemia.wlk;
@@ -2553,18 +2546,8 @@ begin
       with mysliwiec[a] do
       begin
 
-        if x < xod then
-          x1 := x - ziemia.px * 2
-        else if x > xdo then
-          x1 := x + ziemia.px * 2
-        else
-          x1 := x;
-        if z < zod then
-          z1 := z - ziemia.pz * 2
-        else if z > zdo then
-          z1 := z + ziemia.pz * 2
-        else
-          z1 := z;
+        x1 := TGameMath.ToScreenX(x);
+        z1 := TGameMath.ToScreenZ(z);
 
         if (x1 >= xod) and (x1 <= xdo) and (z1 >= zod) and (z1 <= zdo) then
         begin
@@ -2606,33 +2589,6 @@ begin
           rysuj_swiatelko(-7.2, 0.7, 3, 6, 1, 1, 0.9, 0.7 + random * 0.05);
 
           glPopMatrix;
-
-{          j := (y - gdzie_y(x, z, y)) / 400;
-          if j > 0 then
-          begin
-            if j > 0.6 then
-              j := 0.6;
-            glPushMatrix;
-            glTranslatef(x1, 0, z1);
-            wlacz_teksture(4);
-            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-            glEnable(GL_BLEND);
-            glEnable(GL_COLOR_MATERIAL);
-            glColor4f(1, 1, 1, 1 - j);
-            glBegin(GL_QUADS);
-            glTexCoord2f(0, 1);
-            glVertex3f(-7 - 12 * j, gdzie_y(x - 7 - 12 * j, z + 7 + 12 * j, y) + 0.2, +7 + 12 * j);
-            glTexCoord2f(1, 1);
-            glVertex3f(+7 + 12 * j, gdzie_y(x + 7 + 12 * j, z + 7 + 12 * j, y) + 0.2, +7 + 12 * j);
-            glTexCoord2f(1, 0);
-            glVertex3f(+7 + 12 * j, gdzie_y(x + 7 + 12 * j, z - 7 - 12 * j, y) + 0.2, -7 - 12 * j);
-            glTexCoord2f(0, 0);
-            glVertex3f(-7 - 12 * j, gdzie_y(x - 7 - 12 * j, z - 7 - 12 * j, y) + 0.2, -7 - 12 * j);
-            glEnd;
-            glDisable(GL_BLEND);
-            wylacz_teksture;
-            glPopMatrix;
-          end;          }
         end;
       end;
 end;

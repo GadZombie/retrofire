@@ -15,13 +15,14 @@ uses
   ZGLTextures,
   ZGLGraphProcs,
   uRenderConst,
+  uGameMath,
   unitTimer;
 
 // ---------------------------------------------------------------------------
 procedure rysuj_dymy;
 var
   a: integer;
-  xod, xdo, zod, zdo, x1, z1: real;
+  xod, xdo, zod, zdo, x1, z1: extended;
 begin
   // dym
   glPushAttrib(GL_ALL_ATTRIB_BITS);
@@ -47,18 +48,8 @@ begin
 
         if gra.etap = 1 then
         begin
-          if x < xod then
-            x1 := x - ziemia.px * 2
-          else if x > xdo then
-            x1 := x + ziemia.px * 2
-          else
-            x1 := x;
-          if z < zod then
-            z1 := z - ziemia.pz * 2
-          else if z > zdo then
-            z1 := z + ziemia.pz * 2
-          else
-            z1 := z;
+          x1 := TGameMath.ToScreenX(x);
+          z1 := TGameMath.ToScreenZ(z);
         end
         else
         begin
