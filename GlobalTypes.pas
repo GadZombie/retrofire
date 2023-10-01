@@ -2,6 +2,7 @@ unit GlobalTypes;
 
 interface
 uses
+  System.Generics.Collections,
   GL, obj;
 
 type
@@ -308,7 +309,7 @@ type
     bigHeads: boolean;
 
     czas_od_ostatniej_litery: integer; // zmniejsza sie do 0 i jesli dojdzie, to staje, a wpisywana_litera sie zeruje
-    wpisany_tekst: array of byte;
+    wpisany_tekst: TList<byte>;
   end;
 
 implementation

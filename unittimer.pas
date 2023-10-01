@@ -3210,7 +3210,7 @@ begin
   begin
     dec(cheaty.czas_od_ostatniej_litery);
     if cheaty.czas_od_ostatniej_litery <= 0 then
-      setlength(cheaty.wpisany_tekst, 0);
+      cheaty.wpisany_tekst.Clear;
   end;
 
   // sprawdz czy jakas litera nie zostala wcisnieta
@@ -3220,15 +3220,14 @@ begin
     begin // jesli tak
       cheaty.czas_od_ostatniej_litery := 100;
       // dodaj litere do wpisywanego tekstu:
-      setlength(cheaty.wpisany_tekst, length(cheaty.wpisany_tekst) + 1);
-      cheaty.wpisany_tekst[high(cheaty.wpisany_tekst)] := litery[a];
+      cheaty.wpisany_tekst.Add(litery[a]);
 
       // i sprawdz czy ten tekst pasuje do ktoregos z kodow:
       pasuje := false;
       for b := 0 to high(cheatcodes_n) do
       begin
         c := 0;
-        while (c <= high(cheaty.wpisany_tekst)) and (c <= high(cheatcodes_n[b])) and
+        while (c <= cheaty.wpisany_tekst.Count - 1) and (c <= high(cheatcodes_n[b])) and
           (cheaty.wpisany_tekst[c] = cheatcodes_n[b][c]) do
           inc(c);
 
@@ -3286,12 +3285,12 @@ begin
               end;
           end;
 
-          setlength(cheaty.wpisany_tekst, 0);
+          cheaty.wpisany_tekst.Clear;
           exit;
         end
         else
         begin // jesli tylko kawalek dobry, to pozwol pisac dalej:
-          if (c >= 1) and (c > high(cheaty.wpisany_tekst)) and (c <= high(cheatcodes_n[b])) and
+          if (c >= 1) and (c >= cheaty.wpisany_tekst.Count) and (c <= high(cheatcodes_n[b])) and
             (cheaty.wpisany_tekst[c - 1] = cheatcodes_n[b][c - 1]) then
             pasuje := true;
 
@@ -3300,7 +3299,7 @@ begin
 
       if not pasuje then
         // jesli nie pasuje do zadnego kodu, to wyczysc pole wpisywania
-        setlength(cheaty.wpisany_tekst, 0);
+        cheaty.wpisany_tekst.Clear;
 
     end;
   end;
@@ -6489,7 +6488,7 @@ begin
   cheaty.lives := gra.sandboxMode;
   cheaty.load := gra.sandboxMode;
   cheaty.time := gra.sandboxMode;
-  setlength(cheaty.wpisany_tekst, 0);
+  cheaty.wpisany_tekst.Clear;
 
   // gracz.pilotow:=10;
 end;
@@ -6960,6 +6959,7 @@ begin
   end;
 
   cheaty := Default(TCheatCodes);
+  cheaty.wpisany_tekst := TList<byte>.Create;
 
   RenderInit;
 
