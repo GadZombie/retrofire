@@ -166,6 +166,9 @@ type
     randuszkodzenia: integer;
     silaskrzywien: real;
     czas: integer;
+
+    weigth, size: extended;
+
   end;
 
   TLandfield = record

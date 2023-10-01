@@ -27,8 +27,9 @@ const
   ob_dzialkolufa2 = 10;
   ob_kokpit = 11;
   ob_kamien = 12;
+  ob_stone_small = 13;
 
-  ob_sceneria1 = 13;
+  ob_sceneria1 = 14;
   ile_obiektow_scenerii = 6;
 
   upgrade: array [0 .. 5, 0 .. 9] of TUpgradeItem = (

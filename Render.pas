@@ -35,7 +35,7 @@ var
   l_dzialko, l_dzialkowieza, l_dzialkowieza2, l_dzialkolufa, l_dzialkolufa2, l_rakieta, l_mysliwiec, l_cien: GLUint;
   l_sceneria: array [0 .. ile_obiektow_scenerii - 1] of GLUint;
   l_krzaki: array [0 .. 3] of GLUint;
-
+  l_stone_small: array [0 .. 4] of GLUint;
 
 procedure RenderInit;
 begin
@@ -1114,7 +1114,7 @@ begin
   DrawShadowsBegin;
   for a := 0 to high(smiec) do
     if smiec[a].jest then
-      DrawShadow(smiec[a].x, smiec[a].y, smiec[a].z, 2, 7, 70, 0.4);
+      DrawShadow(smiec[a].x, smiec[a].y, smiec[a].z, 2 * smiec[a].size, 7 * smiec[a].size, 70 * smiec[a].size, 0.4);
   DrawShadowsEnd;
 end;
 
@@ -2108,6 +2108,15 @@ begin
           { with obiekt[ob_gracz].o do
             with obiekt[ob_gracz].o.Groups[element] do }
 
+
+          if size <> 1 then
+            glScalef(size, size, size);
+
+          if nobiekt = ob_stone_small then
+          begin
+            glCallList(l_stone_small[element]);
+          end
+          else
           if nobiekt = ob_pilot then
             pokaz_obiekt(obiekt[nobiekt])
           else
@@ -4467,6 +4476,29 @@ begin
   end;
 end;
 
+procedure stworz_stones;
+var
+  a: integer;
+begin
+  for a := 0 to Min(High(obiekt[ob_stone_small].o.Groups), High(l_stone_small)) do
+  begin
+    l_stone_small[a] := glGenLists(1);
+    glNewList(l_stone_small[a], GL_COMPILE);
+    glPushMatrix;
+    pokaz_element_obiekt(obiekt[ob_stone_small], a, false, -1);
+    glPopMatrix;
+    glEndList();
+  end;
+
+//  l_stone_small := glGenLists(1);
+//  glNewList(l_stone_small, GL_COMPILE);
+//  glPushMatrix;
+//  //glRotatef(90, 0, 1, 0);
+//  pokaz_obiekt(obiekt[ob_stone_small]);
+//  glPopMatrix;
+//  glEndList();
+end;
+
 // ----------------------------------------------------------------------------
 procedure tworz_obiekty;
 begin
@@ -4477,6 +4509,7 @@ begin
   stworz_cien;
   stworz_krzaki;
   stworz_survivors;
+  stworz_stones;
 end;
 
 procedure InitRenderers;

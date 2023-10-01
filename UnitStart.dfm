@@ -68,9 +68,10 @@ object FormStart: TFormStart
       Margins.Right = 15
       Margins.Bottom = 7
       Align = alBottom
-      Max = 69
+      Max = 70
       Step = 1
       TabOrder = 0
+      ExplicitTop = 78
     end
   end
 end

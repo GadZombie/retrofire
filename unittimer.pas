@@ -236,15 +236,19 @@ begin
 end;
 
 // ---------------------------------------------------------------------------
-procedure nowy_smiec(sx, sy, sz, sdx, sdy, sdz: real; rodzaj, obiekt_: byte; typ_: byte = 0; randuszkodz: integer = 0;
-  silaskrzyw: real = 0);
+function nowy_smiec(sx, sy, sz, sdx, sdy, sdz: real; rodzaj, obiekt_: byte; typ_: byte = 0; randuszkodz: integer = 0;
+  silaskrzyw: real = 0; weigth_: extended = 2; size_: extended = 1): integer;
 var
   n: integer;
 begin
   n := 0;
   while (n <= high(smiec)) and (smiec[n].jest) do
     inc(n);
+//  if n > high(smiec) then
+//    n := random(length(smiec));
+
   if n <= high(smiec) then
+  begin
     with smiec[n] do
     begin
       jest := true;
@@ -256,7 +260,28 @@ begin
       dy := sdy;
       dz := sdz;
 
-      czas := 1500;
+      size := size_;
+
+      case typ of
+        0: //kawa³ki myœliwców/dzia³ek
+        begin
+          palisie := true;
+          czas := 1500;
+          dymisie := true;
+        end;
+        1: //kamienie scenerii
+        begin
+          palisie := false;
+          czas := 1500;
+          dymisie := true;
+        end;
+        2: //kamyki ziemi
+        begin
+          czas := 400;
+          dymisie := random(100) = 0;
+          palisie := false;
+        end;
+      end;
 
       randuszkodzenia := randuszkodz;
       silaskrzywien := silaskrzyw;
@@ -264,14 +289,13 @@ begin
       element := rodzaj;
       nobiekt := obiekt_;
       typ := typ_;
-      dymisie := true;
-      case typ of
-        0:
-          palisie := true;
-        1:
-          palisie := false;
-      end;
+      weigth := weigth_;
     end;
+    result := n;
+  end
+  else
+    result := -1;
+
 end;
 
 // ---------------------------------------------------------------------------
@@ -1786,6 +1810,36 @@ begin
   ziemia.pk[gx, gz].kb := ziemia.pk[gx, gz].kb * s;
 end;
 
+procedure BlowStones(x, y, z, dx, dy, dz: extended; number: integer = -1);
+var
+  b: integer;
+  CameraDist: extended;
+begin
+  CameraDist := Distance3D(x, y, z, gra.kamera[0, 0], gra.kamera[0, 1], gra.kamera[0, 2]);
+  if CameraDist > 700 then
+    exit;
+
+  if number = -1 then
+    number := 3 + random(10);
+
+  for b := 0 to number - 1 do
+  begin
+    nowy_smiec(
+      (random - 0.5) * 5 + x,
+      (random - 0.5) * 5 + y,
+      (random - 0.5) * 5 + z,
+
+      (random - 0.5) * 1 + dx * 0.2,
+      (random - 0.5) * 1 + dy * 0.2,
+      (random - 0.5) * 1 + dz * 0.2,
+
+      random(length(obiekt[ob_stone_small].o.Groups)),
+      ob_stone_small,
+      2,
+      0, random, 2 + random * 5, 0.1 + random * 0.4);
+  end;
+end;
+
 // ---------------------------------------------------------------------------
 procedure ruch_rakiet;
 var
@@ -1900,6 +1954,9 @@ begin
             ziemia.pk[nx, nz].kr := ziemia.pk[nx, nz].kr * s;
             ziemia.pk[nx, nz].kg := ziemia.pk[nx, nz].kg * s;
             ziemia.pk[nx, nz].kb := ziemia.pk[nx, nz].kb * s;
+
+            if rodzaj = 0 then
+              BlowStones(x, y, z, dx, dy, dz);
 
             if Config.Display.ShowGrass then
             begin
@@ -2267,6 +2324,7 @@ begin
             ziemia.pk[nx, nz].kg := ziemia.pk[nx, nz].kg * 0.1;
             ziemia.pk[nx, nz].kb := ziemia.pk[nx, nz].kb * 0.1;
           end;
+          BlowStones(x, y, z, dx, dy, dz);
         end;
 
         MakeFire(
@@ -2618,17 +2676,6 @@ begin
             nowy_smiec(x, y, z, (random - 0.5) * 1.4, (random - 0.5) * 1.4, (random - 0.5) * 1.4, b, ob_dzialkokawalki,
               0, random(99999), random);
 
-          (* if gracz.zyje then begin
-            s:=sqrt2(sqr(gracz.x-x)+sqr(gracz.y-y)+sqr(gracz.z-z));
-            if s<=10 then begin
-            gracz.sila:=gracz.sila-((10-s)/4);
-            if gracz.sila<0 then gracz.sila:=0;
-            {gracz.dx:=gracz.dx+dx/3;
-            gracz.dy:=gracz.dy+dy/3;
-            gracz.dz:=gracz.dz+dz/3;}
-            end;
-            end; *)
-
           jest := false;
         end;
 
@@ -2915,6 +2962,9 @@ begin
                   .kb * 0.05;
               end;
             end;
+
+            BlowStones(x, y, z, 0, random, 0);
+
             rozwalone := true;
             inc(gra.dzialekzniszczonych);
           end;
@@ -2933,15 +2983,21 @@ end;
 
 // ---------------------------------------------------------------------------
 procedure ruch_smieci;
+const
+  MAX_CAMERA_DIST_TO_PLAY_SOUND = 500;
+  MAX_CAMERA_DIST_TO_PLAY_SOUND_SMALL = 300;
 var
   a, b: integer;
   newDelta: TVec3D;
+  CameraDist: extended;
 begin
   for a := 0 to high(smiec) do
     with smiec[a] do
     begin
       if jest then
       begin
+        CameraDist := Distance3D(x, y, z, gra.kamera[0, 0], gra.kamera[0, 1], gra.kamera[0, 2]);
+
         x := x + dx;
         y := y + dy; // -0.3;
         z := z + dz;
@@ -2955,7 +3011,7 @@ begin
           dx := dx * ziemia.gestoscpowietrza;
           dz := dz * ziemia.gestoscpowietrza;
         end;
-        dy := dy - ziemia.grawitacja * 2;
+        dy := dy - ziemia.grawitacja * weigth;
 
         if { (dy>0) and } (y >= matka.y - 25) and (y <= matka.y - 75) then
         begin
@@ -2972,13 +3028,16 @@ begin
         end
         else if (dy <= 0) and (y <= gdzie_y(x, z, y)) then
         begin
-          if abs(dy) > 0.16 then
+          if (CameraDist <= MAX_CAMERA_DIST_TO_PLAY_SOUND) and (abs(dy) > 0.16) then
           begin
             case typ of
               0:
                 Sfx.graj_dzwiek(7, x, y, z);
               1:
                 Sfx.graj_dzwiek(3, x, y, z);
+              2:
+                if (CameraDist <= MAX_CAMERA_DIST_TO_PLAY_SOUND_SMALL) and (random(40) = 0) then
+                  Sfx.graj_dzwiek(3, x, y, z);
             end;
           end;
 
@@ -3297,6 +3356,36 @@ begin
     gra.czas := 99 * 60;
   end;
 
+end;
+
+procedure sceneryWindGarbage;
+var
+  x, y, z, dx, dy, dz: extended;
+  n: integer;
+begin
+//  if random(50) <> 0 then
+//    exit;
+
+  x := random * (abs(ziemia.px) * 2) + ziemia.px;
+  z := random * (abs(ziemia.pz) * 2) + ziemia.pz;
+  y := gdzie_y(x, z, -2000) + random * 100;
+
+  dx := + sin(wiatr.kier * pi180) * (wiatr.sila ) + random;
+  dz := - cos(wiatr.kier * pi180) * (wiatr.sila ) + random;
+  dy := (random - 0.5) * 2;
+
+  n := nowy_smiec(x, y, z,
+    dx, dy, dz,
+
+    random(length(obiekt[ob_stone_small].o.Groups)),
+    ob_stone_small,
+    1,
+    random(99999), random, 0);
+
+  if n >= 0 then
+  begin
+    smiec[n].dymisie := false;
+  end;
 end;
 
 function canCreateFighters: boolean;
@@ -3822,6 +3911,8 @@ begin
     FSOUND_SetPaused(muzchannel, true);
     Sfx.muzyke_wlacz(1, true);
   end;
+
+//  sceneryWindGarbage;
 end;
 
 procedure setFogAndBackgroundForSpace;
@@ -6505,7 +6596,7 @@ begin
   FormStart.progres.StepIt;
 
   // wczytaj obiekty
-  setlength(obiekt, 25);
+  setlength(obiekt, 26);
 
   obiekt[ob_gracz].o := TOBJModel.Create;
   obiekt[ob_gracz].o.LoadFromFile(DATA_FOLDER + 'l3.obj', 5);
@@ -6740,6 +6831,24 @@ begin
   obiekt[ob_kamien].mat_s[2] := 1.0;
   obiekt[ob_kamien].mat_s[3] := 1.0;
   obiekt[ob_kamien].mat_shin := 100;
+  FormStart.progres.StepIt;
+
+  obiekt[ob_stone_small].o := TOBJModel.Create;
+  obiekt[ob_stone_small].o.LoadFromFile(DATA_FOLDER + 'kamo.obj', 2.0);
+  obiekt[ob_stone_small].tex := 1;
+  obiekt[ob_stone_small].mat_a[0] := 0.2;
+  obiekt[ob_stone_small].mat_a[1] := 0.2;
+  obiekt[ob_stone_small].mat_a[2] := 0.2;
+  obiekt[ob_stone_small].mat_a[3] := 0.3;
+  obiekt[ob_stone_small].mat_d[0] := 0.3;
+  obiekt[ob_stone_small].mat_d[1] := 0.3;
+  obiekt[ob_stone_small].mat_d[2] := 0.3;
+  obiekt[ob_stone_small].mat_d[3] := 0.4;
+  obiekt[ob_stone_small].mat_s[0] := 0.5;
+  obiekt[ob_stone_small].mat_s[1] := 0.5;
+  obiekt[ob_stone_small].mat_s[2] := 0.5;
+  obiekt[ob_stone_small].mat_s[3] := 0.5;
+  obiekt[ob_stone_small].mat_shin := 20;
   FormStart.progres.StepIt;
 
   for a := 0 to ile_obiektow_scenerii - 1 do
