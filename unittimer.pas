@@ -262,7 +262,7 @@ begin
 
       size := size_;
 
-      case typ of
+      case typ_ of
         0: //kawa³ki myœliwców/dzia³ek
         begin
           palisie := true;
